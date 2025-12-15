@@ -1,28 +1,32 @@
 import arcade
+import arcade.gui
+import tkinter as tk
 
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-SCREEN_TITLE = "Red Hat collects berries"
+root = tk.Tk()
+SCREEN_WIDTH = root.winfo_screenwidth()
+SCREEN_HEIGHT = root.winfo_screenheight()
 
-class BerryGame(arcade.Window):
+SCREEN_TITLE = "Our game"
+
+class MainWindow(arcade.Window):
     def __init__(self, width, height, title):
-        super().__init__(width, height, title)
-        pass
+        super().__init__(width, height, title, fullscreen=True)
+        self.back_img = arcade.load_texture("images/back_images_in_menu.jpg")
 
     def setup(self):
         pass
 
     def on_draw(self):
         self.clear()
-        pass
+        arcade.draw_texture_rect(self.back_img, arcade.rect.XYWH(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, SCREEN_WIDTH, SCREEN_HEIGHT), alpha=150)
 
     def on_update(self, delta_time):
         pass
 
 
-def setup_game(width=800, height=600, title="Red Hat collects berries"):
-    game = BerryGame(width, height, title)
+def setup_game(width=800, height=600, title="Our game"):
+    game = MainWindow(width, height, title)
     game.setup()
     return game
 
