@@ -25,7 +25,7 @@ class MainWindow(arcade.Window):
         pass
 
 
-def setup_game(width=800, height=600, title="Our game"):
+def setup_game(width=800, height=600, title="Battle of the Square"):
     game = MainWindow(width, height, title)
     game.setup()
     return game

@@ -1,1 +1,2 @@
-# The Battle of the Square \nTurn-based multiplayer strategy game
+# The Battle of the Square
+Turn-based multiplayer strategy game
