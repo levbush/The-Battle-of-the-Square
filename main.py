@@ -7,7 +7,7 @@ root = tk.Tk()
 SCREEN_WIDTH = root.winfo_screenwidth()
 SCREEN_HEIGHT = root.winfo_screenheight()
 
-SCREEN_TITLE = "Our game"
+SCREEN_TITLE = "Battle of the Square"
 
 class MainWindow(arcade.Window):
     def __init__(self, width, height, title):
