@@ -4,8 +4,8 @@ from unitclasses import UnitBase
 
 class TileBase:
     weight: int
+    type: int
     def __init__(self, visible_mapping):
-        self.terrain_type = list(TERRAIN_TYPES.values()).index(self.__class__)
         self.visible_mapping: list[bool] = visible_mapping
         self.unit: UnitBase = None
         self.city: City = None
@@ -16,18 +16,21 @@ class TileBase:
 
 class Land(TileBase):
     weight = 70
+    type = 0
     def __str__(self):
         return '.'
 
 
 class Water(TileBase):
     weight = 10
+    type = 1
     def __str__(self):
         return '~'
 
 
 class Mountain(TileBase):
     weight = 20
+    type = 2
     def __str__(self):
         return '^'
 
