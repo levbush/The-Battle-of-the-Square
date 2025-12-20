@@ -1,5 +1,5 @@
 import arcade
-from screens.start_screen import StartView
+from views.start_view import StartView
 from database import init_dbs
 
 
