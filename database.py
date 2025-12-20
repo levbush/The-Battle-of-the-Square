@@ -1,7 +1,7 @@
 import sqlite3
 
 
-DB_PATH = 'games.db'
+DB_PATH = 'game.db'
 
 
 def init_dbs():
