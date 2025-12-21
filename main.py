@@ -8,7 +8,7 @@ SCREEN_TITLE = "Battle of the Square"
 
 
 class MainWindow(arcade.Window):
-    # для событий, клавишь, мыши и тд.
+    # для событий, клавиш, мыши и тд.
     def __init__(self, width, height, title):
         super().__init__(width, height, title, fullscreen=True)
         self.is_fullscreen = True
