@@ -19,10 +19,13 @@ class TileBase:
 class Land(TileBase):
     weight = 75
     type = 0
-    def __init__(self, visible_mapping, city = None, unit = None, modifier=None):
+    def __init__(self, visible_mapping, city = None, unit = None, modifier=None, gold=False):
         super().__init__(visible_mapping, city, unit, modifier)
+        self.gold = gold
         if self.city is None and self.modifier is None:
             self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest"], [35, 21, 21, 10, 13], k=1)[0]
+        if self.modifier == "mountain" and self.gold == False:
+            self.gold = choices([False, True], [60, 40], k=1)[0]
 
     def __str__(self):
         return '.'
