@@ -22,7 +22,7 @@ class CreateGameView(arcade.View):
         self.manager.add(self.anchor_layout)
 
     def setup_widgets(self):
-        self.area_options = [144, 169, 196, 225, 256]
+        self.area_options = [121, 196, 256, 324, 400, 900]
         self.bot_difficulty_options = ['Easy', 'Hard']
 
         self.area_selector = HorizontalRadioButtonGroup(
