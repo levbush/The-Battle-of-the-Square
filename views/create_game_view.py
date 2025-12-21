@@ -2,8 +2,7 @@ import arcade
 from arcade.gui import UIManager, UILabel, UIFlatButton
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from classes import HorizontalRadioButtonGroup
-from views.create_map_view import MapView
-# from views.game_view import GameView
+from views.game_view import GameView
 
 
 class CreateGameView(arcade.View):
@@ -70,7 +69,7 @@ class CreateGameView(arcade.View):
 
         area_index, area_value = self.area_selector.selected()
 
-        max_player_amount = (4 + area_index) * 2
+        max_player_amount = (2 + area_index) * 2
 
         player_amount = (
             self.player_amount_selector.selected()[1]
@@ -119,6 +118,5 @@ class CreateGameView(arcade.View):
         else:
             bot_difficulty = None
         
-        view = MapView(size, bot_amount, player_amount, bot_difficulty)
+        view = GameView(size, bot_amount, player_amount, bot_difficulty)
         self.window.show_view(view)
-        print(size, bot_amount, player_amount, bot_difficulty)

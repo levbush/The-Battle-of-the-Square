@@ -178,12 +178,21 @@ class Player:
     def __init__(self, id: int, is_bot: bool):
         self.id = id
         self.is_bot = is_bot
+        self.cities = []
 
     def __eq__(self, value: 'Player'):
         return self.id == value.id
+    
+    def __repr__(self):
+        return f'Player({self.id}, {self.is_bot})'
 
 
 class City:
-    def __init__(self, owner: Player, level=1):
+    def __init__(self, owner: Player, level=0):
         self.owner = owner
         self.level = level
+        if self not in owner.cities:
+            owner.cities.append(self)
+
+    def __repr__(self):
+        return f'City({repr(self.owner)}, {self.level})'

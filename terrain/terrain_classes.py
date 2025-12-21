@@ -1,24 +1,34 @@
 from classes import City
 from unitclasses import UnitBase
+from random import choices
 
 
 class TileBase:
     weight: int
     type: int
-    def __init__(self, visible_mapping):
+    def __init__(self, visible_mapping, city: City=None, unit: UnitBase=None, modifier=None):
         self.visible_mapping: list[bool] = visible_mapping
-        self.unit: UnitBase = None
-        self.city: City = None
+        self.unit = unit
+        self.city = city
+        self.modifier = None
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.visible_mapping})'
+        return f'{self.__class__.__name__}({self.visible_mapping}, {repr(self.city)}, {repr(self.unit)})'
     
 
 class Land(TileBase):
     weight = 75
     type = 0
+    def __init__(self, visible_mapping, city = None, unit = None, modifier=None):
+        super().__init__(visible_mapping, city, unit, modifier)
+        if self.city is None and self.modifier is None:
+            self.modifier = choices([False, 'fruits', 'animal', 'mountain'], [35, 27, 18, 10], k=1)[0]
+
     def __str__(self):
         return '.'
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.visible_mapping}, {repr(self.city)}, {repr(self.unit)}, {self.modifier})'
 
 
 class Water(TileBase):
@@ -28,18 +38,11 @@ class Water(TileBase):
         return '~'
 
 
-class Mountain(TileBase):
-    weight = 5
-    type = 2
-    def __str__(self):
-        return '^'
-
-
-TERRAIN_TYPES: dict[int, TileBase] = {0: Land, 1: Water, 2: Mountain}
+TERRAIN_TYPES: dict[int, TileBase] = {0: Land, 1: Water}
 
 
 class Tile:
-    def __new__(cls, terrain_type: int, player_count: int) -> TileBase:
+    def __new__(cls, terrain_type: int, player_count: int, modifier=None) -> TileBase:
         if terrain_type in TERRAIN_TYPES:
-            return TERRAIN_TYPES[terrain_type]([False] * player_count)
+            return TERRAIN_TYPES[terrain_type]([False] * player_count, modifier)
         raise ValueError("Invalid terrain type")
