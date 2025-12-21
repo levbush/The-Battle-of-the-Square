@@ -69,5 +69,37 @@ class MapView(arcade.View):
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.move = False
 
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        zoom_speed = 0.1
+        min_zoom = 0.2
+        max_zoom = 3.0
+        
+        current_zoom = self.world_camera.zoom
+        
+        if scroll_y > 0:  
+            new_zoom = current_zoom * (1 + zoom_speed)
+        elif scroll_y < 0:  
+            new_zoom = current_zoom * (1 - zoom_speed)
+        else:
+            return
+        
+        new_zoom = max(min_zoom, min(max_zoom, new_zoom))
+        
+        zoom_point_x = x - 150
+        zoom_point_y = y - 150
+        
+        mouse_world_x_before = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / current_zoom
+        mouse_world_y_before = self.world_camera.position[1] + (zoom_point_y - self.window.height / 2) / current_zoom
+        
+        self.world_camera.zoom = new_zoom
+        
+        mouse_world_x_after = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / new_zoom
+        mouse_world_y_after = self.world_camera.position[1] + (zoom_point_y - self.window.height / 2) / new_zoom
+        
+        self.world_camera.position = (
+            self.world_camera.position[0] - (mouse_world_x_after - mouse_world_x_before),
+            self.world_camera.position[1] - (mouse_world_y_after - mouse_world_y_before)
+        )
+
     def on_update(self, delta_time):
         pass
