@@ -20,9 +20,9 @@ class MapView(arcade.View):
 
     def setup(self):
         self.map = create_map(self.size_map, self.size_map, self.player_amount)
-        spr_texture_land = arcade.load_texture("img\Terrain\Tiles\ground_1.png")
-        spr_texture_mount = arcade.load_texture("img\Terrain\Mountains\mountain_1.png")
-        spr_texture_water = arcade.load_texture("img\Terrain\Water\water.png")
+        spr_texture_land = arcade.load_texture("assets\img\Terrain\Tiles\ground_1.png")
+        spr_texture_mount = arcade.load_texture("assets\img\Terrain\Mountains\mountain_1.png")
+        spr_texture_water = arcade.load_texture("assets\img\Terrain\Water\water.png")
         self.tiles = arcade.SpriteList()
         
         for row_idx, row in enumerate(self.map):
