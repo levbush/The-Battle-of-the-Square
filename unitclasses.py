@@ -15,7 +15,7 @@ class UnitBase:
         self.args = (owner, pos, max_health, attack, defense, movement, range)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({','.join(list(map(repr, self.args)))})'
+        return f'{self.__class__.__name__}({",".join(list(map(repr, self.args)))})'
     
     def __str__(self):
         return f'{self.__class__.__name__}: {self.health}hp\n'

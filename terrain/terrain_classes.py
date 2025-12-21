@@ -15,7 +15,7 @@ class TileBase:
     
 
 class Land(TileBase):
-    weight = 70
+    weight = 80
     type = 0
     def __str__(self):
         return '.'
@@ -29,7 +29,7 @@ class Water(TileBase):
 
 
 class Mountain(TileBase):
-    weight = 20
+    weight = 10
     type = 2
     def __str__(self):
         return '^'

@@ -17,7 +17,7 @@ class MainWindow(arcade.Window):
         if arcade.key.ESCAPE == key:
             self.is_fullscreen = not(self.is_fullscreen)
             self.set_fullscreen(self.is_fullscreen)
-            
+
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
     window = MainWindow(width, height, title)
