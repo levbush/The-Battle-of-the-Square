@@ -22,7 +22,7 @@ class Land(TileBase):
     def __init__(self, visible_mapping, city = None, unit = None, modifier=None):
         super().__init__(visible_mapping, city, unit, modifier)
         if self.city is None and self.modifier is None:
-            self.modifier = choices([False, 'fruits', 'animal', 'mountain'], [35, 27, 18, 10], k=1)[0]
+            self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest"], [35, 21, 21, 10, 13], k=1)[0]
 
     def __str__(self):
         return '.'

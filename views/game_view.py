@@ -69,6 +69,7 @@ class GameView(arcade.View):
                             self.tiles.append(arcade.Sprite(self.spr_texture_fruit, 0.2, screen_x, screen_y + 60))
                         case 'animal':
                             self.tiles.append(arcade.Sprite(self.spr_texture_animal, 0.1, screen_x, screen_y + 80))
+                        case "forest":
                             self.tiles.append(arcade.Sprite(self.spr_texture_forest, 0.3, screen_x, screen_y + 80))
                         case 'mountain':
                             mount_spr = arcade.Sprite(self.spr_texture_mount, scale=0.3, center_x=screen_x, center_y=screen_y + 50)
