@@ -59,7 +59,7 @@ class StartView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        arcade.draw_texture_rect(self.back_img, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height), alpha=150)
+        arcade.draw_texture_rect(self.back_img, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height), alpha=200)
         self.manager.draw()
 
     def on_update(self, delta_time):

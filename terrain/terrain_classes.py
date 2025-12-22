@@ -37,6 +37,10 @@ class Land(TileBase):
 class Water(TileBase):
     weight = 20
     type = 1
+    def __init__(self, visible_mapping, city = None, unit = None, modifier=None):
+        super().__init__(visible_mapping, city, unit, modifier)
+        if self.city is None and self.modifier is None:
+            self.modifier = choices([False, 'fish'], [65, 35], k=1)[0]
     def __str__(self):
         return '~'
 

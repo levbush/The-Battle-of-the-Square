@@ -1,7 +1,7 @@
 import arcade
 import arcade.color
 from terrain.create_map import create_map
-from terrain.terrain_classes import Land
+from terrain.terrain_classes import Land, Water
 from classes import Player
 from random import shuffle
 from pprint import pprint
@@ -46,13 +46,14 @@ class GameView(arcade.View):
         self.spr_texture_fog = arcade.load_texture(r"assets\Terrain\fog.png")
         self.bot_city_textures = [arcade.load_texture(rf'assets\Cities\bot\House_{i}.png') for i in range(6)]
         self.player_city_textures = [arcade.load_texture(rf'assets\Cities\player\House_{i}.png') for i in range(6)]
-        self.spr_texture_gold = arcade.load_texture(r"assets\Resources\ResourceGFX_metal.png")
+        self.spr_texture_gold = arcade.load_texture(r"assets\Resources\gold.png")
+        self.spr_texture_fish = arcade.load_texture(r"assets\Resources\fish.png")
         
         self.create_map()
 
     def create_map(self):
         self.map = create_map(self.size_map, self.players)
-        pprint(self.map)
+        # pprint(self.map)
         
         self.tiles = arcade.SpriteList()
         
@@ -87,6 +88,10 @@ class GameView(arcade.View):
                     self.tiles.append(spr)
 
                 if tile.type == 1:
+                    tile: Water
+                    match tile.modifier:
+                        case 'fish':
+                            self.tiles.append(arcade.Sprite(self.spr_texture_fish, 0.2, screen_x, screen_y + 60))
                     spr = arcade.Sprite(self.spr_texture_water, scale=0.3, center_x=screen_x, center_y=screen_y)
                     self.tiles.append(spr)                    
         self.tiles.reverse()

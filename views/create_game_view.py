@@ -102,7 +102,7 @@ class CreateGameView(arcade.View):
         arcade.draw_texture_rect(
             self.back_img,
             arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height),
-            alpha=150
+            alpha=200
         )
         self.manager.draw()
 
