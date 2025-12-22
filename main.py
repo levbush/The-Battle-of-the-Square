@@ -12,10 +12,10 @@ class MainWindow(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title, fullscreen=True)
         self.is_fullscreen = True
-    
+
     def on_key_press(self, key, modifiers):
         if arcade.key.ESCAPE == key:
-            self.is_fullscreen = not(self.is_fullscreen)
+            self.is_fullscreen = not (self.is_fullscreen)
             self.set_fullscreen(self.is_fullscreen)
 
 

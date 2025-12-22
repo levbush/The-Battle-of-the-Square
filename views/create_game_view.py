@@ -26,23 +26,16 @@ class CreateGameView(arcade.View):
         self.bot_difficulty_options = ['Easy', 'Hard']
 
         self.area_selector = HorizontalRadioButtonGroup(
-            self.area_options,
-            on_change=lambda *_: self.update_selectors('area')
+            self.area_options, on_change=lambda *_: self.update_selectors('area')
         )
 
-        self.bot_amount_selector = HorizontalRadioButtonGroup(
-            [],
-            on_change=lambda *_: self.update_selectors('bot')
-        )
+        self.bot_amount_selector = HorizontalRadioButtonGroup([], on_change=lambda *_: self.update_selectors('bot'))
 
         self.player_amount_selector = HorizontalRadioButtonGroup(
-            [],
-            on_change=lambda *_: self.update_selectors('player')
+            [], on_change=lambda *_: self.update_selectors('player')
         )
 
-        self.bot_difficulty_selector = HorizontalRadioButtonGroup(
-            self.bot_difficulty_options
-        )
+        self.bot_difficulty_selector = HorizontalRadioButtonGroup(self.bot_difficulty_options)
 
         self.vertical_layout.add(UILabel(text='Размер карты'))
         self.vertical_layout.add(self.area_selector.widget)
@@ -62,7 +55,6 @@ class CreateGameView(arcade.View):
 
         self.update_selectors('')
 
-
     def update_selectors(self, sender):
         if self.area_selector._selected_index is None:
             return
@@ -72,17 +64,13 @@ class CreateGameView(arcade.View):
         max_player_amount = (2 + area_index) * 2
 
         player_amount = (
-            self.player_amount_selector.selected()[1]
-            if self.player_amount_selector._selected_index is not None
-            else 1
+            self.player_amount_selector.selected()[1] if self.player_amount_selector._selected_index is not None else 1
         )
         if sender != 'bot':
             bot_options = list(range(max(1, max_player_amount - player_amount + 1)))
             self.bot_amount_selector.set_options(bot_options)
         bot_amount = (
-            self.bot_amount_selector.selected()[1]
-            if self.bot_amount_selector._selected_index is not None
-            else 0
+            self.bot_amount_selector.selected()[1] if self.bot_amount_selector._selected_index is not None else 0
         )
         if sender != 'player':
             player_options = list(range(1, max(2, max_player_amount - bot_amount + 1)))
@@ -100,23 +88,26 @@ class CreateGameView(arcade.View):
     def on_draw(self):
         self.clear()
         arcade.draw_texture_rect(
-            self.back_img,
-            arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height),
-            alpha=200
+            self.back_img, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height), alpha=200
         )
         self.manager.draw()
 
     def start_game(self):
-        area, bot_amount, player_amount, bot_difficulty = self.area_selector.selected(), self.bot_amount_selector.selected(), self.player_amount_selector.selected(), self.bot_difficulty_selector.selected()
+        area, bot_amount, player_amount, bot_difficulty = (
+            self.area_selector.selected(),
+            self.bot_amount_selector.selected(),
+            self.player_amount_selector.selected(),
+            self.bot_difficulty_selector.selected(),
+        )
         if None in [area, bot_amount, player_amount] or bot_amount and bot_difficulty is None:
             return
-        size = int(area[1]**0.5)
+        size = int(area[1] ** 0.5)
         bot_amount = bot_amount[1]
         player_amount = player_amount[1]
         if bot_amount:
             bot_difficulty = bot_difficulty[0]
         else:
             bot_difficulty = None
-        
+
         view = GameView(size, bot_amount, player_amount, bot_difficulty)
         self.window.show_view(view)

@@ -23,10 +23,7 @@ class AnimatedButton(arcade.gui.UIFlatButton):
         diff = self.scale_target - self.scale_current
         self.scale_current += diff * min(delta_time * 10, 1)
 
-        self.rect = self._base_rect.scale(
-            new_scale=self.scale_current,
-            anchor=AnchorPoint.CENTER
-        )
+        self.rect = self._base_rect.scale(new_scale=self.scale_current, anchor=AnchorPoint.CENTER)
 
 
 class HorizontalRadioButtonGroup:
@@ -47,19 +44,12 @@ class HorizontalRadioButtonGroup:
         self.button_width = button_width
         self.button_height = button_height
 
-        self.layout = arcade.gui.UIBoxLayout(
-            vertical=False,
-            space_between=spacing,
-        )
+        self.layout = arcade.gui.UIBoxLayout(vertical=False, space_between=spacing)
 
         self.buttons: list[arcade.gui.UIFlatButton] = []
 
         for i, label in enumerate(options):
-            button = arcade.gui.UIFlatButton(
-                text=str(label),
-                width=button_width,
-                height=button_height,
-            )
+            button = arcade.gui.UIFlatButton(text=str(label), width=button_width, height=button_height)
             button.on_click = self._make_handler(i)
             self.buttons.append(button)
             self.layout.add(button)
@@ -67,11 +57,14 @@ class HorizontalRadioButtonGroup:
         if self.options:
             self.set_selected(default_index, False)
 
-
     def selected(self):
         if self._selected_index is None:
             return None
-        return self._selected_index, (int(self.options[self._selected_index]) if isinstance(self.options[self._selected_index], int) or self.options[self._selected_index].isdigit() else self.options[self._selected_index])
+        return self._selected_index, (
+            int(self.options[self._selected_index])
+            if isinstance(self.options[self._selected_index], int) or self.options[self._selected_index].isdigit()
+            else self.options[self._selected_index]
+        )
 
     def set_selected(self, value, do_trigger=True):
         if isinstance(value, int):
@@ -89,12 +82,12 @@ class HorizontalRadioButtonGroup:
         if self.on_change and do_trigger:
             self.on_change(index, self.options[index])
 
-    
     def _make_handler(self, index):
         def handler(event):
             self.set_selected(index)
+
         return handler
-    
+
     def set_options(self, options, default_index=0):
         self.layout.clear()
         self.buttons.clear()
@@ -102,11 +95,7 @@ class HorizontalRadioButtonGroup:
         self.options = [str(o) for o in options]
 
         for i, label in enumerate(self.options):
-            button = arcade.gui.UIFlatButton(
-                text=label,
-                width=self.button_width,
-                height=self.button_height,
-            )
+            button = arcade.gui.UIFlatButton(text=label, width=self.button_width, height=self.button_height)
             button.on_click = self._make_handler(i)
             self.buttons.append(button)
             self.layout.add(button)
@@ -182,7 +171,7 @@ class Player:
 
     def __eq__(self, value: 'Player'):
         return self.id == value.id
-    
+
     def __repr__(self):
         return f'Player({self.id}, {self.is_bot})'
 
