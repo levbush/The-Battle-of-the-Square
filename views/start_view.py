@@ -8,7 +8,7 @@ from database import DB_PATH
 from views.create_game_view import CreateGameView
 
 
-COUNT_MUSIC = 2
+COUNT_MUSIC = 7
 
 
 class StartView(arcade.View):
