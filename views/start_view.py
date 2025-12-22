@@ -1,4 +1,5 @@
 import arcade
+import random
 from classes import AnimatedButton
 from arcade.gui import UIManager
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
@@ -7,10 +8,15 @@ from database import DB_PATH
 from views.create_game_view import CreateGameView
 
 
+COUNT_MUSIC = 2
+
+
 class StartView(arcade.View):
     def __init__(self):
         super().__init__()
         self.back_img = arcade.load_texture(r'assets\menu_background.jpg')
+
+        arcade.play_sound(arcade.load_sound(rf"music\sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
 
         self.manager = UIManager()
         self.manager.enable()

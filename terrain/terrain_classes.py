@@ -23,7 +23,7 @@ class Land(TileBase):
         super().__init__(visible_mapping, city, unit, modifier)
         self.gold = gold
         if self.city is None and self.modifier is None:
-            self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest", "n_village"], [40, 18, 18, 9, 13, 2], k=1)[0]
+            self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest", "n_village"], [45, 16, 15, 9, 13, 2], k=1)[0]
         if self.modifier == "mountain" and self.gold == False:
             self.gold = choices([False, True], [60, 40], k=1)[0]
 
@@ -40,7 +40,7 @@ class Water(TileBase):
     def __init__(self, visible_mapping, city = None, unit = None, modifier=None):
         super().__init__(visible_mapping, city, unit, modifier)
         if self.city is None and self.modifier is None:
-            self.modifier = choices([False, 'fish'], [65, 35], k=1)[0]
+            self.modifier = choices([False, 'fish'], [80, 20], k=1)[0]
     def __str__(self):
         return '~'
 
