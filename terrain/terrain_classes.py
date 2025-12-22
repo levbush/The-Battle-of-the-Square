@@ -23,7 +23,7 @@ class Land(TileBase):
         super().__init__(visible_mapping, city, unit, modifier)
         self.gold = gold
         if self.city is None and self.modifier is None:
-            self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest"], [35, 21, 21, 10, 13], k=1)[0]
+            self.modifier = choices([False, 'fruits', 'animal', 'mountain', "forest", "n_village"], [40, 18, 18, 9, 13, 2], k=1)[0]
         if self.modifier == "mountain" and self.gold == False:
             self.gold = choices([False, True], [60, 40], k=1)[0]
 

@@ -48,6 +48,7 @@ class GameView(arcade.View):
         self.player_city_textures = [arcade.load_texture(rf'assets\Cities\player\House_{i}.png') for i in range(6)]
         self.spr_texture_gold = arcade.load_texture(r"assets\Resources\gold.png")
         self.spr_texture_fish = arcade.load_texture(r"assets\Resources\fish.png")
+        self.spr_texture_n_village = arcade.load_texture(r"assets\Resources\n_village.png")
         
         self.create_map()
 
@@ -73,6 +74,8 @@ class GameView(arcade.View):
                             self.tiles.append(arcade.Sprite(self.spr_texture_animal, 0.1, screen_x, screen_y + 80))
                         case "forest":
                             self.tiles.append(arcade.Sprite(self.spr_texture_forest, 0.3, screen_x, screen_y + 80))
+                        case "n_village":
+                            self.tiles.append(arcade.Sprite(self.spr_texture_n_village, 0.3, screen_x, screen_y + 80))
                         case 'mountain':
                             if tile.gold:
                                 gold_spr = arcade.Sprite(self.spr_texture_gold, scale=0.2, center_x=screen_x, center_y=screen_y + 75)
