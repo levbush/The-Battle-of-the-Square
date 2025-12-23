@@ -14,9 +14,9 @@ COUNT_MUSIC = 7
 class StartView(arcade.View):
     def __init__(self):
         super().__init__()
-        self.back_img = arcade.load_texture(r'assets\menu_background.jpg')
+        self.back_img = arcade.load_texture(r'assets/menu_background.jpg')
 
-        arcade.play_sound(arcade.load_sound(rf"music\sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
+        arcade.play_sound(arcade.load_sound(rf"music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
 
         self.manager = UIManager()
         self.manager.enable()

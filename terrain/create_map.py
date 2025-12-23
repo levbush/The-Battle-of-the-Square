@@ -10,34 +10,41 @@ def create_map(side: int, players: list[Player]):
         map.append([])
         for y in range(side):
             if x == 0 or y == 0:
-                map[x].append(Tile(Land, len(players)))
+                map[x].append(Tile(Land, [False] * len(players)))
                 continue
             terrain_type = choices(TERRAIN_TYPES, terrain_types_weights(), k=1)[0]
             if terrain_type == Land:
                 modifier_type = choices(LAND_MODIFIERS, land_modifiers_weights(), k=1)[0]
-                map[x].append(Tile(Land, len(players), modifier=modifier_type))
+                map[x].append(Tile(Land, [False] * len(players), modifier=modifier_type))
                 if modifier_type == Village:
                     villages.append((x, y))
             elif terrain_type == Water:
                 modifier_type = choices(WATER_MODIFIERS, water_modifiers_weights(), k=1)[0]
-                map[x].append(Tile(Water, len(players), modifier=modifier_type))
-
+                map[x].append(Tile(Water, [False] * len(players), modifier=modifier_type))
+    
     for player in players:
+        visible_tiles: list[tuple[int]] = []
         while True:
             flag = True
             x, y = randint(2, side - 3), randint(2, side - 3)
             for i in range(x - 2, x + 3):
                 for j in range(y - 2, y + 3):
+                    if x - 1 <= i <= x + 1 and y - 1 <= j <= y + 1: visible_tiles.append((i, j))
                     if map[i][j].city:
                         flag = False
+                        visible_tiles.clear()
                         break
                     if map[i][j].modifier == Village:
-                        map[i][j] = Tile(Land, len(players))
+                        map[i][j] = Tile(Land, [False] * len(players))
                 if not flag:
                     break
             if not flag:
                 continue
-            map[x][y] = Tile(Land, len(players), city=City(player))
+            for (i, j) in visible_tiles:
+                map[i][j].visible_mapping[player.id] = True
+            vm = map[x][y].visible_mapping[:]
+            vm[player.id] = True
+            map[x][y] = Tile(Land, vm, city=City(player))
             print(x, y)
             break
 

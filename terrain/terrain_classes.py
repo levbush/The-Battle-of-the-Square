@@ -21,7 +21,7 @@ class ModifierBase:
 class Fruits(ModifierBase):
     weight = 18
     type = 0
-    textures = (load_texture(r"assets\Resources\fruits.png"),)
+    textures = (load_texture(r"assets/Resources/fruits.png"),)
     offsets = (60,)
     scales = (0.2,)
 
@@ -29,7 +29,7 @@ class Fruits(ModifierBase):
 class Animal(ModifierBase):
     weight = 18
     type = 1
-    textures = (load_texture(r"assets\Resources\animal.png"),)
+    textures = (load_texture(r"assets/Resources/animal.png"),)
     offsets = (80,)
     scales = (0.1,)
 
@@ -37,7 +37,7 @@ class Animal(ModifierBase):
 class Mountain(ModifierBase):
     weight = 6
     type = 2
-    textures = (load_texture(r"assets\Terrain\mountain.png"),)
+    textures = (load_texture(r"assets/Terrain/mountain.png"),)
     offsets = (50,)
     scales = (0.3,)
 
@@ -45,7 +45,7 @@ class Mountain(ModifierBase):
 class GoldMountain(ModifierBase):
     weight = 3
     type = 3
-    textures = load_texture(r"assets\Resources\gold.png"), Mountain.textures[0]
+    textures = load_texture(r"assets/Resources/gold.png"), Mountain.textures[0]
     offsets = 75, Mountain.offsets[0]
     scales = 0.2, Mountain.scales[0]
 
@@ -53,7 +53,7 @@ class GoldMountain(ModifierBase):
 class Forest(ModifierBase):
     weight = 13
     type = 4
-    textures = (load_texture(r"assets\Terrain\forest.png"),)
+    textures = (load_texture(r"assets/Terrain/forest.png"),)
     offsets = (80,)
     scales = (0.3,)
 
@@ -61,7 +61,7 @@ class Forest(ModifierBase):
 class Village(ModifierBase):
     weight = 5
     type = 5
-    textures = (load_texture(r"assets\village.png"),)
+    textures = (load_texture(r"assets/village.png"),)
     offsets = (80,)
     scales = (0.3,)
 
@@ -69,7 +69,7 @@ class Village(ModifierBase):
 class Fish(ModifierBase):
     weight = 35
     type = 6
-    textures = (load_texture(r"assets\Resources\fish.png"),)
+    textures = (load_texture(r"assets/Resources/fish.png"),)
     offsets = (60,)
     scales = (0.2,)
 
@@ -114,7 +114,7 @@ class TileBase:
 class Land(TileBase):
     weight = 75
     type = 0
-    texture = load_texture(r"assets\Terrain\ground.png")
+    texture = load_texture(r"assets/Terrain/ground.png")
 
     def __init__(self, visible_mapping, city=None, unit=None, modifier=None):
         super().__init__(visible_mapping, city, unit, modifier)
@@ -124,7 +124,7 @@ class Land(TileBase):
 
 
 class Water(TileBase):
-    texture = load_texture(r"assets\Terrain\water.png")
+    texture = load_texture(r"assets/Terrain/water.png")
     weight = 20
     type = 1
 
@@ -146,11 +146,11 @@ class Tile:
     def __new__(
         cls,
         terrain_type: type,
-        player_count: int,
+        visible_mapping: list[bool],
         modifier: type = None,
         city: City | None = None,
         unit: UnitBase | None = None,
     ) -> TileBase:
         if terrain_type in TERRAIN_TYPES:
-            return terrain_type([False] * player_count, city, unit, modifier)
+            return terrain_type(visible_mapping, city, unit, modifier)
         raise ValueError("Invalid terrain type")

@@ -38,9 +38,9 @@ class GameView(arcade.View):
             self.players[i].id = i
         self.current_player = 0
 
-        self.spr_texture_fog = arcade.load_texture(r"assets\Terrain\fog.png")
-        self.bot_city_textures = [arcade.load_texture(rf'assets\Cities\bot\House_{i}.png') for i in range(6)]
-        self.player_city_textures = [arcade.load_texture(rf'assets\Cities\player\House_{i}.png') for i in range(6)]
+        self.spr_texture_fog = arcade.load_texture(r"assets/Terrain/fog.png")
+        self.bot_city_textures = [arcade.load_texture(rf'assets/Cities/bot/House_{i}.png') for i in range(6)]
+        self.player_city_textures = [arcade.load_texture(rf'assets/Cities/player/House_{i}.png') for i in range(6)]
         self.city_textures = {True: self.bot_city_textures, False: self.player_city_textures}
         self.sprite_offsets = {}
 
@@ -58,9 +58,9 @@ class GameView(arcade.View):
             for col_idx, tile in enumerate(row):
                 screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
-                # if not tile.visible_mapping[self.current_player]:
-                #     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-                #     continue
+                if not tile.visible_mapping[self.current_player]:
+                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+                    continue
                 self.tiles.append(arcade.Sprite(tile.texture, 0.3, screen_x, screen_y))
                 if tile.modifier:
                     for i in range(len(tile.modifier.textures)):
