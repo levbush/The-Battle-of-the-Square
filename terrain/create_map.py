@@ -45,7 +45,6 @@ def create_map(side: int, players: list[Player]):
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
             map[x][y] = Tile(Land, vm, city=City(player))
-            print(x, y)
             break
 
     for x, y in villages:

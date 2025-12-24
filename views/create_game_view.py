@@ -46,7 +46,8 @@ class CreateGameView(arcade.View):
         self.vertical_layout.add(UILabel(text='Количество игроков'))
         self.vertical_layout.add(self.player_amount_selector.widget)
 
-        self.vertical_layout.add(UILabel(text='Уровень сложности'))
+        self.bot_difficulty_label = UILabel(text='Уровень сложности')
+        self.vertical_layout.add(self.bot_difficulty_label)
         self.vertical_layout.add(self.bot_difficulty_selector.widget)
 
         self.start_game_button = UIFlatButton(text='Начать игру')
@@ -79,11 +80,14 @@ class CreateGameView(arcade.View):
         if bot_amount > 0:
             if self.bot_difficulty_selector.widget not in self.vertical_layout.children:
                 self.vertical_layout.remove(self.start_game_button)
+                self.vertical_layout.add(self.bot_difficulty_label)
                 self.vertical_layout.add(self.bot_difficulty_selector.widget)
                 self.vertical_layout.add(self.start_game_button)
         else:
             if self.bot_difficulty_selector.widget in self.vertical_layout.children:
+                self.vertical_layout.remove(self.bot_difficulty_label)
                 self.vertical_layout.remove(self.bot_difficulty_selector.widget)
+                
 
     def on_draw(self):
         self.clear()
@@ -110,4 +114,5 @@ class CreateGameView(arcade.View):
             bot_difficulty = None
 
         view = GameView(size, bot_amount, player_amount, bot_difficulty)
+        self.window.hide_view()
         self.window.show_view(view)

@@ -1,10 +1,9 @@
 import arcade
 import arcade.color
+from arcade.gui import UIManager, UITextureButton
 from terrain.create_map import create_map
 from classes import Player
 from random import shuffle
-
-# from pprint import pprint
 from terrain.terrain_classes import *
 
 
@@ -23,6 +22,8 @@ class GameView(arcade.View):
         self.camera_start = (0, 0)
         self.world_camera = arcade.camera.Camera2D()
         self.gui_camera = arcade.camera.Camera2D()
+        self.ui_manager = UIManager()
+        self.ui_manager.enable()
         arcade.set_background_color(arcade.color.SKY_BLUE)
         self.setup()
 
@@ -36,29 +37,47 @@ class GameView(arcade.View):
         self.players.insert(0, Player(None, False))
         for i in range(self.player_amount + self.bot_amount):
             self.players[i].id = i
-        self.current_player = 0
-
-        self.spr_texture_fog = arcade.load_texture(r"assets/Terrain/fog.png")
-        self.bot_city_textures = [arcade.load_texture(rf'assets/Cities/bot/House_{i}.png') for i in range(6)]
-        self.player_city_textures = [arcade.load_texture(rf'assets/Cities/player/House_{i}.png') for i in range(6)]
-        self.city_textures = {True: self.bot_city_textures, False: self.player_city_textures}
-        self.sprite_offsets = {}
-
-        self.create_map()
-
-    def create_map(self):
-        self.map = create_map(self.size_map, self.players)
-        # pprint(self.map)
-
+        self.current_player: Player | None = None
+        
         self.tiles = arcade.SpriteList()
         self.modifiers = arcade.SpriteList()
         self.cities = arcade.SpriteList()
+        self.map = create_map(self.size_map, self.players)
+
+        btn_normal = arcade.load_texture("assets/next_turn.png")
+        self.next_move_btn = UITextureButton(
+            x=SCREEN_WIDTH // 2 + SCREEN_WIDTH * 0.05,
+            y=SCREEN_HEIGHT * 0.05,
+            texture=btn_normal,
+            scale=2)
+        self.ui_manager.add(self.next_move_btn)
+        self.next_move_btn.on_click = lambda *_: self.change_POV()
+
+        self.spr_texture_fog = arcade.load_texture("assets/Terrain/fog.png")
+        self.bot_city_textures = [arcade.load_texture(f'assets/Cities/bot/House_{i}.png') for i in range(6)]
+        self.player_city_textures = [arcade.load_texture(f'assets/Cities/player/House_{i}.png') for i in range(6)]
+        self.city_textures = {True: self.bot_city_textures, False: self.player_city_textures}
+
+        self.change_POV()
+
+    def change_POV(self):
+        if self.current_player is None:
+            self.current_player = self.players[0]
+        else:
+            self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
+
+            while self.current_player.is_bot:
+                self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
+
+        self.tiles.clear()
+        self.modifiers.clear()
+        self.cities.clear()
 
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
                 screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
-                if not tile.visible_mapping[self.current_player]:
+                if not tile.visible_mapping[self.current_player.id]:
                     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
                     continue
                 self.tiles.append(arcade.Sprite(tile.texture, 0.3, screen_x, screen_y))
@@ -89,6 +108,7 @@ class GameView(arcade.View):
         self.modifiers.draw()
         self.cities.draw()
         self.gui_camera.use()
+        self.ui_manager.draw()
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
