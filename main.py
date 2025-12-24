@@ -13,7 +13,7 @@ class MainWindow(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title, fullscreen=True)
         self.is_fullscreen = True
-        arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
+        self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
         self.music_counter = 0
 
     def on_key_press(self, key, modifiers):
@@ -23,9 +23,10 @@ class MainWindow(arcade.Window):
 
     def on_update(self, delta_time):
         self.music_counter += delta_time
-        if self.music_counter >= 60:
+        if self.music_counter >= 120:
             self.music_counter = 0
-            arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 1, loop=True)
+            arcade.stop_sound(self.music)
+            self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 0.9, loop=True)
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
