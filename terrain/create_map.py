@@ -1,6 +1,7 @@
 from random import choices, randint
 from terrain.terrain_classes import *
 from classes import Player, City
+from unitclasses import Unit
 
 
 def create_map(side: int, players: list[Player]):
@@ -44,7 +45,7 @@ def create_map(side: int, players: list[Player]):
                 map[i][j].visible_mapping[player.id] = True
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
-            map[x][y] = Tile(Land, vm, city=City(player))
+            map[x][y] = Tile(Land, vm, city=City(player), unit=Unit(0, player, x, y))
             break
 
     for x, y in villages:

@@ -1,5 +1,4 @@
 import arcade
-import random
 from classes import AnimatedButton
 from arcade.gui import UIManager
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
@@ -47,9 +46,9 @@ class StartView(arcade.View):
                 'border_radius': 16,
             },
         }
-        self.new_game_button = AnimatedButton(text='New game', style=style, width=width, height=height)
+        self.new_game_button = AnimatedButton(text='Новая игра', style=style, width=width, height=height)
         if data:
-            self.resume_game_button = AnimatedButton(text='Resume game', style=style, width=width, height=height)
+            self.resume_game_button = AnimatedButton(text='Продолжить игру', style=style, width=width, height=height)
         else:
             self.resume_game_button = None
 
@@ -70,5 +69,5 @@ class StartView(arcade.View):
 
     def new_game(self):
         view = CreateGameView()
-        self.window.hide_view()
+        self.manager.disable()
         self.window.show_view(view)

@@ -27,6 +27,8 @@ class MainWindow(arcade.Window):
             self.music_counter = 0
             arcade.stop_sound(self.music)
             self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 0.9, loop=True)
+        if self.current_view:
+            self.current_view.on_update(delta_time)
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):

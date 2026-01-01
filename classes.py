@@ -1,6 +1,7 @@
 import arcade.gui
 from arcade.types import AnchorPoint
 import arcade
+from dataclasses import dataclass, field
 
 
 class AnimatedButton(arcade.gui.UIFlatButton):
@@ -163,25 +164,39 @@ class HorizontalRadioButtonGroup:
         return self.layout
 
 
+@dataclass(eq=False, repr=False)
 class Player:
-    def __init__(self, id: int, is_bot: bool):
-        self.id = id
-        self.is_bot = is_bot
-        self.cities = []
+    id: int
+    is_bot: bool
+    is_alive: bool = True
+    cities: list["City"] = field(default_factory=list)
+    stars: int = 5
 
-    def __eq__(self, value: 'Player'):
-        return self.id == value.id
+    def __post_init__(self):
+        for city in self.cities:
+            if city.owner != self:
+                city.owner = self
 
+    def __eq__(self, value):
+        if isinstance(value, Player):
+            return self.id == value.id
+        if isinstance(value, int):
+            return self.id == value
+        return NotImplemented
+    
     def __repr__(self):
-        return f'Player({self.id}, {self.is_bot})'
+        return (
+            f"Player(id={self.id}, is_bot={self.is_bot}, "
+            f"is_alive={self.is_alive}, stars={self.stars})"
+        )
 
 
+@dataclass()
 class City:
-    def __init__(self, owner: Player, level=0):
-        self.owner = owner
-        self.level = level
-        if self not in owner.cities:
-            owner.cities.append(self)
+    owner: Player | int
+    level: int = 0
+    population: int = 0
 
-    def __repr__(self):
-        return f'City({repr(self.owner)}, {self.level})'
+    def __post_init__(self):
+        if self not in self.owner.cities:
+            self.owner.cities.append(self)

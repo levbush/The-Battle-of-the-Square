@@ -114,5 +114,5 @@ class CreateGameView(arcade.View):
             bot_difficulty = None
 
         view = GameView(size, bot_amount, player_amount, bot_difficulty)
-        self.window.hide_view()
+        self.manager.disable()
         self.window.show_view(view)

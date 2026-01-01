@@ -1,105 +1,125 @@
 from classes import Player
+from dataclasses import dataclass, field
+from typing import Type
+from classes import Player
+from arcade import Texture, load_texture
 
 
+@dataclass
 class UnitBase:
-    type: int
+    owner: Player
+    pos: tuple[int, int]
+    max_health: int
+    attack: int
+    defense: int
+    movement: int
+    range: int
+    move_remains: bool = True
+    health: int = None
 
-    def __init__(
-        self, owner: Player, pos: tuple[int, int], max_health: int, attack: int, defense: int, movement: int, range: int
-    ):
-        self.owner = owner
-        self.pos = pos
-        self.max_health = max_health
-        self.health = max_health
-        self.attack = attack
-        self.defense = defense
-        self.movement = movement
-        self.range = range
-        self.args = (owner, pos, max_health, attack, defense, movement, range)
+    type: int = field(init=False)
+    name: str = field(init=False)
+    textures: 'UnitTexture' = field(init=False)
 
-    def __repr__(self):
-        return f'{self.__class__.__name__}({",".join(list(map(repr, self.args)))})'
+    def __post_init__(self):
+        if self.health is None: self.health = self.max_health
 
-    def __str__(self):
-        return f'{self.__class__.__name__}: {self.health}hp\n'
-
-    def attack_unit(attacker, defender: 'UnitBase'):
+    @staticmethod
+    def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
         if attacker.owner == defender.owner:
             return
+
         if (
             abs(attacker.pos[0] - defender.pos[0]) > attacker.range
             or abs(attacker.pos[1] - defender.pos[1]) > attacker.range
         ):
             return
-        # TODO: add particles
-        attackForce = attacker.attack * (attacker.health / attacker.max_health)
-        defenseForce = defender.defense * (defender.health / defender.max_health)
-        totalDamage = attackForce + defenseForce
-        attackResult = round((attackForce / totalDamage) * attacker.attack * 4.5)
-        defenseResult = round((defenseForce / totalDamage) * defender.defense * 4.5)
 
-        defender.health -= attackResult
-        if defender.health < 0:
+        attack_force = attacker.attack * (attacker.health / attacker.max_health)
+        defense_force = defender.defense * (defender.health / defender.max_health)
+        total = attack_force + defense_force
+        # TODO: add particles
+        attack_damage = round((attack_force / total) * attacker.attack * 4.5)
+        defense_damage = round((defense_force / total) * defender.defense * 4.5)
+
+        defender.health -= attack_damage
+        if defender.health <= 0:
             attacker.move(defender.pos)
             defender.die()
             return
+
         if (
             abs(attacker.pos[0] - defender.pos[0]) <= defender.range
             and abs(attacker.pos[1] - defender.pos[1]) <= defender.range
         ):
-            attacker.health -= defenseResult
-            if attacker.health < 0:
+            attacker.health -= defense_damage
+            if attacker.health <= 0:
                 attacker.die()
+
+    def move(self, pos: tuple[int, int]):
+        # TODO: add animation
+        self.pos = pos
 
     def die(self):
         # TODO: add particles
-        del self
-
-    def move(self, pos):
-        # TODO: add animation
-        self.pos = pos
+        pass
 
 
 class Warrior(UnitBase):
     type = 0
-
-    def __init__(self, *args):
-        super().__init__(*args, 10, 2, 2, 1, 1)
+    name = 'warrior'
+    def __init__(self, owner, pos):
+        super().__init__(owner, pos, 10, 2, 2, 1, 1)
 
 
 class Defender(UnitBase):
     type = 1
-
-    def __init__(self, *args):
-        super().__init__(*args, 15, 1, 3, 1, 1)
+    name = 'defender'
+    def __init__(self, owner, pos):
+        super().__init__(owner, pos, 15, 1, 3, 1, 1)
 
 
 class Rider(UnitBase):
     type = 2
-
-    def __init__(self, *args):
-        super().__init__(*args, 10, 2, 1, 2, 1)
+    name = 'rider'
+    def __init__(self, owner, pos):
+        super().__init__(owner, pos, 10, 2, 1, 2, 1)
 
 
 class Archer(UnitBase):
     type = 3
-
-    def __init__(self, *args):
-        super().__init__(*args, 10, 2, 1, 1, 2)
+    name = 'archer'
+    def __init__(self, owner, pos):
+        super().__init__(owner, pos, 10, 2, 1, 1, 2)
 
 
 class Giant(UnitBase):
     type = 4
+    name = 'giant'
+    def __init__(self, owner, pos):
+        super().__init__(owner, pos, 40, 5, 4, 1, 1)
 
-    def __init__(self, *args):
-        super().__init__(*args, 40, 5, 4, 1, 1)
 
-
-UNIT_TYPES: dict[int, UnitBase] = {0: Warrior, 1: Defender, 2: Rider, 3: Archer, 4: Giant}
+UNIT_TYPES: dict[int, Type[UnitBase]] = {
+    0: Warrior,
+    1: Defender,
+    2: Rider,
+    3: Archer,
+    4: Giant,
+}
 
 
 class Unit:
     def __new__(cls, unit_type: int, owner: Player, x: int, y: int) -> UnitBase:
-        if unit_type in UNIT_TYPES:
-            return UNIT_TYPES[unit_type](owner, (x, y))
-        raise ValueError('Invalid unit type')
+        if unit_type not in UNIT_TYPES:
+            raise ValueError("Invalid unit type")
+        return UNIT_TYPES[unit_type](owner, (x, y))
+
+
+class UnitTexture:
+    def __init__(self, name):
+        self.ally, self.enemy, self.bot = (load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/'))
+
+
+for cls in UNIT_TYPES.values():
+    cls.textures = UnitTexture(cls.name)
