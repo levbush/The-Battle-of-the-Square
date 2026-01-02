@@ -95,6 +95,7 @@ class GameView(arcade.View):
         self.tiles.clear()
         self.modifiers.clear()
         self.cities.clear()
+        self.units.clear()
 
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
