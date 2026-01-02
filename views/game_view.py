@@ -23,6 +23,14 @@ class GameView(arcade.View):
         self.move_start = (0, 0)
         self.camera_start = (250 * self.size_map / 4, 250 * self.size_map *(1 / 2 - 1 / 6))
         self.new_game = new_game
+        self.click_threshold = 5
+        self.mouse_down_pos = None
+        self.dragging = False
+        self.selected_tile = None
+        self.selected_unit = None
+        self.selected_modifier = None
+        self.selected_city = None
+
         self.world_camera = arcade.camera.Camera2D()
         self.gui_camera = arcade.camera.Camera2D()
         self.manager = UIManager()
@@ -61,7 +69,8 @@ class GameView(arcade.View):
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
         self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
         self.player_city_textures = [arcade.load_texture(f'assets/cities/player/House_{i}.png') for i in range(6)]
-        self.city_textures = {True: self.bot_city_textures, False: self.player_city_textures}
+        self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
+        self.city_textures = {'bot': self.bot_city_textures, 'ally': self.player_city_textures, 'enemy': self.enemy_city_textures}
         self.resource = arcade.load_texture('assets/resource.png')
         self.batch = Batch()
         self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
@@ -116,9 +125,15 @@ class GameView(arcade.View):
                             )
                         )
                 elif tile.city:
+                    if tile.city.owner.is_bot:
+                        texture = 'bot'
+                    elif tile.city.owner == self.current_player:
+                        texture = 'ally'
+                    else:
+                        texture = 'enemy'
                     self.cities.append(
                         arcade.Sprite(
-                            self.city_textures[tile.city.owner.is_bot][tile.city.level], 0.5, screen_x, screen_y + 150
+                            self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150
                         )
                     )
                 if tile.unit:
@@ -128,7 +143,7 @@ class GameView(arcade.View):
                         texture = tile.unit.textures.bot
                     else:
                         texture = tile.unit.textures.enemy
-                    self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x, center_y=screen_y + 80))
+                    self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
 
                         
         self.tiles.reverse()
@@ -151,6 +166,7 @@ class GameView(arcade.View):
         self.modifiers.draw()
         self.cities.draw()
         self.units.draw()
+        self.draw_selection_highlight()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT - 50, 40, 40))
@@ -158,20 +174,41 @@ class GameView(arcade.View):
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
+            self.mouse_down_pos = (x, y)
+            self.dragging = False
+
             self.move = True
             self.move_start = (x, y)
-            self.camera_start = (self.world_camera.position[0], self.world_camera.position[1])
+            self.camera_start = self.world_camera.position
+
 
     def on_mouse_motion(self, x, y, dx, dy):
-        if self.move:
+        if not self.move:
+            return
+
+        dist = abs(x - self.mouse_down_pos[0]) + abs(y - self.mouse_down_pos[1])
+        if dist > self.click_threshold:
+            self.dragging = True
+
+        if self.dragging:
             dx = x - self.move_start[0]
             dy = y - self.move_start[1]
+            self.world_camera.position = (
+                self.camera_start[0] - dx,
+                self.camera_start[1] - dy
+        )
 
-            self.world_camera.position = (self.camera_start[0] - dx, self.camera_start[1] - dy)
 
     def on_mouse_release(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            self.move = False
+        if button != arcade.MOUSE_BUTTON_LEFT:
+            return
+
+        self.move = False
+        if not self.dragging:
+            self.handle_click(x, y)
+        self.dragging = False
+        self.mouse_down_pos = None
+
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         zoom_speed = 0.1
@@ -205,6 +242,63 @@ class GameView(arcade.View):
             self.world_camera.position[1] - (mouse_world_y_after - mouse_world_y_before),
         )
 
+    def draw_selection_highlight(self):
+        if not self.selected_tile:
+            return
+
+        x, y = self.tile_to_world(self.selected_tile)
+
+        if self.selected_unit:
+            arcade.draw_circle_outline(
+                center_x=x + 10,
+                center_y=y + 90,
+                radius=40,
+                color=arcade.color.YELLOW,
+                border_width=4,
+            )
+            return
+
+        if self.selected_modifier or self.selected_city:
+            dx, dy = 120 / 2, 80 // 2
+            y = y + 70 + bool(self.selected_city) * 20
+
+            points = [
+                (x - dx, y - dy),
+                (x + dx, y - dy),
+                (x + dx, y + dy),
+                (x - dx, y + dy),
+            ]
+
+            arcade.draw_polygon_outline(
+                points,
+                color=arcade.color.BLEU_DE_FRANCE,
+                line_width=4,
+            )
+            return
+
+    def screen_to_world(self, x, y):
+        cam = self.world_camera
+        world_x = cam.position[0] + (x - self.window.width / 2) / cam.zoom
+        world_y = cam.position[1] + (y - 35 - self.window.height / 2) / cam.zoom
+        return world_x, world_y
+
+    def screen_to_tile(self, x, y) -> TileBase | None:
+        world_x, world_y = self.screen_to_world(x, y)
+        world_x -= SCREEN_WIDTH // 2
+        world_y -= 150
+
+        col = round((world_x / 150 + world_y / 90) / 2)
+        row = round((world_y / 90 - world_x / 150) / 2)
+
+        if 0 <= row < len(self.map) and 0 <= col < len(self.map[row]):
+            return self.map[row][col]
+        
+    def tile_to_world(self, tile: TileBase):
+        x = (tile.col - tile.row) * 150 + SCREEN_WIDTH // 2
+        y = (tile.col + tile.row) * 90 + 150
+        return x, y
+
+
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
             return
@@ -217,3 +311,59 @@ class GameView(arcade.View):
         self.current_player.stars += stars
         self.star_label.text = str(self.current_player.stars) + (f" (+ {stars})" if stars else '')
         self.move_label.text = f'Ход {self.move_n}'
+
+    def select_unit(self, tile: TileBase):
+        self.selected_unit = tile.unit
+        self.selected_tile = tile
+        print("Unit selected", repr(tile.unit))
+
+    def select_modifier(self, tile: TileBase):
+        self.selected_tile = tile
+        self.selected_modifier = tile.modifier
+        print("Modifier selected", repr(tile.modifier))
+
+    def select_city(self, tile: TileBase):
+        self.selected_tile = tile
+        self.selected_city = tile.city
+        print("City selected", repr(tile.city))
+
+    def handle_click(self, x, y):
+
+        def deselect_all():
+            self.selected_unit = None
+            self.selected_modifier = None
+            self.selected_city = None
+            self.selected_tile = None
+
+
+        tile = self.screen_to_tile(x, y)
+        if not tile or not tile.visible_mapping[self.current_player.id]:
+            deselect_all()
+            return
+
+        if self.selected_tile and tile != self.selected_tile:
+            deselect_all()
+
+        if self.selected_unit is None:
+            if tile.unit:
+                deselect_all()
+                self.select_unit(tile)
+                return
+
+            if tile.modifier:
+                deselect_all()
+                self.select_modifier(tile)
+                return
+
+            if tile.city:
+                deselect_all()
+                self.select_city(tile)
+                return
+
+        if tile == self.selected_tile:
+            if tile.modifier:
+                deselect_all()
+                self.select_modifier(tile)
+            elif tile.city:
+                deselect_all()
+                self.select_city(tile)

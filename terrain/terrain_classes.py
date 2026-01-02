@@ -26,6 +26,9 @@ class Fruits(ModifierBase):
     offsets = (60,)
     scales = (0.2,)
 
+    def __repr__(self):
+        return super().__repr__()
+
 
 class Animal(ModifierBase):
     weight = 18
@@ -33,6 +36,9 @@ class Animal(ModifierBase):
     textures = (load_texture("assets/resources/animal.png"),)
     offsets = (80,)
     scales = (0.1,)
+
+    def __repr__(self):
+        return super().__repr__()
 
 
 class Mountain(ModifierBase):
@@ -77,9 +83,9 @@ class Fish(ModifierBase):
 
 
 
-MODIFIER_TYPES: list[ModifierBase] = [Fruits, Animal, Mountain, GoldMountain, Forest, Village, Fish]
-LAND_MODIFIERS: list[None | ModifierBase] = [None, Fruits, Animal, Mountain, GoldMountain, Forest, Village]
-WATER_MODIFIERS: list[None | ModifierBase] = [None, Fish]
+MODIFIER_TYPES: list[ModifierBase] = [Fruits(), Animal(), Mountain(), GoldMountain(), Forest(), Village(), Fish()]
+LAND_MODIFIERS: list[None | ModifierBase] = [None, Fruits(), Animal(), Mountain(), GoldMountain(), Forest(), Village()]
+WATER_MODIFIERS: list[None | ModifierBase] = [None, Fish()]
 
 
 def land_modifiers_weights():
@@ -104,6 +110,8 @@ class TileBase:
     weight: int = field(init=False)
     type: int = field(init=False)
     texture: Texture = field(init=False)
+    row: int = field(init=False)
+    col: int = field(init=False)
 
 
 class Land(TileBase):
@@ -133,6 +141,7 @@ def terrain_types_weights():
 class Tile:
     def __new__(
         cls,
+        row, col,
         terrain_type: type,
         visible_mapping: list[bool],
         modifier: ModifierBase | None = None,
@@ -141,4 +150,7 @@ class Tile:
     ) -> TileBase:
         if terrain_type not in TERRAIN_TYPES:
             raise ValueError("Invalid terrain type")
-        return terrain_type(visible_mapping, city, unit, modifier)
+        tile: TileBase = terrain_type(visible_mapping, city, unit, modifier)
+        tile.row = row
+        tile.col = col
+        return tile

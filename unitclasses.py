@@ -118,7 +118,11 @@ class Unit:
 
 class UnitTexture:
     def __init__(self, name):
+        self.name = name
         self.ally, self.enemy, self.bot = (load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/'))
+    
+    def __repr__(self):
+        return f'UnitTexture({self.name})'
 
 
 for cls in UNIT_TYPES.values():
