@@ -30,7 +30,7 @@ def create_map(side: int, players: list[Player]):
             x, y = randint(2, side - 3), randint(2, side - 3)
             for i in range(x - 2, x + 3):
                 for j in range(y - 2, y + 3):
-                    if x - 1 <= i <= x + 1 and y - 1 <= j <= y + 1: visible_tiles.append((i, j))
+                    if x - 2 <= i <= x + 2 and y - 2 <= j <= y + 2: visible_tiles.append((i, j))
                     if map[i][j].city:
                         flag = False
                         visible_tiles.clear()
