@@ -7,7 +7,7 @@ from classes import Player
 from random import shuffle
 from terrain.terrain_classes import *
 from pyglet.graphics import Batch
-
+import math
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
 
@@ -30,6 +30,8 @@ class GameView(arcade.View):
         self.selected_unit = None
         self.selected_modifier = None
         self.selected_city = None
+        self.valid_move_tiles = []
+        self.path = []
 
         self.world_camera = arcade.camera.Camera2D()
         self.gui_camera = arcade.camera.Camera2D()
@@ -50,12 +52,12 @@ class GameView(arcade.View):
                 self.players[i].id = i
             self.current_player: Player | None = None
             
-            self.tiles = arcade.SpriteList()
-            self.modifiers = arcade.SpriteList()
-            self.cities = arcade.SpriteList()
-            self.units = arcade.SpriteList()
+            self.tiles = arcade.SpriteList(use_spatial_hash=True)
+            self.modifiers = arcade.SpriteList(use_spatial_hash=True)
+            self.cities = arcade.SpriteList(use_spatial_hash=True)
+            self.units = arcade.SpriteList(use_spatial_hash=True)
             self.map = create_map(self.size_map, self.players)
-
+  
             btn_normal = arcade.load_texture("assets/next_turn.png")
             self.next_turn_btn = UITextureButton(
                 x=SCREEN_WIDTH // 2 + SCREEN_WIDTH * 0.05,
@@ -100,6 +102,10 @@ class GameView(arcade.View):
                 self.move_n += 1
             self.make_player_move()
         
+        self.selected_unit = None
+        self.selected_tile = None
+        self.valid_move_tiles = []
+        self.path = []
 
         self.tiles.clear()
         self.modifiers.clear()
@@ -167,6 +173,8 @@ class GameView(arcade.View):
         self.cities.draw()
         self.units.draw()
         self.draw_selection_highlight()
+        self.draw_valid_moves()
+        self.draw_path()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT - 50, 40, 40))
@@ -176,11 +184,9 @@ class GameView(arcade.View):
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.mouse_down_pos = (x, y)
             self.dragging = False
-
             self.move = True
             self.move_start = (x, y)
             self.camera_start = self.world_camera.position
-
 
     def on_mouse_motion(self, x, y, dx, dy):
         if not self.move:
@@ -196,8 +202,7 @@ class GameView(arcade.View):
             self.world_camera.position = (
                 self.camera_start[0] - dx,
                 self.camera_start[1] - dy
-        )
-
+            )
 
     def on_mouse_release(self, x, y, button, modifiers):
         if button != arcade.MOUSE_BUTTON_LEFT:
@@ -208,7 +213,6 @@ class GameView(arcade.View):
             self.handle_click(x, y)
         self.dragging = False
         self.mouse_down_pos = None
-
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         zoom_speed = 0.1
@@ -230,12 +234,12 @@ class GameView(arcade.View):
         zoom_point_y = y - 150
 
         mouse_world_x_before = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / current_zoom
-        mouse_world_y_before = self.world_camera.position[1] + (zoom_point_y - self.window.height / 2) / current_zoom
+        mouse_world_y_before = self.world_camera.position[1] + (zoom_point_x - self.window.height / 2) / current_zoom
 
         self.world_camera.zoom = new_zoom
 
         mouse_world_x_after = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / new_zoom
-        mouse_world_y_after = self.world_camera.position[1] + (zoom_point_y - self.window.height / 2) / new_zoom
+        mouse_world_y_after = self.world_camera.position[1] + (zoom_point_x - self.window.height / 2) / new_zoom
 
         self.world_camera.position = (
             self.world_camera.position[0] - (mouse_world_x_after - mouse_world_x_before),
@@ -256,25 +260,81 @@ class GameView(arcade.View):
                 color=arcade.color.YELLOW,
                 border_width=4,
             )
-            return
 
         if self.selected_modifier or self.selected_city:
-            dx, dy = 120 / 2, 80 // 2
-            y = y + 70 + bool(self.selected_city) * 20
-
-            points = [
-                (x - dx, y - dy),
-                (x + dx, y - dy),
-                (x + dx, y + dy),
-                (x - dx, y + dy),
-            ]
-
-            arcade.draw_polygon_outline(
-                points,
+            width = 120
+            height = 80
+            left = x - width / 2
+            right = x + width / 2
+            bottom = y + 70 + bool(self.selected_city) * 20 - height / 2
+            top = y + 70 + bool(self.selected_city) * 20 + height / 2
+            
+            arcade.draw_lrbt_rectangle_outline(
+                left=left,
+                right=right,
+                bottom=bottom,
+                top=top,
                 color=arcade.color.BLEU_DE_FRANCE,
-                line_width=4,
+                border_width=4,
             )
+
+    def draw_valid_moves(self):
+        for tile in self.valid_move_tiles:
+            x, y = self.tile_to_world(tile)
+            
+            width = 120
+            height = 80
+            left = x - width / 2
+            right = x + width / 2
+            bottom = y + 90 - height / 2
+            top = y + 90 + height / 2
+            
+            arcade.draw_lrbt_rectangle_outline(
+                left=left,
+                right=right,
+                bottom=bottom,
+                top=top,
+                color=arcade.color.GREEN,
+                border_width=3
+            )
+
+    def draw_path(self):
+        if len(self.path) < 2:
             return
+        
+        for i in range(len(self.path) - 1):
+            start_x, start_y = self.tile_to_world(self.path[i])
+            end_x, end_y = self.tile_to_world(self.path[i + 1])
+            
+            start_x += 10
+            start_y += 90
+            end_x += 10
+            end_y += 90
+            
+            arcade.draw_line(
+                start_x, start_y,
+                end_x, end_y,
+                color=arcade.color.BLUE,
+                line_width=3
+            )
+            
+            angle = math.atan2(end_y - start_y, end_x - start_x)
+            arrow_length = 20
+            arrow_angle = math.pi / 6
+            
+            left_x = end_x - arrow_length * math.cos(angle - arrow_angle)
+            left_y = end_y - arrow_length * math.sin(angle - arrow_angle)
+            
+            right_x = end_x - arrow_length * math.cos(angle + arrow_angle)
+            right_y = end_y - arrow_length * math.sin(angle + arrow_angle)
+            
+            arcade.draw_triangle_outline(
+                end_x, end_y,
+                left_x, left_y,
+                right_x, right_y,
+                color=arcade.color.BLUE,
+                border_width=2
+            )
 
     def screen_to_world(self, x, y):
         cam = self.world_camera
@@ -292,17 +352,260 @@ class GameView(arcade.View):
 
         if 0 <= row < len(self.map) and 0 <= col < len(self.map[row]):
             return self.map[row][col]
-        
+        return None
+
     def tile_to_world(self, tile: TileBase):
         x = (tile.col - tile.row) * 150 + SCREEN_WIDTH // 2
         y = (tile.col + tile.row) * 90 + 150
         return x, y
 
+    def get_neighbors(self, tile: TileBase):
+        neighbors = []
+        
+        directions = [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ]
+        
+        for dr, dc in directions:
+            new_row = tile.row + dr
+            new_col = tile.col + dc
+            
+            if 0 <= new_row < len(self.map) and 0 <= new_col < len(self.map[new_row]):
+                neighbor = self.map[new_row][new_col]
+                
+                if neighbor.visible_mapping[self.current_player.id]:
+                    neighbors.append(neighbor)
+        
+        return neighbors
+
+    def get_tiles_in_range(self, center_tile: TileBase, radius: int):
+        tiles_in_range = []
+        
+        for dr in range(-radius, radius + 1):
+            for dc in range(-radius, radius + 1):
+                new_row = center_tile.row + dr
+                new_col = center_tile.col + dc
+                
+                if (0 <= new_row < len(self.map) and 
+                    0 <= new_col < len(self.map[new_row]) and
+                    max(abs(dr), abs(dc)) <= radius):
+                    
+                    tile = self.map[new_row][new_col]
+                    tiles_in_range.append(tile)
+        
+        return tiles_in_range
+
+    def update_visibility_around_unit(self, unit_tile: TileBase):
+        player_id = self.current_player.id
+        
+        visible_tiles = self.get_tiles_in_range(unit_tile, 1)
+        
+        for tile in visible_tiles:
+            tile.visible_mapping[player_id] = True
+
+    def is_passable(self, tile: TileBase) -> bool:
+        return isinstance(tile, Land)
+
+    def calculate_valid_moves(self, start_tile: TileBase):
+        self.valid_move_tiles = []
+        self.path = []
+        
+        if not start_tile or not start_tile.unit:
+            return
+        
+        print(f"Calculating moves for unit at ({start_tile.row}, {start_tile.col})")
+        print(f"Unit movement: {start_tile.unit.movement}")
+        print(f"Tile type: {type(start_tile).__name__}")
+        
+        movement_range = start_tile.unit.movement
+        
+        visited = []
+        queue = [(start_tile, 0, [])]
+        
+        while queue:
+            current_tile, distance, path = queue.pop(0)
+            
+            if current_tile in visited:
+                continue
+                
+            visited.append(current_tile)
+            
+            if current_tile != start_tile:
+                can_move = False
+                
+                if not self.is_passable(current_tile):
+                    print(f"  Tile at ({current_tile.row}, {current_tile.col}) is not passable (type: {type(current_tile).__name__})")
+                    continue
+                
+                if current_tile.unit is None:
+                    can_move = True
+                elif current_tile.unit.owner != self.current_player:
+                    can_move = True
+                
+                if can_move and distance <= movement_range:
+                    self.valid_move_tiles.append(current_tile)
+                    print(f"  Valid move to ({current_tile.row}, {current_tile.col}) at distance {distance} (type: {type(current_tile).__name__})")
+            
+            if distance >= movement_range:
+                continue
+            
+            for neighbor in self.get_neighbors(current_tile):
+                if neighbor not in visited and self.is_passable(neighbor):
+                    new_path = path + [current_tile]
+                    queue.append((neighbor, distance + 1, new_path))
+                elif neighbor in visited:
+                    print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) already visited")
+                else:
+                    print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) not passable (type: {type(neighbor).__name__})")
+        
+        print(f"Found {len(self.valid_move_tiles)} valid moves")
+        print(f"Expected up to: {movement_range * 8} cells (theoretical maximum)")
+        for tile in self.valid_move_tiles:
+            print(f"  - ({tile.row}, {tile.col}) - type: {type(tile).__name__}")
+
+    def move_unit(self, from_tile: TileBase, to_tile: TileBase):
+        if not from_tile.unit or from_tile.unit.owner != self.current_player:
+            print("No unit to move or wrong owner")
+            return False
+        
+        print(f"Attempting to move unit from ({from_tile.row}, {from_tile.col}) to ({to_tile.row}, {to_tile.col})")
+        print(f"Unit type: {type(from_tile.unit).__name__}")
+        print(f"Unit movement remains: {from_tile.unit.move_remains}")
+        print(f"From tile type: {type(from_tile).__name__}")
+        print(f"To tile type: {type(to_tile).__name__}")
+        
+        if not self.is_passable(to_tile):
+            print(f"Cannot move to tile - not passable (type: {type(to_tile).__name__})")
+            return False
+        
+        if not from_tile.unit.move_remains:
+            print("Unit has no movement left")
+            return False
+        
+        if to_tile not in self.valid_move_tiles:
+            print("Target tile not in valid moves")
+            return False
+        
+        try:
+            distance = max(abs(to_tile.row - from_tile.row), abs(to_tile.col - from_tile.col))
+            print(f"Distance to move: {distance}")
+            
+            if to_tile.unit:
+                if to_tile.unit.owner != self.current_player:
+                    print(f"Attacking enemy unit at ({to_tile.row}, {to_tile.col})")
+                    UnitBase.attack_unit(from_tile.unit, to_tile.unit)
+                    
+                    if not to_tile.unit.is_alive:
+                        print(f"Enemy defeated, moving to tile")
+                        from_tile.unit.move((to_tile.row, to_tile.col))
+                        from_tile.unit.move_remains = False
+                        
+                        self.update_visibility_around_unit(to_tile)
+                        
+                        to_tile.unit = from_tile.unit
+                        from_tile.unit = None
+                    else:
+                        from_tile.unit.move_remains = False
+                        print(f"Attack completed but enemy still alive")
+                else:
+                    print("Cannot attack ally")
+                    return False
+            else:
+                print(f"Moving to empty tile")
+                from_tile.unit.move((to_tile.row, to_tile.col))
+                from_tile.unit.move_remains = False
+                
+                self.update_visibility_around_unit(to_tile)
+                
+                to_tile.unit = from_tile.unit
+                from_tile.unit = None
+            
+            self.update_sprites()
+            
+            self.selected_unit = None
+            self.selected_tile = None
+            self.valid_move_tiles = []
+            self.path = []
+            
+            print("Move completed successfully")
+            return True
+            
+        except Exception as e:
+            print(f"Error during move: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def update_sprites(self):
+        print("Updating sprites...")
+        self.tiles.clear()
+        self.modifiers.clear()
+        self.cities.clear()
+        self.units.clear()
+        
+        for row_idx, row in enumerate(self.map):
+            for col_idx, tile in enumerate(row):
+                screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
+                screen_y = (col_idx + row_idx) * 90 + 150
+                
+                if not tile.visible_mapping[self.current_player.id]:
+                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+                    continue
+                    
+                self.tiles.append(arcade.Sprite(tile.texture, 0.3, screen_x, screen_y))
+                
+                if tile.modifier:
+                    for i in range(len(tile.modifier.textures)):
+                        self.modifiers.append(
+                            arcade.Sprite(
+                                tile.modifier.textures[i],
+                                tile.modifier.scales[i],
+                                screen_x,
+                                screen_y + tile.modifier.offsets[i],
+                            )
+                        )
+                elif tile.city:
+                    if tile.city.owner.is_bot:
+                        texture = 'bot'
+                    elif tile.city.owner == self.current_player:
+                        texture = 'ally'
+                    else:
+                        texture = 'enemy'
+                    self.cities.append(
+                        arcade.Sprite(
+                            self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150
+                        )
+                    )
+                
+                if tile.unit:
+                    if tile.unit.owner == self.current_player:
+                        texture = tile.unit.textures.ally
+                    elif tile.unit.owner.is_bot:
+                        texture = tile.unit.textures.bot
+                    else:
+                        texture = tile.unit.textures.enemy
+                    self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
+                    print(f"  Unit sprite at ({row_idx}, {col_idx}) - {type(tile.unit).__name__}")
+        
+        self.tiles.reverse()
+        self.modifiers.reverse()
+        self.cities.reverse()
+        self.units.reverse()
+        print(f"Total unit sprites: {len(self.units)}")
 
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
             return
-    
+        # TODO: Реализовать логику хода бота
+        pass
+
     def get_stars_for_player(self):
         return sum((city.level + 1) for city in self.current_player.cities) + 1 if self.move_n else 0
 
@@ -311,59 +614,151 @@ class GameView(arcade.View):
         self.current_player.stars += stars
         self.star_label.text = str(self.current_player.stars) + (f" (+ {stars})" if stars else '')
         self.move_label.text = f'Ход {self.move_n}'
+        
+        for row in self.map:
+            for tile in row:
+                if tile.unit and tile.unit.owner == self.current_player:
+                    tile.unit.move_remains = True
+                    
+                    self.update_visibility_around_unit(tile)
+                    print(f"Reset movement and updated visibility for unit at ({tile.row}, {tile.col})")
+        
+        self.update_sprites()
 
     def select_unit(self, tile: TileBase):
+        if tile.unit and not tile.unit.move_remains:
+            print(f"Cannot select unit - no movement left")
+            return
+            
         self.selected_unit = tile.unit
         self.selected_tile = tile
-        print("Unit selected", repr(tile.unit))
+        self.valid_move_tiles = []
+        self.path = []
+        
+        self.calculate_valid_moves(tile)
+        print(f"Unit selected at ({tile.row}, {tile.col}) - {type(tile.unit).__name__}")
 
     def select_modifier(self, tile: TileBase):
         self.selected_tile = tile
         self.selected_modifier = tile.modifier
+        self.valid_move_tiles = []
+        self.path = []
         print("Modifier selected", repr(tile.modifier))
 
     def select_city(self, tile: TileBase):
         self.selected_tile = tile
         self.selected_city = tile.city
+        self.valid_move_tiles = []
+        self.path = []
         print("City selected", repr(tile.city))
 
     def handle_click(self, x, y):
-
-        def deselect_all():
-            self.selected_unit = None
-            self.selected_modifier = None
-            self.selected_city = None
-            self.selected_tile = None
-
-
         tile = self.screen_to_tile(x, y)
-        if not tile or not tile.visible_mapping[self.current_player.id]:
-            deselect_all()
+        if not tile:
+            print("No tile at clicked position")
+            self.deselect_all()
+            return
+            
+        if not tile.visible_mapping[self.current_player.id]:
+            print("Tile not visible")
+            self.deselect_all()
+            return
+
+        print(f"Clicked tile at ({tile.row}, {tile.col})")
+        print(f"  Tile type: {type(tile).__name__}")
+        print(f"  Has unit: {bool(tile.unit)}")
+        if tile.unit:
+            print(f"  Unit owner: {tile.unit.owner}")
+            print(f"  Unit movement remains: {tile.unit.move_remains}")
+        print(f"  Has city: {bool(tile.city)}")
+        print(f"  Has modifier: {bool(tile.modifier)}")
+
+        if self.selected_unit and tile in self.valid_move_tiles:
+            print(f"Attempting to move to valid tile ({tile.row}, {tile.col})")
+            success = self.move_unit(self.selected_tile, tile)
+            if success:
+                print(f"Юнит перемещен с ({self.selected_tile.row}, {self.selected_tile.col}) на ({tile.row}, {tile.col})")
+            else:
+                print("Move failed")
+            return
+
+        if tile == self.selected_tile:
+            print("Same tile clicked - switching selection")
+            self.switch_selection_on_tile(tile)
             return
 
         if self.selected_tile and tile != self.selected_tile:
-            deselect_all()
+            print("Deselecting all (different tile)")
+            self.deselect_all()
 
-        if self.selected_unit is None:
-            if tile.unit:
-                deselect_all()
-                self.select_unit(tile)
-                return
+        self.primary_selection(tile)
 
+    def switch_selection_on_tile(self, tile: TileBase):
+        if self.selected_unit:
             if tile.modifier:
-                deselect_all()
-                self.select_modifier(tile)
-                return
-
-            if tile.city:
-                deselect_all()
-                self.select_city(tile)
-                return
-
-        if tile == self.selected_tile:
-            if tile.modifier:
-                deselect_all()
+                print("Switching from unit to modifier")
+                self.deselect_all()
                 self.select_modifier(tile)
             elif tile.city:
-                deselect_all()
+                print("Switching from unit to city")
+                self.deselect_all()
                 self.select_city(tile)
+            else:
+                print("Deselecting unit")
+                self.deselect_all()
+        
+        elif self.selected_modifier:
+            if tile.unit and tile.unit.owner == self.current_player:
+                print("Switching from modifier to unit")
+                self.deselect_all()
+                self.select_unit(tile)
+            elif tile.city:
+                print("Switching from modifier to city")
+                self.deselect_all()
+                self.select_city(tile)
+            else:
+                print("Deselecting modifier")
+                self.deselect_all()
+        
+        elif self.selected_city:
+            if tile.unit and tile.unit.owner == self.current_player:
+                print("Switching from city to unit")
+                self.deselect_all()
+                self.select_unit(tile)
+            elif tile.modifier:
+                print("Switching from city to modifier")
+                self.deselect_all()
+                self.select_modifier(tile)
+            else:
+                print("Deselecting city")
+                self.deselect_all()
+        
+        else:
+            self.primary_selection(tile)
+
+    def primary_selection(self, tile: TileBase):
+        if tile.unit:
+            if tile.unit.owner == self.current_player:
+                print("Selecting unit")
+                self.select_unit(tile)
+            else:
+                print("Cannot select enemy unit")
+                self.deselect_all()
+        elif tile.city:
+            print("Selecting city")
+            self.select_city(tile)
+        elif tile.modifier:
+            print("Selecting modifier")
+            self.select_modifier(tile)
+        else:
+            print("Empty tile clicked")
+            self.deselect_all()
+
+    def deselect_all(self):
+        self.selected_unit = None
+        self.selected_modifier = None
+        self.selected_city = None
+        self.selected_tile = None
+        self.valid_move_tiles = []
+        self.path = []
+        print("All selections cleared")
