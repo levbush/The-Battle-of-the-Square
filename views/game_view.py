@@ -58,7 +58,7 @@ class GameView(arcade.View):
             self.units = arcade.SpriteList(use_spatial_hash=True)
             self.map = create_map(self.size_map, self.players)
   
-            btn_normal = arcade.load_texture("assets/next_turn.png")
+            btn_normal = arcade.load_texture("assets/misc/next_turn.png")
             self.next_turn_btn = UITextureButton(
                 x=SCREEN_WIDTH // 2 + SCREEN_WIDTH * 0.05,
                 y=SCREEN_HEIGHT * 0.05,
@@ -73,7 +73,7 @@ class GameView(arcade.View):
         self.player_city_textures = [arcade.load_texture(f'assets/cities/player/House_{i}.png') for i in range(6)]
         self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
         self.city_textures = {'bot': self.bot_city_textures, 'ally': self.player_city_textures, 'enemy': self.enemy_city_textures}
-        self.resource = arcade.load_texture('assets/resource.png')
+        self.resource = arcade.load_texture('assets/misc/resource.png')
         self.batch = Batch()
         self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
         self.move_label = arcade.Text('', SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)

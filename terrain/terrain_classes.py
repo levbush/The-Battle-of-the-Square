@@ -68,7 +68,7 @@ class Forest(ModifierBase):
 class Village(ModifierBase):
     weight = 5
     type = 5
-    textures = (load_texture("assets/village.png"),)
+    textures = (load_texture("assets/misc/village.png"),)
     offsets = (80,)
     scales = (0.3,)
 

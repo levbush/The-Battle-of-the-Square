@@ -8,7 +8,7 @@ from views.game_view import GameView
 class CreateGameView(arcade.View):
     def __init__(self):
         super().__init__()
-        self.back_img = arcade.load_texture('assets/menu_background.jpg')
+        self.back_img = arcade.load_texture('assets/misc/menu_background.jpg')
 
         self.manager = UIManager()
         self.manager.enable()
