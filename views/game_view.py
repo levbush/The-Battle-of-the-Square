@@ -74,6 +74,7 @@ class GameView(arcade.View):
         self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
         self.city_textures = {'bot': self.bot_city_textures, 'ally': self.player_city_textures, 'enemy': self.enemy_city_textures}
         self.resource = arcade.load_texture('assets/misc/resource.png')
+        self.move_texture = arcade.load_texture('assets/misc/moveTarget.png')
         self.batch = Batch()
         self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
         self.move_label = arcade.Text('', SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
@@ -150,7 +151,6 @@ class GameView(arcade.View):
                     else:
                         texture = tile.unit.textures.enemy
                     self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
-
                         
         self.tiles.reverse()
         self.modifiers.reverse()
@@ -231,7 +231,6 @@ class GameView(arcade.View):
         new_zoom = max(min_zoom, min(max_zoom, new_zoom))
 
         zoom_point_x = x - 150
-        zoom_point_y = y - 150
 
         mouse_world_x_before = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / current_zoom
         mouse_world_y_before = self.world_camera.position[1] + (zoom_point_x - self.window.height / 2) / current_zoom
@@ -289,13 +288,11 @@ class GameView(arcade.View):
             bottom = y + 90 - height / 2
             top = y + 90 + height / 2
             
-            arcade.draw_lrbt_rectangle_outline(
+            arcade.draw_texture_rect(self.move_texture, arcade.rect.LRBT(
                 left=left,
                 right=right,
                 bottom=bottom,
-                top=top,
-                color=arcade.color.GREEN,
-                border_width=3
+                top=top)
             )
 
     def draw_path(self):
@@ -466,7 +463,7 @@ class GameView(arcade.View):
                     print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) not passable (type: {type(neighbor).__name__})")
         
         print(f"Found {len(self.valid_move_tiles)} valid moves")
-        print(f"Expected up to: {movement_range * 8} cells (theoretical maximum)")
+        print(f"Expected up to: {(movement_range * 2 - 1)**2} cells (theoretical maximum)")
         for tile in self.valid_move_tiles:
             print(f"  - ({tile.row}, {tile.col}) - type: {type(tile).__name__}")
 
