@@ -75,7 +75,8 @@ class GameView(arcade.View):
         self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
         self.city_textures = {'bot': self.bot_city_textures, 'ally': self.player_city_textures, 'enemy': self.enemy_city_textures}
         self.resource = arcade.load_texture('assets/misc/resource.png')
-        self.move_texture = arcade.load_texture('assets/misc/moveTarget.png')
+        self.move_tooltip = arcade.load_texture('assets/misc/moveTarget.png')
+        self.attack_tooltip = arcade.load_texture('assets/misc/attackTarget.png')
         self.batch = Batch()
         self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
         self.move_label = arcade.Text('', SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
@@ -296,7 +297,7 @@ class GameView(arcade.View):
             #     bottom=bottom,
             #     top=top)
             # )
-            self.move_popups.append(arcade.Sprite(self.move_texture, 0.5, x, y + 60))
+            self.move_popups.append(arcade.Sprite(self.move_tooltip if not tile.unit else self.attack_tooltip, 0.5, x, y + 60))
         self.move_popups.draw()
 
     def draw_path(self):
