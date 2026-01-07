@@ -6,7 +6,7 @@ import random
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
 SCREEN_TITLE = "Battle of the Square"
-COUNT_MUSIC = 7
+COUNT_MUSIC = 6
 
 
 class MainWindow(arcade.Window):

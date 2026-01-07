@@ -16,6 +16,7 @@ class UnitBase:
     range: int
     move_remains: bool = True
     health: int = None
+    is_alive: bool = True
 
     type: int = field(init=False)
     name: str = field(init=False)
@@ -38,6 +39,8 @@ class UnitBase:
         attack_force = attacker.attack * (attacker.health / attacker.max_health)
         defense_force = defender.defense * (defender.health / defender.max_health)
         total = attack_force + defense_force
+        print(attack_force, defense_force)
+        print(total)
         # TODO: add particles
         attack_damage = round((attack_force / total) * attacker.attack * 4.5)
         defense_damage = round((defense_force / total) * defender.defense * 4.5)

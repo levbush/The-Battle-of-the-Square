@@ -56,6 +56,7 @@ class GameView(arcade.View):
             self.modifiers = arcade.SpriteList(use_spatial_hash=True)
             self.cities = arcade.SpriteList(use_spatial_hash=True)
             self.units = arcade.SpriteList(use_spatial_hash=True)
+            self.move_popups = arcade.SpriteList()
             self.map = create_map(self.size_map, self.players)
   
             btn_normal = arcade.load_texture("assets/misc/next_turn.png")
@@ -278,22 +279,25 @@ class GameView(arcade.View):
             )
 
     def draw_valid_moves(self):
+        self.move_popups.clear()
         for tile in self.valid_move_tiles:
             x, y = self.tile_to_world(tile)
             
-            width = 120
-            height = 80
-            left = x - width / 2
-            right = x + width / 2
-            bottom = y + 90 - height / 2
-            top = y + 90 + height / 2
+            # width = 120
+            # height = 80
+            # left = x - width / 2
+            # right = x + width / 2
+            # bottom = y + 90 - height / 2
+            # top = y + 90 + height / 2
             
-            arcade.draw_texture_rect(self.move_texture, arcade.rect.LRBT(
-                left=left,
-                right=right,
-                bottom=bottom,
-                top=top)
-            )
+            # arcade.draw_texture_rect(self.move_texture, arcade.rect.LRBT(
+            #     left=left,
+            #     right=right,
+            #     bottom=bottom,
+            #     top=top)
+            # )
+            self.move_popups.append(arcade.Sprite(self.move_texture, 0.5, x, y + 60))
+        self.move_popups.draw()
 
     def draw_path(self):
         if len(self.path) < 2:
@@ -758,4 +762,5 @@ class GameView(arcade.View):
         self.selected_tile = None
         self.valid_move_tiles = []
         self.path = []
+        self.move_popups.clear()
         print("All selections cleared")
