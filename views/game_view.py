@@ -57,7 +57,6 @@ class GameView(arcade.View):
             self.units = arcade.SpriteList(use_spatial_hash=True)
             self.move_popups = arcade.SpriteList()
             self.city_tooltips = []
-            self.hp_tooltips = []
             self.map = create_map(self.size_map, self.players)
   
             btn_normal = arcade.load_texture("assets/misc/next_turn.png")
@@ -118,7 +117,7 @@ class GameView(arcade.View):
 
         # for row_idx, row in enumerate(self.map):
         #     for col_idx, tile in enumerate(row):
-        #         screen_x = (col_idx - row_idx) * 150 + self.width // 2
+        #         screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
         #         screen_y = (col_idx + row_idx) * 90 + 150
         #         if not tile.visible_mapping[self.current_player.id]:
         #             self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
@@ -197,7 +196,7 @@ class GameView(arcade.View):
                     hp_x = screen_x - 50
                     hp_y = screen_y + 130
                     
-                    self.hp_tooltips.append(arcade.Text(
+                    arcade.draw_text(
                         hp_text,
                         hp_x,
                         hp_y,
@@ -205,8 +204,8 @@ class GameView(arcade.View):
                         30,
                         anchor_x="center",
                         anchor_y="center",
-                        batch=self.world_batch
-                    ))
+                        bold=True
+                    )
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -262,12 +261,12 @@ class GameView(arcade.View):
         zoom_point_x = x - 150
 
         mouse_world_x_before = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / current_zoom
-        mouse_world_y_before = self.world_camera.position[1] + (zoom_point_x - self.window.heightt / 2) / current_zoom
+        mouse_world_y_before = self.world_camera.position[1] + (zoom_point_x - self.window.height / 2) / current_zoom
 
         self.world_camera.zoom = new_zoom
 
         mouse_world_x_after = self.world_camera.position[0] + (zoom_point_x - self.window.width / 2) / new_zoom
-        mouse_world_y_after = self.world_camera.position[1] + (zoom_point_x - self.window.heightt / 2) / new_zoom
+        mouse_world_y_after = self.world_camera.position[1] + (zoom_point_x - self.window.height / 2) / new_zoom
 
         self.world_camera.position = (
             self.world_camera.position[0] - (mouse_world_x_after - mouse_world_x_before),
@@ -291,11 +290,11 @@ class GameView(arcade.View):
 
         if self.selected_modifier or self.selected_city:
             width = 120
-            heightt = 80
+            height = 80
             left = x - width / 2
             right = x + width / 2
-            bottom = y + 70 + bool(self.selected_city) * 20 - heightt / 2
-            top = y + 70 + bool(self.selected_city) * 20 + heightt / 2
+            bottom = y + 70 + bool(self.selected_city) * 20 - height / 2
+            top = y + 70 + bool(self.selected_city) * 20 + height / 2
             
             arcade.draw_lrbt_rectangle_outline(
                 left=left,
@@ -357,7 +356,7 @@ class GameView(arcade.View):
     def screen_to_world(self, x, y):
         cam = self.world_camera
         world_x = cam.position[0] + (x - self.window.width / 2) / cam.zoom
-        world_y = cam.position[1] + (y - 35 - self.window.heightt / 2) / cam.zoom
+        world_y = cam.position[1] + (y - 35 - self.window.height / 2) / cam.zoom
         return world_x, world_y
 
     def screen_to_tile(self, x, y) -> TileBase | None:
@@ -571,7 +570,6 @@ class GameView(arcade.View):
         self.cities.clear()
         self.units.clear()
         self.city_tooltips.clear()
-        self.hp_tooltips.clear()
         self.deselect_all()
         
         for row_idx, row in enumerate(self.map):
