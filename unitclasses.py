@@ -20,6 +20,7 @@ class UnitBase:
     type: int = field(init=False, repr=False)
     name: str = field(init=False, repr=False)
     textures: 'UnitTexture' = field(init=False, repr=False)
+    is_alive: bool = field(init=False, repr=False, default=True)
 
     def __post_init__(self):
         if self.health is None: self.health = self.max_health
