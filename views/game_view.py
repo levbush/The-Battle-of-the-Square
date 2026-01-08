@@ -21,7 +21,7 @@ class GameView(arcade.View):
         self.bot_difficulty = bot_difficulty
         self.move = False
         self.move_start = (0, 0)
-        self.camera_start = (250 * self.size_map / 4, 250 * self.size_map *(1 / 2 - 1 / 6))
+        self.camera_start = (250 * self.size_map / 4, 250 * self.size_map * (1 / 2 - 1 / 6))
         self.new_game = new_game
         self.click_threshold = 5
         self.mouse_down_pos = None
@@ -32,6 +32,7 @@ class GameView(arcade.View):
         self.selected_city = None
         self.valid_move_tiles = []
         self.path = []
+        self.cost_tooltip = None
 
         self.world_camera = arcade.camera.Camera2D()
         self.gui_camera = arcade.camera.Camera2D()
@@ -78,6 +79,7 @@ class GameView(arcade.View):
         self.move_tooltip = arcade.load_texture('assets/misc/moveTarget.png')
         self.attack_tooltip = arcade.load_texture('assets/misc/attackTarget.png')
         self.batch = Batch()
+        self.world_batch = Batch()
         self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
         self.move_label = arcade.Text('', SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
 
@@ -105,59 +107,59 @@ class GameView(arcade.View):
                 self.move_n += 1
             self.make_player_move()
         
-        self.selected_unit = None
-        self.selected_tile = None
+        self.deselect_all()
         self.valid_move_tiles = []
         self.path = []
 
-        self.tiles.clear()
-        self.modifiers.clear()
-        self.cities.clear()
-        self.units.clear()
+        # self.tiles.clear()
+        # self.modifiers.clear()
+        # self.cities.clear()
+        # self.units.clear()
 
-        for row_idx, row in enumerate(self.map):
-            for col_idx, tile in enumerate(row):
-                screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
-                screen_y = (col_idx + row_idx) * 90 + 150
-                if not tile.visible_mapping[self.current_player.id]:
-                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-                    continue
-                self.tiles.append(arcade.Sprite(tile.texture, 0.3, screen_x, screen_y))
-                if tile.modifier:
-                    for i in range(len(tile.modifier.textures)):
-                        self.modifiers.append(
-                            arcade.Sprite(
-                                tile.modifier.textures[i],
-                                tile.modifier.scales[i],
-                                screen_x,
-                                screen_y + tile.modifier.offsets[i],
-                            )
-                        )
-                elif tile.city:
-                    if tile.city.owner.is_bot:
-                        texture = 'bot'
-                    elif tile.city.owner == self.current_player:
-                        texture = 'ally'
-                    else:
-                        texture = 'enemy'
-                    self.cities.append(
-                        arcade.Sprite(
-                            self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150
-                        )
-                    )
-                if tile.unit:
-                    if tile.unit.owner == self.current_player:
-                        texture = tile.unit.textures.ally
-                    elif tile.unit.owner.is_bot:
-                        texture = tile.unit.textures.bot
-                    else:
-                        texture = tile.unit.textures.enemy
-                    self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
+        # for row_idx, row in enumerate(self.map):
+        #     for col_idx, tile in enumerate(row):
+        #         screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
+        #         screen_y = (col_idx + row_idx) * 90 + 150
+        #         if not tile.visible_mapping[self.current_player.id]:
+        #             self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+        #             continue
+        #         self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
+        #         if tile.modifier:
+        #             for i in range(len(tile.modifier.textures)):
+        #                 self.modifiers.append(
+        #                     arcade.Sprite(
+        #                         tile.modifier.textures[i].texture,
+        #                         tile.modifier.scales[i],
+        #                         screen_x,
+        #                         screen_y + tile.modifier.offsets[i],
+        #                     )
+        #                 )
+        #         elif tile.city:
+        #             if tile.city.owner.is_bot:
+        #                 texture = 'bot'
+        #             elif tile.city.owner == self.current_player:
+        #                 texture = 'ally'
+        #             else:
+        #                 texture = 'enemy'
+        #             self.cities.append(
+        #                 arcade.Sprite(
+        #                     self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150
+        #                 )
+        #             )
+        #         if tile.unit:
+        #             if tile.unit.owner == self.current_player:
+        #                 texture = tile.unit.textures.ally
+        #             elif tile.unit.owner.is_bot:
+        #                 texture = tile.unit.textures.bot
+        #             else:
+        #                 texture = tile.unit.textures.enemy
+        #             self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
                         
-        self.tiles.reverse()
-        self.modifiers.reverse()
-        self.cities.reverse()
-        self.units.reverse()
+        # self.tiles.reverse()
+        # self.modifiers.reverse()
+        # self.cities.reverse()
+        # self.units.reverse()
+        self.update_sprites()
 
         self.manager.disable()
         view = NextTurnView(self.current_player, parent=self)
@@ -175,6 +177,7 @@ class GameView(arcade.View):
         self.cities.draw()
         self.units.draw()
         self.draw_selection_highlight()
+        self.world_batch.draw()
         self.draw_valid_moves()
         self.draw_path()
         self.gui_camera.use()
@@ -207,14 +210,15 @@ class GameView(arcade.View):
             )
 
     def on_mouse_release(self, x, y, button, modifiers):
-        if button != arcade.MOUSE_BUTTON_LEFT:
-            return
-
-        self.move = False
-        if not self.dragging:
-            self.handle_click(x, y)
-        self.dragging = False
-        self.mouse_down_pos = None
+        match button:
+            case arcade.MOUSE_BUTTON_LEFT:
+                self.move = False
+                if not self.dragging:
+                    self.handle_click(x, y)
+                self.dragging = False
+                self.mouse_down_pos = None
+            case arcade.MOUSE_BUTTON_RIGHT:
+                self.handle_right_click(x, y)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         zoom_speed = 0.1
@@ -278,6 +282,8 @@ class GameView(arcade.View):
                 color=arcade.color.BLEU_DE_FRANCE,
                 border_width=4,
             )
+            if self.selected_modifier and self.selected_modifier.cost is not None:
+                self.cost_tooltip = arcade.Text(str(self.selected_modifier.cost), right, top, arcade.color.BLACK, anchor_x='center', anchor_y='center', batch=self.world_batch, font_size=30)
 
     def draw_valid_moves(self):
         self.move_popups.clear()
@@ -468,7 +474,7 @@ class GameView(arcade.View):
                     print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) not passable (type: {type(neighbor).__name__})")
         
         print(f"Found {len(self.valid_move_tiles)} valid moves")
-        print(f"Expected up to: {(movement_range * 2 - 1)**2} cells (theoretical maximum)")
+        print(f"Expected up to: {(movement_range * 2 + 1)**2 - 1} cells (theoretical maximum)")
         for tile in self.valid_move_tiles:
             print(f"  - ({tile.row}, {tile.col}) - type: {type(tile).__name__}")
 
@@ -561,13 +567,13 @@ class GameView(arcade.View):
                     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
                     continue
                     
-                self.tiles.append(arcade.Sprite(tile.texture, 0.3, screen_x, screen_y))
+                self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
                 
                 if tile.modifier:
                     for i in range(len(tile.modifier.textures)):
                         self.modifiers.append(
                             arcade.Sprite(
-                                tile.modifier.textures[i],
+                                tile.modifier.textures[i].texture,
                                 tile.modifier.scales[i],
                                 screen_x,
                                 screen_y + tile.modifier.offsets[i],
@@ -630,7 +636,7 @@ class GameView(arcade.View):
     def select_unit(self, tile: TileBase):
         if tile.unit and not tile.unit.move_remains:
             print(f"Cannot select unit - no movement left")
-            return
+            return False
             
         self.selected_unit = tile.unit
         self.selected_tile = tile
@@ -639,6 +645,7 @@ class GameView(arcade.View):
         
         self.calculate_valid_moves(tile)
         print(f"Unit selected at ({tile.row}, {tile.col}) - {type(tile.unit).__name__}")
+        return True
 
     def select_modifier(self, tile: TileBase):
         self.selected_tile = tile
@@ -655,6 +662,7 @@ class GameView(arcade.View):
         print("City selected", repr(tile.city))
 
     def handle_click(self, x, y):
+        self.cost_tooltip = None
         tile = self.screen_to_tile(x, y)
         if not tile:
             print("No tile at clicked position")
@@ -694,6 +702,17 @@ class GameView(arcade.View):
             self.deselect_all()
 
         self.primary_selection(tile)
+
+    def handle_right_click(self, x, y):
+        if not self.selected_tile or self.selected_tile.owner != self.current_player or not self.selected_modifier:
+            return
+        if self.selected_modifier.cost is None:
+            return
+        tile = self.screen_to_tile(x, y)
+        print(repr(tile))
+        if tile != self.selected_tile:
+            return
+        
 
     def switch_selection_on_tile(self, tile: TileBase):
         if self.selected_unit:
@@ -742,11 +761,12 @@ class GameView(arcade.View):
         if tile.unit:
             if tile.unit.owner == self.current_player:
                 print("Selecting unit")
-                self.select_unit(tile)
+                if self.select_unit(tile):
+                    return
             else:
-                print("Cannot select enemy unit")
+                print("Cannot select enemy unit and nothing under it")
                 self.deselect_all()
-        elif tile.city:
+        if tile.city:
             print("Selecting city")
             self.select_city(tile)
         elif tile.modifier:
@@ -764,4 +784,5 @@ class GameView(arcade.View):
         self.valid_move_tiles = []
         self.path = []
         self.move_popups.clear()
+        self.cost_tooltip = None
         print("All selections cleared")

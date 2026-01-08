@@ -42,10 +42,13 @@ def create_map(side: int, players: list[Player]):
             if not flag:
                 continue
             for (i, j) in visible_tiles:
+                j: int
                 map[i][j].visible_mapping[player.id] = True
+                map[i][j].owner = player
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
             map[x][y] = Tile(x, y, Land, vm, city=City(player), unit=Unit(0, player, x, y))
+            map[x][y].owner = player
             break
 
     for x, y in villages:

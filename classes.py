@@ -180,8 +180,6 @@ class Player:
     def __eq__(self, value):
         if isinstance(value, Player):
             return self.id == value.id
-        if isinstance(value, int):
-            return self.id == value
         return NotImplemented
     
     def __repr__(self):

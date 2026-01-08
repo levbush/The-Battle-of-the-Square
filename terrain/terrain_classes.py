@@ -1,16 +1,26 @@
-from classes import City
+from classes import City, Player
 from unitclasses import UnitBase
 from arcade import load_texture, Texture
 from dataclasses import dataclass, field
-from typing import Optional
+
+
+class CustomTexture:
+    def __init__(self, path):
+        self.path = path
+        self.texture = load_texture(path)
+    
+    def __repr__(self):
+        return f'CustomTexture({self.path})'
 
 
 class ModifierBase:
     weight: int
     type: int
-    textures: tuple[Texture]
+    textures: tuple[CustomTexture]
     offsets: tuple[int]
     scales: tuple[float]
+    cost: int | None
+    population: int | None
 
     def __eq__(self, value):
         return self.__class__ == value.__class__
@@ -22,9 +32,11 @@ class ModifierBase:
 class Fruits(ModifierBase):
     weight = 18
     type = 0
-    textures = (load_texture("assets/resources/fruits.png"),)
+    textures = (CustomTexture("assets/resources/fruits.png"),)
     offsets = (60,)
     scales = (0.2,)
+    cost = 2
+    population = 1
 
     def __repr__(self):
         return super().__repr__()
@@ -33,9 +45,11 @@ class Fruits(ModifierBase):
 class Animal(ModifierBase):
     weight = 18
     type = 1
-    textures = (load_texture("assets/resources/animal.png"),)
+    textures = (CustomTexture("assets/resources/animal.png"),)
     offsets = (80,)
     scales = (0.1,)
+    cost = 2
+    population = 1
 
     def __repr__(self):
         return super().__repr__()
@@ -44,43 +58,51 @@ class Animal(ModifierBase):
 class Mountain(ModifierBase):
     weight = 6
     type = 2
-    textures = (load_texture("assets/terrain/mountain.png"),)
+    textures = (CustomTexture("assets/terrain/mountain.png"),)
     offsets = (50,)
     scales = (0.3,)
+    cost = None
+    population = None
 
 
 class GoldMountain(ModifierBase):
     weight = 3
     type = 3
-    textures = load_texture("assets/resources/gold.png"), Mountain.textures[0]
+    textures = CustomTexture("assets/resources/gold.png"), Mountain.textures[0]
     offsets = 75, Mountain.offsets[0]
     scales = 0.2, Mountain.scales[0]
+    cost = 4
+    population = 2
 
 
 class Forest(ModifierBase):
     weight = 13
     type = 4
-    textures = (load_texture("assets/terrain/forest.png"),)
+    textures = (CustomTexture("assets/terrain/forest.png"),)
     offsets = (80,)
     scales = (0.3,)
+    cost = 3
+    population = 1
 
 
 class Village(ModifierBase):
     weight = 5
     type = 5
-    textures = (load_texture("assets/misc/village.png"),)
+    textures = (CustomTexture("assets/misc/village.png"),)
     offsets = (80,)
     scales = (0.3,)
+    cost = None
+    population = None
 
 
 class Fish(ModifierBase):
     weight = 35
     type = 6
-    textures = (load_texture("assets/resources/fish.png"),)
+    textures = (CustomTexture("assets/resources/fish.png"),)
     offsets = (60,)
     scales = (0.2,)
-
-
+    cost = 2
+    population = 1
 
 
 MODIFIER_TYPES: list[ModifierBase] = [Fruits(), Animal(), Mountain(), GoldMountain(), Forest(), Village(), Fish()]
@@ -103,21 +125,22 @@ def water_modifiers_weights():
 @dataclass
 class TileBase:
     visible_mapping: list[bool]
-    city: Optional[City] = None
-    unit: Optional[UnitBase] = None
-    modifier: Optional[ModifierBase] = None
+    city: City | None = None
+    unit: UnitBase | None = None
+    modifier: ModifierBase | None = None
 
     weight: int = field(init=False)
     type: int = field(init=False)
-    texture: Texture = field(init=False)
+    texture: CustomTexture = field(init=False)
     row: int = field(init=False)
     col: int = field(init=False)
+    owner: Player = field(init=False)
 
 
 class Land(TileBase):
     weight = 75
     type = 0
-    texture = load_texture("assets/terrain/ground.png")
+    texture = CustomTexture("assets/terrain/ground.png")
     def __str__(self):
         return "."
 
@@ -125,7 +148,7 @@ class Land(TileBase):
 class Water(TileBase):
     weight = 20
     type = 1
-    texture = load_texture("assets/terrain/water.png")
+    texture = CustomTexture("assets/terrain/water.png")
     def __str__(self):
         return "~"
 
