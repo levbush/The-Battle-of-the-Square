@@ -1,5 +1,5 @@
 import sqlite3
-
+import arcade
 
 DB_PATH = 'game.db'
 
@@ -16,3 +16,10 @@ def init_dbs():
             value TEXT NOT NULL
     )'''
     )
+
+
+SPARK_TEX = [
+    arcade.make_soft_circle_texture(22, (120, 140, 255)),
+    arcade.make_soft_circle_texture(22, (155, 110, 255)),
+    arcade.make_soft_circle_texture(22, (135, 120, 230)),
+]

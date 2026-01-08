@@ -3,6 +3,9 @@ from arcade.gui import UIManager, UILabel, UIFlatButton
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from classes import HorizontalRadioButtonGroup
 from views.game_view import GameView
+from arcade.particles import Emitter, EmitMaintainCount, FadeParticle
+import random
+from database import SPARK_TEX
 
 
 class CreateGameView(arcade.View):
@@ -20,6 +23,22 @@ class CreateGameView(arcade.View):
 
         self.anchor_layout.add(self.vertical_layout)
         self.manager.add(self.anchor_layout)
+
+        self.trail = Emitter(
+            center_xy=(0, 0),
+            emit_controller=EmitMaintainCount(45),
+            particle_factory=lambda e: FadeParticle(
+                filename_or_texture=random.choice(SPARK_TEX),
+                change_xy=(
+                    random.uniform(-0.2, 0.2),
+                    random.uniform(-0.8, -0.4),
+                ),
+                lifetime=random.uniform(1.0, 1.6),
+                start_alpha=150,
+                end_alpha=0,
+                scale=random.uniform(0.55, 0.75),
+            ),
+        )
 
     def setup_widgets(self):
         self.area_options = [121, 196, 256, 324, 400, 900]
@@ -95,6 +114,7 @@ class CreateGameView(arcade.View):
             self.back_img, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height), alpha=200
         )
         self.manager.draw()
+        self.trail.draw()
 
     def start_game(self):
         area, bot_amount, player_amount, bot_difficulty = (
@@ -116,3 +136,11 @@ class CreateGameView(arcade.View):
         view = GameView(size, bot_amount, player_amount, bot_difficulty)
         self.manager.disable()
         self.window.show_view(view)
+
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.trail.center_x = x
+        self.trail.center_y = y - 20
+
+    def on_update(self, delta_time):
+        self.trail.update()
