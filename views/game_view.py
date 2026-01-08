@@ -181,10 +181,33 @@ class GameView(arcade.View):
         self.world_batch.draw()
         self.draw_valid_moves()
         self.draw_path()
+        self.draw_unit_hp()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT - 50, 40, 40))
         self.batch.draw()
+
+    def draw_unit_hp(self):
+        for row_idx, row in enumerate(self.map):
+            for col_idx, tile in enumerate(row):
+                if tile.unit and tile.visible_mapping[self.current_player.id] and tile.unit.is_alive:
+                    screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
+                    screen_y = (col_idx + row_idx) * 90 + 150
+                    
+                    hp_text = f"{tile.unit.health}"
+                    hp_x = screen_x - 50
+                    hp_y = screen_y + 130
+                    
+                    arcade.draw_text(
+                        hp_text,
+                        hp_x,
+                        hp_y,
+                        arcade.color.WHITE,
+                        30,
+                        anchor_x="center",
+                        anchor_y="center",
+                        bold=True
+                    )
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -291,19 +314,6 @@ class GameView(arcade.View):
         for tile in self.valid_move_tiles:
             x, y = self.tile_to_world(tile)
             
-            # width = 120
-            # height = 80
-            # left = x - width / 2
-            # right = x + width / 2
-            # bottom = y + 90 - height / 2
-            # top = y + 90 + height / 2
-            
-            # arcade.draw_texture_rect(self.move_texture, arcade.rect.LRBT(
-            #     left=left,
-            #     right=right,
-            #     bottom=bottom,
-            #     top=top)
-            # )
             self.move_popups.append(arcade.Sprite(self.move_tooltip if not tile.unit else self.attack_tooltip, 0.5, x, y + 60))
         self.move_popups.draw()
 
