@@ -64,8 +64,10 @@ class UnitBase:
         self.pos = pos
 
     def die(self):
-        # TODO: add particles
-        pass
+        """Помечает юнита как мертвого"""
+        self.is_alive = False
+        self.health = 0
+        print(f"Unit died: {self}")
 
 
 class Warrior(UnitBase):
