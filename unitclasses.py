@@ -3,6 +3,15 @@ from dataclasses import dataclass, field
 from typing import Type
 from classes import Player
 from arcade import Texture, load_texture
+from enum import IntEnum
+
+
+class UnitType(IntEnum):
+    WARRIOR = 0
+    DEFENDER = 1
+    RIDER = 2
+    ARCHER = 3
+    GIANT = 4
 
 
 @dataclass
@@ -17,13 +26,14 @@ class UnitBase:
     move_remains: bool = True
     health: int = None
 
-    type: int = field(init=False, repr=False)
+    type: UnitType = field(init=False, repr=False)
     name: str = field(init=False, repr=False)
     textures: 'UnitTexture' = field(init=False, repr=False)
-    is_alive: bool = field(init=False, repr=False, default=True)
+    is_alive: bool = field(init=False, default=True, repr=False)
 
     def __post_init__(self):
-        if self.health is None: self.health = self.max_health
+        if self.health is None:
+            self.health = self.max_health
 
     @staticmethod
     def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
@@ -71,53 +81,57 @@ class UnitBase:
 
 
 class Warrior(UnitBase):
-    type = 0
+    type = UnitType.WARRIOR
     name = 'warrior'
-    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+
+    def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, health)
 
 
 class Defender(UnitBase):
-    type = 1
+    type = UnitType.DEFENDER
     name = 'defender'
-    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+
+    def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, health)
 
 
 class Rider(UnitBase):
-    type = 2
+    type = UnitType.RIDER
     name = 'rider'
-    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+
+    def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, health)
 
 
 class Archer(UnitBase):
-    type = 3
+    type = UnitType.ARCHER
     name = 'archer'
-    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+
+    def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)
 
 
 class Giant(UnitBase):
-    type = 4
+    type = UnitType.GIANT
     name = 'giant'
-    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+
+    def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, health)
 
 
-UNIT_TYPES: dict[int, Type[UnitBase]] = {
-    0: Warrior,
-    1: Defender,
-    2: Rider,
-    3: Archer,
-    4: Giant,
+UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
+    UnitType.WARRIOR: Warrior,
+    UnitType.DEFENDER: Defender,
+    UnitType.RIDER: Rider,
+    UnitType.ARCHER: Archer,
+    UnitType.GIANT: Giant,
 }
 
 
+
 class Unit:
-    def __new__(cls, unit_type: int, owner: Player, x: int, y: int) -> UnitBase:
-        if unit_type not in UNIT_TYPES:
-            raise ValueError("Invalid unit type")
+    def __new__(cls, unit_type: UnitType, owner: Player, x: int, y: int):
         return UNIT_TYPES[unit_type](owner, (x, y))
 
 

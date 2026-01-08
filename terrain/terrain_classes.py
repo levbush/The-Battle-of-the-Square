@@ -2,6 +2,22 @@ from classes import City, Player
 from unitclasses import UnitBase, Giant
 from arcade import load_texture, Texture
 from dataclasses import dataclass, field
+from enum import IntEnum
+
+
+class ModifierType(IntEnum):
+    FRUITS = 0
+    ANIMAL = 1
+    MOUNTAIN = 2
+    GOLD_MOUNTAIN = 3
+    FOREST = 4
+    VILLAGE = 5
+    FISH = 6
+
+
+class TerrainType(IntEnum):
+    LAND = 0
+    WATER = 1
 
 
 class CustomTexture:
@@ -15,7 +31,7 @@ class CustomTexture:
 
 class ModifierBase:
     weight: int
-    type: int
+    type: ModifierType
     textures: tuple[CustomTexture]
     offsets: tuple[int]
     scales: tuple[float]
@@ -38,7 +54,7 @@ class ModifierBase:
 
 class Fruits(ModifierBase):
     weight = 18
-    type = 0
+    type = ModifierType.FRUITS
     textures = (CustomTexture("assets/resources/fruits.png"),)
     offsets = (60,)
     scales = (0.2,)
@@ -54,7 +70,7 @@ class Fruits(ModifierBase):
 
 class Animal(ModifierBase):
     weight = 18
-    type = 1
+    type = ModifierType.ANIMAL
     textures = (CustomTexture("assets/resources/animal.png"),)
     offsets = (80,)
     scales = (0.1,)
@@ -70,7 +86,7 @@ class Animal(ModifierBase):
 
 class Mountain(ModifierBase):
     weight = 6
-    type = 2
+    type = ModifierType.MOUNTAIN
     textures = (CustomTexture("assets/terrain/mountain.png"),)
     offsets = (50,)
     scales = (0.3,)
@@ -83,7 +99,7 @@ class Mountain(ModifierBase):
 
 class GoldMountain(ModifierBase):
     weight = 3
-    type = 3
+    type = ModifierType.GOLD_MOUNTAIN
     textures = CustomTexture("assets/resources/gold.png"), Mountain.textures[0]
     offsets = 75, Mountain.offsets[0]
     scales = 0.2, Mountain.scales[0]
@@ -97,7 +113,7 @@ class GoldMountain(ModifierBase):
 
 class Forest(ModifierBase):
     weight = 13
-    type = 4
+    type = ModifierType.FOREST
     textures = (CustomTexture("assets/terrain/forest.png"),)
     offsets = (80,)
     scales = (0.3,)
@@ -113,7 +129,7 @@ class Forest(ModifierBase):
 
 class Village(ModifierBase):
     weight = 5
-    type = 5
+    type = ModifierType.VILLAGE
     textures = (CustomTexture("assets/misc/village.png"),)
     offsets = (80,)
     scales = (0.3,)
@@ -126,7 +142,7 @@ class Village(ModifierBase):
 
 class Fish(ModifierBase):
     weight = 35
-    type = 6
+    type = ModifierType.FISH
     textures = (CustomTexture("assets/resources/fish.png"),)
     offsets = (60,)
     scales = (0.2,)
@@ -162,7 +178,7 @@ class TileBase:
     modifier: ModifierBase | None = None
 
     weight: int = field(init=False, repr=False)
-    type: int = field(init=False, repr=False)
+    type: TerrainType = field(init=False, repr=False)
     texture: CustomTexture = field(init=False, repr=False)
     row: int = field(init=False, repr=False)
     col: int = field(init=False, repr=False)
@@ -189,7 +205,7 @@ class TileBase:
 
 class Land(TileBase):
     weight = 75
-    type = 0
+    type = TerrainType.LAND
     texture = CustomTexture("assets/terrain/ground.png")
     def __str__(self):
         return "."
@@ -197,11 +213,10 @@ class Land(TileBase):
 
 class Water(TileBase):
     weight = 20
-    type = 1
+    type = TerrainType.WATER
     texture = CustomTexture("assets/terrain/water.png")
     def __str__(self):
         return "~"
-
 
 
 TERRAIN_TYPES: list[TileBase] = [Land, Water]
@@ -221,8 +236,6 @@ class Tile:
         city: City | None = None,
         unit: UnitBase | None = None,
     ) -> TileBase:
-        if terrain_type not in TERRAIN_TYPES:
-            raise ValueError("Invalid terrain type")
         tile: TileBase = terrain_type(visible_mapping, city, unit, modifier)
         tile.row = row
         tile.col = col
