@@ -110,54 +110,6 @@ class GameView(arcade.View):
         self.valid_move_tiles = []
         self.path = []
 
-        # self.tiles.clear()
-        # self.modifiers.clear()
-        # self.cities.clear()
-        # self.units.clear()
-
-        # for row_idx, row in enumerate(self.map):
-        #     for col_idx, tile in enumerate(row):
-        #         screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
-        #         screen_y = (col_idx + row_idx) * 90 + 150
-        #         if not tile.visible_mapping[self.current_player.id]:
-        #             self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-        #             continue
-        #         self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
-        #         if tile.modifier:
-        #             for i in range(len(tile.modifier.textures)):
-        #                 self.modifiers.append(
-        #                     arcade.Sprite(
-        #                         tile.modifier.textures[i].texture,
-        #                         tile.modifier.scales[i],
-        #                         screen_x,
-        #                         screen_y + tile.modifier.offsets[i],
-        #                     )
-        #                 )
-        #         elif tile.city:
-        #             if tile.city.owner.is_bot:
-        #                 texture = 'bot'
-        #             elif tile.city.owner == self.current_player:
-        #                 texture = 'ally'
-        #             else:
-        #                 texture = 'enemy'
-        #             self.cities.append(
-        #                 arcade.Sprite(
-        #                     self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150
-        #                 )
-        #             )
-        #         if tile.unit:
-        #             if tile.unit.owner == self.current_player:
-        #                 texture = tile.unit.textures.ally
-        #             elif tile.unit.owner.is_bot:
-        #                 texture = tile.unit.textures.bot
-        #             else:
-        #                 texture = tile.unit.textures.enemy
-        #             self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
-                        
-        # self.tiles.reverse()
-        # self.modifiers.reverse()
-        # self.cities.reverse()
-        # self.units.reverse()
         self.update_sprites()
 
         self.manager.disable()
@@ -180,10 +132,41 @@ class GameView(arcade.View):
         self.draw_valid_moves()
         self.draw_path()
         self.draw_unit_hp()
+        self.draw_city_borders()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
         self.batch.draw()
+
+    def draw_city_borders(self):
+        for row_idx, row in enumerate(self.map):
+            for col_idx, tile in enumerate(row):
+                if tile.city and tile.visible_mapping[self.current_player.id]:
+                    if tile.city.owner == self.current_player:
+                        color = arcade.color.BLUE
+                    elif tile.city.owner.is_bot:
+                        color = arcade.color.RED 
+                    else:
+                        color = arcade.color.RED 
+                    
+                    city_x, city_y = self.tile_to_world(tile)
+                    city_y += 55
+    
+                    radius = 225
+                    
+                    points = [
+                        (city_x, city_y + 270),
+                        (city_x + 450, city_y),
+                        (city_x, city_y - 270),
+                        (city_x - 450, city_y),  
+                    ]
+
+                    arcade.draw_polygon_outline(
+                        points,
+                        color,
+                        3
+                    )
+                    # TODO что-то сдесь не так
 
     def draw_unit_hp(self):
         for row_idx, row in enumerate(self.map):
@@ -437,10 +420,6 @@ class GameView(arcade.View):
         if not start_tile or not start_tile.unit:
             return
         
-        # print(f"Calculating moves for unit at ({start_tile.row}, {start_tile.col})")
-        # print(f"Unit movement: {start_tile.unit.movement}")
-        # print(f"Tile type: {type(start_tile).__name__}")
-        
         movement_range = start_tile.unit.movement
         
         visited = []
@@ -458,7 +437,6 @@ class GameView(arcade.View):
                 can_move = False
                 
                 if not self.is_passable(current_tile):
-                    # print(f"  Tile at ({current_tile.row}, {current_tile.col}) is not passable (type: {type(current_tile).__name__})")
                     continue
                 
                 if current_tile.unit is None:
@@ -468,7 +446,6 @@ class GameView(arcade.View):
                 
                 if can_move and distance <= movement_range:
                     self.valid_move_tiles.append(current_tile)
-                    # print(f"  Valid move to ({current_tile.row}, {current_tile.col}) at distance {distance} (type: {type(current_tile).__name__})")
             
             if distance >= movement_range:
                 continue
@@ -477,53 +454,28 @@ class GameView(arcade.View):
                 if neighbor not in visited and self.is_passable(neighbor):
                     new_path = path + [current_tile]
                     queue.append((neighbor, distance + 1, new_path))
-                elif neighbor in visited:
-                    # print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) already visited")
-                    ...
-                else:
-                    ...
-                    # print(f"  Neighbor at ({neighbor.row}, {neighbor.col}) not passable (type: {type(neighbor).__name__})")
-        
-        # print(f"Found {len(self.valid_move_tiles)} valid moves")
-        # print(f"Expected up to: {(movement_range * 2 + 1)**2 - 1} cells (theoretical maximum)")
-        for tile in self.valid_move_tiles:
-            # print(f"  - ({tile.row}, {tile.col}) - type: {type(tile).__name__}")
-            ...
 
     def move_unit(self, from_tile: TileBase, to_tile: TileBase):
         if not from_tile.unit or from_tile.unit.owner != self.current_player:
-            # print("No unit to move or wrong owner")
             return False
         
-        # print(f"Attempting to move unit from ({from_tile.row}, {from_tile.col}) to ({to_tile.row}, {to_tile.col})")
-        # print(f"Unit type: {type(from_tile.unit).__name__}")
-        # print(f"Unit movement remains: {from_tile.unit.move_remains}")
-        # print(f"From tile type: {type(from_tile).__name__}")
-        # print(f"To tile type: {type(to_tile).__name__}")
-        
         if not self.is_passable(to_tile):
-            # print(f"Cannot move to tile - not passable (type: {type(to_tile).__name__})")
             return False
         
         if not from_tile.unit.move_remains:
-            # print("Unit has no movement left")
             return False
         
         if to_tile not in self.valid_move_tiles:
-            # print("Target tile not in valid moves")
             return False
         
         try:
             distance = max(abs(to_tile.row - from_tile.row), abs(to_tile.col - from_tile.col))
-            # print(f"Distance to move: {distance}")
             
             if to_tile.unit:
                 if to_tile.unit.owner != self.current_player:
-                    # print(f"Attacking enemy unit at ({to_tile.row}, {to_tile.col})")
                     UnitBase.attack_unit(from_tile.unit, to_tile.unit)
                     
                     if not to_tile.unit.is_alive:
-                        # print(f"Enemy defeated, moving to tile")
                         from_tile.unit.move((to_tile.row, to_tile.col))
                         from_tile.unit.move_remains = False
                         
@@ -533,12 +485,9 @@ class GameView(arcade.View):
                         from_tile.unit = None
                     else:
                         from_tile.unit.move_remains = False
-                        # print(f"Attack completed but enemy still alive")
                 else:
-                    # print("Cannot attack ally")
                     return False
             else:
-                # print(f"Moving to empty tile")
                 from_tile.unit.move((to_tile.row, to_tile.col))
                 from_tile.unit.move_remains = False
                 
@@ -554,17 +503,14 @@ class GameView(arcade.View):
             self.valid_move_tiles = []
             self.path = []
             
-            # print("Move completed successfully")
             return True
             
         except Exception as e:
-            # print(f"Error during move: {e}")
             import traceback
             traceback.print_exc()
             return False
 
     def update_sprites(self):
-        # print("Updating sprites...")
         self.tiles.clear()
         self.modifiers.clear()
         self.cities.clear()
@@ -615,13 +561,11 @@ class GameView(arcade.View):
                     else:
                         texture = tile.unit.textures.enemy
                     self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
-                    # print(f"  Unit sprite at ({row_idx}, {col_idx}) - {type(tile.unit).__name__}")
         
         self.tiles.reverse()
         self.modifiers.reverse()
         self.cities.reverse()
         self.units.reverse()
-        # print(f"Total unit sprites: {len(self.units)}")
 
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
@@ -644,13 +588,11 @@ class GameView(arcade.View):
                     tile.unit.move_remains = True
                     
                     self.update_visibility_around_unit(tile)
-                    # print(f"Reset movement and updated visibility for unit at ({tile.row}, {tile.col})")
         
         self.update_sprites()
 
     def select_unit(self, tile: TileBase):
         if tile.unit and not tile.unit.move_remains:
-            # print(f"Cannot select unit - no movement left")
             return False
             
         self.selected_unit = tile.unit
@@ -659,7 +601,6 @@ class GameView(arcade.View):
         self.path = []
         
         self.calculate_valid_moves(tile)
-        # print(f"Unit selected at ({tile.row}, {tile.col}) - {type(tile.unit).__name__}")
         return True
 
     def select_modifier(self, tile: TileBase):
@@ -667,57 +608,33 @@ class GameView(arcade.View):
         self.selected_modifier = tile.modifier
         self.valid_move_tiles = []
         self.path = []
-        # print("Modifier selected", repr(tile.modifier))
 
     def select_city(self, tile: TileBase):
         self.selected_tile = tile
         self.selected_city = tile.city
         self.valid_move_tiles = []
         self.path = []
-        # print("City selected", repr(tile.city))
 
     def handle_click(self, x, y):
         self.cost_tooltip = None
         tile = self.screen_to_tile(x, y)
-        print(repr(tile))
         if not tile:
-            # print("No tile at clicked position")
             self.deselect_all()
             return
             
         if not tile.visible_mapping[self.current_player.id]:
-            # print("Tile not visible")
             self.deselect_all()
             return
 
-        # print(f"Clicked tile at ({tile.row}, {tile.col})")
-        # print(f"  Tile type: {type(tile).__name__}")
-        # print(f"  Has unit: {bool(tile.unit)}")
-        if tile.unit:
-            # print(f"  Unit owner: {tile.unit.owner}")
-            # print(f"  Unit movement remains: {tile.unit.move_remains}")
-            ...
-        # print(f"  Has city: {bool(tile.city)}")
-        # print(f"  Has modifier: {bool(tile.modifier)}")
-
         if self.selected_unit and tile in self.valid_move_tiles:
-            # print(f"Attempting to move to valid tile ({tile.row}, {tile.col})")
             success = self.move_unit(self.selected_tile, tile)
-            if success:
-                # print(f"Юнит перемещен с ({self.selected_tile.row}, {self.selected_tile.col}) на ({tile.row}, {tile.col})")
-                ...
-            else:
-                # print("Move failed")
-                ...
             return
 
         if tile == self.selected_tile:
-            # print("Same tile clicked - switching selection")
             self.switch_selection_on_tile(tile)
             return
 
         if self.selected_tile and tile != self.selected_tile:
-            # print("Deselecting all (different tile)")
             self.deselect_all()
 
         self.primary_selection(tile)
@@ -741,41 +658,32 @@ class GameView(arcade.View):
     def switch_selection_on_tile(self, tile: TileBase):
         if self.selected_unit:
             if tile.modifier:
-                # # print("Switching from unit to modifier")
                 self.deselect_all()
                 self.select_modifier(tile)
             elif tile.city:
-                # # print("Switching from unit to city")
                 self.deselect_all()
                 self.select_city(tile)
             else:
-                # print("Deselecting unit")
                 self.deselect_all()
         
         elif self.selected_modifier:
             if tile.unit and tile.unit.owner == self.current_player:
-                # print("Switching from modifier to unit")
                 self.deselect_all()
                 self.select_unit(tile)
             elif tile.city:
-                # print("Switching from modifier to city")
                 self.deselect_all()
                 self.select_city(tile)
             else:
-                # print("Deselecting modifier")
                 self.deselect_all()
         
         elif self.selected_city:
             if tile.unit and tile.unit.owner == self.current_player:
-                # print("Switching from city to unit")
                 self.deselect_all()
                 self.select_unit(tile)
             elif tile.modifier:
-                # print("Switching from city to modifier")
                 self.deselect_all()
                 self.select_modifier(tile)
             else:
-                # print("Deselecting city")
                 self.deselect_all()
         
         else:
@@ -784,20 +692,15 @@ class GameView(arcade.View):
     def primary_selection(self, tile: TileBase):
         if tile.unit:
             if tile.unit.owner == self.current_player:
-                # print("Selecting unit")
                 if self.select_unit(tile):
                     return
             else:
-                # print("Cannot select enemy unit and nothing under it")
                 self.deselect_all()
         if tile.city:
-            # print("Selecting city")
             self.select_city(tile)
         elif tile.modifier:
-            # print("Selecting modifier")
             self.select_modifier(tile)
         else:
-            # print("Empty tile clicked")
             self.deselect_all()
 
     def deselect_all(self):
@@ -809,4 +712,3 @@ class GameView(arcade.View):
         self.path = []
         self.move_popups.clear()
         self.cost_tooltip = None
-        # print("All selections cleared")
