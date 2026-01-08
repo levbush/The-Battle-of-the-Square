@@ -1,5 +1,5 @@
 from classes import City, Player
-from unitclasses import UnitBase
+from unitclasses import UnitBase, Giant
 from arcade import load_texture, Texture
 from dataclasses import dataclass, field
 
@@ -10,7 +10,7 @@ class CustomTexture:
         self.texture = load_texture(path)
     
     def __repr__(self):
-        return f'CustomTexture({self.path})'
+        return f'CustomTexture("{self.path}")'
 
 
 class ModifierBase:
@@ -21,12 +21,19 @@ class ModifierBase:
     scales: tuple[float]
     cost: int | None
     population: int | None
+    tile: 'TileBase' = None
+
+    def __init__(self, is_collected=False):
+        self.is_collected = is_collected
 
     def __eq__(self, value):
         return self.__class__ == value.__class__
 
     def __repr__(self):
-        return f'{self.__class__.__name__}()'
+        return f'{self.__class__.__name__}({self.is_collected})'
+    
+    def collect(self):
+        self.is_collected = True
 
 
 class Fruits(ModifierBase):
@@ -40,6 +47,9 @@ class Fruits(ModifierBase):
 
     def __repr__(self):
         return super().__repr__()
+    
+    def collect(self):
+        self.tile.modifier = None
 
 
 class Animal(ModifierBase):
@@ -53,6 +63,9 @@ class Animal(ModifierBase):
 
     def __repr__(self):
         return super().__repr__()
+    
+    def collect(self):
+        self.tile.modifier = None
 
 
 class Mountain(ModifierBase):
@@ -64,6 +77,9 @@ class Mountain(ModifierBase):
     cost = None
     population = None
 
+    def collect(self):
+        return NotImplemented
+
 
 class GoldMountain(ModifierBase):
     weight = 3
@@ -73,6 +89,10 @@ class GoldMountain(ModifierBase):
     scales = 0.2, Mountain.scales[0]
     cost = 4
     population = 2
+
+    def collect(self):
+        super().collect()
+        self.textures = CustomTexture("assets/resources/goldCollected.png"), Mountain.textures[0]
 
 
 class Forest(ModifierBase):
@@ -84,6 +104,12 @@ class Forest(ModifierBase):
     cost = 3
     population = 1
 
+    def collect(self):
+        super().collect()
+        self.textures = CustomTexture('assets/resources/hut.png'), CustomTexture("assets/terrain/forest.png")
+        self.offsets = (80, 80)
+        self.scales = (0.3, 0.3)
+
 
 class Village(ModifierBase):
     weight = 5
@@ -93,6 +119,9 @@ class Village(ModifierBase):
     scales = (0.3,)
     cost = None
     population = None
+
+    def collect(self):
+        return NotImplemented
 
 
 class Fish(ModifierBase):
@@ -104,21 +133,24 @@ class Fish(ModifierBase):
     cost = 2
     population = 1
 
+    def collect(self):
+        self.tile.modifier = None
 
-MODIFIER_TYPES: list[ModifierBase] = [Fruits(), Animal(), Mountain(), GoldMountain(), Forest(), Village(), Fish()]
-LAND_MODIFIERS: list[None | ModifierBase] = [None, Fruits(), Animal(), Mountain(), GoldMountain(), Forest(), Village()]
-WATER_MODIFIERS: list[None | ModifierBase] = [None, Fish()]
+
+MODIFIER_TYPES: list[type] = [Fruits, Animal, Mountain, GoldMountain, Forest, Village, Fish]
+LAND_MODIFIERS: list[type] = [lambda: None, Fruits, Animal, Mountain, GoldMountain, Forest, Village]
+WATER_MODIFIERS: list[type] = [lambda: None, Fish]
 
 
 def land_modifiers_weights():
-    return [100 - sum([modifier.weight for modifier in LAND_MODIFIERS if modifier])] + [
-        modifier.weight for modifier in LAND_MODIFIERS if modifier
+    return [100 - sum([modifier.weight for modifier in LAND_MODIFIERS if modifier()])] + [
+        modifier.weight for modifier in LAND_MODIFIERS if modifier()
     ]
 
 
 def water_modifiers_weights():
-    return [100 - sum([modifier.weight for modifier in WATER_MODIFIERS if modifier])] + [
-        modifier.weight for modifier in WATER_MODIFIERS if modifier
+    return [100 - sum([modifier.weight for modifier in WATER_MODIFIERS if modifier()])] + [
+        modifier.weight for modifier in WATER_MODIFIERS if modifier()
     ]
 
 
@@ -129,12 +161,30 @@ class TileBase:
     unit: UnitBase | None = None
     modifier: ModifierBase | None = None
 
-    weight: int = field(init=False)
-    type: int = field(init=False)
-    texture: CustomTexture = field(init=False)
-    row: int = field(init=False)
-    col: int = field(init=False)
-    owner: Player = field(init=False)
+    weight: int = field(init=False, repr=False)
+    type: int = field(init=False, repr=False)
+    texture: CustomTexture = field(init=False, repr=False)
+    row: int = field(init=False, repr=False)
+    col: int = field(init=False, repr=False)
+    owner: City | None = None
+
+    def add_population_to_city(self, n: int):
+        if not self.owner:
+            return
+        self.owner.population += n
+        if self.owner.population >= self.owner.level + 2:
+            self.owner.population -= self.owner.level + 2
+            self.owner.level += 1
+            if self.owner.level > 1:
+                # self.unit.random_move()
+                self.owner.tile.unit = Giant(self.owner.owner, (self.row, self.col))
+                self.owner.tile.unit.move_remains = False
+    
+    def __post_init__(self):
+        if self.modifier:
+            self.modifier.tile = self
+        if self.city:
+            self.city.tile = self
 
 
 class Land(TileBase):

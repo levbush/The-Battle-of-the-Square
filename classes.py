@@ -2,6 +2,8 @@ import arcade.gui
 from arcade.types import AnchorPoint
 import arcade
 from dataclasses import dataclass, field
+if __name__ == '__main__':
+    from terrain.terrain_classes import TileBase
 
 
 class AnimatedButton(arcade.gui.UIFlatButton):
@@ -164,13 +166,13 @@ class HorizontalRadioButtonGroup:
         return self.layout
 
 
-@dataclass(eq=False, repr=False)
+@dataclass(eq=False)
 class Player:
     id: int
     is_bot: bool
     is_alive: bool = True
-    cities: list["City"] = field(default_factory=list)
-    stars: int = 5
+    cities: list["City"] = field(default_factory=list, repr=False)
+    stars: int = 3
 
     def __post_init__(self):
         for city in self.cities:
@@ -182,18 +184,19 @@ class Player:
             return self.id == value.id
         return NotImplemented
     
-    def __repr__(self):
-        return (
-            f"Player(id={self.id}, is_bot={self.is_bot}, "
-            f"is_alive={self.is_alive}, stars={self.stars})"
-        )
+    # def __repr__(self):
+    #     return (
+    #         f"Player(id={self.id}, is_bot={self.is_bot}, "
+    #         f"is_alive={self.is_alive}, stars={self.stars})"
+    #     )
 
 
-@dataclass()
+@dataclass
 class City:
     owner: Player | int
     level: int = 0
     population: int = 0
+    tile: 'TileBase' = field(init=False, repr=False)
 
     def __post_init__(self):
         if self not in self.owner.cities:

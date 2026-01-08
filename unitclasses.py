@@ -9,18 +9,17 @@ from arcade import Texture, load_texture
 class UnitBase:
     owner: Player
     pos: tuple[int, int]
-    max_health: int
-    attack: int
-    defense: int
-    movement: int
-    range: int
+    max_health: int = field(repr=False)
+    attack: int = field(repr=False)
+    defense: int = field(repr=False)
+    movement: int = field(repr=False)
+    range: int = field(repr=False)
     move_remains: bool = True
     health: int = None
-    is_alive: bool = True
 
-    type: int = field(init=False)
-    name: str = field(init=False)
-    textures: 'UnitTexture' = field(init=False)
+    type: int = field(init=False, repr=False)
+    name: str = field(init=False, repr=False)
+    textures: 'UnitTexture' = field(init=False, repr=False)
 
     def __post_init__(self):
         if self.health is None: self.health = self.max_health
@@ -71,36 +70,36 @@ class UnitBase:
 class Warrior(UnitBase):
     type = 0
     name = 'warrior'
-    def __init__(self, owner, pos):
-        super().__init__(owner, pos, 10, 2, 2, 1, 1)
+    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+        super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, health)
 
 
 class Defender(UnitBase):
     type = 1
     name = 'defender'
-    def __init__(self, owner, pos):
-        super().__init__(owner, pos, 15, 1, 3, 1, 1)
+    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+        super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, health)
 
 
 class Rider(UnitBase):
     type = 2
     name = 'rider'
-    def __init__(self, owner, pos):
-        super().__init__(owner, pos, 10, 2, 1, 2, 1)
+    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+        super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, health)
 
 
 class Archer(UnitBase):
     type = 3
     name = 'archer'
-    def __init__(self, owner, pos):
-        super().__init__(owner, pos, 10, 2, 1, 1, 2)
+    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+        super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)
 
 
 class Giant(UnitBase):
     type = 4
     name = 'giant'
-    def __init__(self, owner, pos):
-        super().__init__(owner, pos, 40, 5, 4, 1, 1)
+    def __init__(self, owner: Player, pos: tuple[int], move_remains: bool=True, health: int=None):
+        super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, health)
 
 
 UNIT_TYPES: dict[int, Type[UnitBase]] = {
@@ -125,7 +124,7 @@ class UnitTexture:
         self.ally, self.enemy, self.bot = (load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/'))
     
     def __repr__(self):
-        return f'UnitTexture({self.name})'
+        return f'UnitTexture("{self.name}")'
 
 
 for cls in UNIT_TYPES.values():
