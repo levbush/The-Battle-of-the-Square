@@ -59,6 +59,7 @@ class GameView(arcade.View):
             self.units = arcade.SpriteList(use_spatial_hash=True)
             self.move_popups = arcade.SpriteList()
             self.city_tooltips = []
+            self.hp_tooltips = []
             self.map = create_map(self.size_map, self.players)
   
             btn_normal = arcade.load_texture("assets/misc/next_turn.png")
@@ -198,7 +199,7 @@ class GameView(arcade.View):
                     hp_x = screen_x - 50
                     hp_y = screen_y + 130
                     
-                    arcade.draw_text(
+                    self.hp_tooltips.append(arcade.Text(
                         hp_text,
                         hp_x,
                         hp_y,
@@ -206,8 +207,8 @@ class GameView(arcade.View):
                         30,
                         anchor_x="center",
                         anchor_y="center",
-                        bold=True
-                    )
+                        batch=self.world_batch
+                    ))
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -572,6 +573,7 @@ class GameView(arcade.View):
         self.cities.clear()
         self.units.clear()
         self.city_tooltips.clear()
+        self.hp_tooltips.clear()
         self.deselect_all()
         
         for row_idx, row in enumerate(self.map):
