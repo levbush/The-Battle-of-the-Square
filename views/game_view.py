@@ -9,8 +9,6 @@ from terrain.terrain_classes import *
 from pyglet.graphics import Batch
 import math
 
-SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
-
 
 class GameView(arcade.View):
     def __init__(self, size_map, bot_amount, player_amount, bot_difficulty, new_game=True):
@@ -59,13 +57,12 @@ class GameView(arcade.View):
             self.units = arcade.SpriteList(use_spatial_hash=True)
             self.move_popups = arcade.SpriteList()
             self.city_tooltips = []
-            self.hp_tooltips = []
             self.map = create_map(self.size_map, self.players)
   
             btn_normal = arcade.load_texture("assets/misc/next_turn.png")
             self.next_turn_btn = UITextureButton(
-                x=SCREEN_WIDTH // 2 + SCREEN_WIDTH * 0.05,
-                y=SCREEN_HEIGHT * 0.05,
+                x=self.width // 2 + self.width * 0.05,
+                y=self.height * 0.05,
                 texture=btn_normal,
                 scale=2)
             self.manager.add(self.next_turn_btn)
@@ -82,8 +79,8 @@ class GameView(arcade.View):
         self.attack_tooltip = arcade.load_texture('assets/misc/attackTarget.png')
         self.batch = Batch()
         self.world_batch = Batch()
-        self.star_label = arcade.Text('', SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
-        self.move_label = arcade.Text('', SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
+        self.star_label = arcade.Text('', self.width / 2 - 50, self.height - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
+        self.move_label = arcade.Text('', self.width / 2 - 250, self.height - 30, font_size=20, color=arcade.color.BLACK, anchor_y='center', batch=self.batch)
 
     def on_show_view(self):
         self.manager.enable()
@@ -185,21 +182,21 @@ class GameView(arcade.View):
         self.draw_unit_hp()
         self.gui_camera.use()
         self.manager.draw()
-        arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT - 50, 40, 40))
+        arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
         self.batch.draw()
 
     def draw_unit_hp(self):
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
                 if tile.unit and tile.visible_mapping[self.current_player.id] and tile.unit.is_alive:
-                    screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
+                    screen_x = (col_idx - row_idx) * 150 + self.width // 2
                     screen_y = (col_idx + row_idx) * 90 + 150
                     
                     hp_text = f"{tile.unit.health}"
                     hp_x = screen_x - 50
                     hp_y = screen_y + 130
                     
-                    self.hp_tooltips.append(arcade.Text(
+                    arcade.draw_text(
                         hp_text,
                         hp_x,
                         hp_y,
@@ -207,8 +204,8 @@ class GameView(arcade.View):
                         30,
                         anchor_x="center",
                         anchor_y="center",
-                        batch=self.world_batch
-                    ))
+                        bold=True
+                    )
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -364,7 +361,7 @@ class GameView(arcade.View):
 
     def screen_to_tile(self, x, y) -> TileBase | None:
         world_x, world_y = self.screen_to_world(x, y)
-        world_x -= SCREEN_WIDTH // 2
+        world_x -= self.width // 2
         world_y -= 150
 
         col = round((world_x / 150 + world_y / 90) / 2)
@@ -375,7 +372,7 @@ class GameView(arcade.View):
         return None
 
     def tile_to_world(self, tile: TileBase):
-        x = (tile.col - tile.row) * 150 + SCREEN_WIDTH // 2
+        x = (tile.col - tile.row) * 150 + self.width // 2
         y = (tile.col + tile.row) * 90 + 150
         return x, y
 
@@ -573,12 +570,11 @@ class GameView(arcade.View):
         self.cities.clear()
         self.units.clear()
         self.city_tooltips.clear()
-        self.hp_tooltips.clear()
         self.deselect_all()
         
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
-                screen_x = (col_idx - row_idx) * 150 + SCREEN_WIDTH // 2
+                screen_x = (col_idx - row_idx) * 150 + self.width // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
                 
                 if not tile.visible_mapping[self.current_player.id]:
