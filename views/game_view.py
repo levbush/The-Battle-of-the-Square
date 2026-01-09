@@ -56,7 +56,6 @@ class GameView(arcade.View):
             self.cities = arcade.SpriteList(use_spatial_hash=True)
             self.units = arcade.SpriteList(use_spatial_hash=True)
             self.move_popups = arcade.SpriteList()
-            self.city_tooltips = []
             self.map = create_map(self.size_map, self.players)
   
             btn_normal = arcade.load_texture("assets/misc/next_turn.png")
@@ -68,6 +67,9 @@ class GameView(arcade.View):
             self.manager.add(self.next_turn_btn)
             self.next_turn_btn.on_click = lambda *_: self.change_POV()
             self.move_n = 0
+        
+        self.city_tooltips = []
+        self.health_tooltips = []
 
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
         self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
@@ -128,11 +130,10 @@ class GameView(arcade.View):
         self.cities.draw()
         self.units.draw()
         self.draw_selection_highlight()
+        self.draw_city_borders()
         self.world_batch.draw()
         self.draw_valid_moves()
         self.draw_path()
-        self.draw_unit_hp()
-        self.draw_city_borders()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
@@ -151,9 +152,7 @@ class GameView(arcade.View):
                     
                     city_x, city_y = self.tile_to_world(tile)
                     city_y += 55
-    
-                    radius = 225
-                    
+                        
                     points = [
                         (city_x, city_y + 270),
                         (city_x + 450, city_y),
@@ -167,28 +166,6 @@ class GameView(arcade.View):
                         3
                     )
                     # TODO что-то сдесь не так
-
-    def draw_unit_hp(self):
-        for row_idx, row in enumerate(self.map):
-            for col_idx, tile in enumerate(row):
-                if tile.unit and tile.visible_mapping[self.current_player.id] and tile.unit.is_alive:
-                    screen_x = (col_idx - row_idx) * 150 + self.width // 2
-                    screen_y = (col_idx + row_idx) * 90 + 150
-                    
-                    hp_text = f"{tile.unit.health}"
-                    hp_x = screen_x - 50
-                    hp_y = screen_y + 130
-                    
-                    arcade.draw_text(
-                        hp_text,
-                        hp_x,
-                        hp_y,
-                        arcade.color.WHITE,
-                        30,
-                        anchor_x="center",
-                        anchor_y="center",
-                        bold=True
-                    )
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -510,13 +487,17 @@ class GameView(arcade.View):
             traceback.print_exc()
             return False
 
-    def update_sprites(self):
+    def reset_all(self):
         self.tiles.clear()
         self.modifiers.clear()
         self.cities.clear()
         self.units.clear()
         self.city_tooltips.clear()
+        self.health_tooltips.clear()
         self.deselect_all()
+
+    def update_sprites(self):
+        self.reset_all()
         
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
@@ -561,6 +542,18 @@ class GameView(arcade.View):
                     else:
                         texture = tile.unit.textures.enemy
                     self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
+                    
+                    self.health_tooltips.append(arcade.Text(
+                        f"{tile.unit.health}",
+                        screen_x - 50,
+                        screen_y + 130,
+                        arcade.color.WHITE,
+                        30,
+                        anchor_x="center",
+                        anchor_y="center",
+                        bold=True,
+                        batch=self.world_batch
+                    ))
         
         self.tiles.reverse()
         self.modifiers.reverse()
