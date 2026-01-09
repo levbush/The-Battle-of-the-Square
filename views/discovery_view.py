@@ -10,6 +10,7 @@ CENTER_RADIUS = 90
 TECH_SPACING = 120
 TECH_SIZE = 72
 ICON_SCALE = 0.7
+
 ZOOM_SPEED = 0.1
 MIN_ZOOM = 0.3
 MAX_ZOOM = 3.0
@@ -58,8 +59,8 @@ class DiscoveryView(arcade.View):
         self.cost_labels: list[arcade.Text] = []
 
         self.zoom = 1.0
-        self.offset_x = 0
-        self.offset_y = 0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
 
         self.tech_elements = []
         self.line_elements = []
@@ -74,6 +75,7 @@ class DiscoveryView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
+    # ---------------- TRANSFORMS ----------------
 
     def apply_transform(self, x, y):
         cx = self.window.width / 2
@@ -91,6 +93,7 @@ class DiscoveryView(arcade.View):
             (y - cy) / self.zoom + cy - self.offset_y,
         )
 
+    # ---------------- BUILD ----------------
 
     def rebuild(self):
         self.create_tech_elements()
@@ -182,6 +185,32 @@ class DiscoveryView(arcade.View):
             button.on_click = make_handler()
             self.manager.add(button)
 
+    # ---------------- INPUT ----------------
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        old_zoom = self.zoom
+
+        if scroll_y > 0:
+            self.zoom = min(self.zoom * (1 + ZOOM_SPEED), MAX_ZOOM)
+        elif scroll_y < 0:
+            self.zoom = max(self.zoom * (1 - ZOOM_SPEED), MIN_ZOOM)
+
+        if self.zoom == old_zoom:
+            return
+
+        world_x, world_y = self.inverse_transform(x, y)
+        new_x, new_y = self.apply_transform(world_x, world_y)
+
+        self.offset_x += (x - new_x) / self.zoom
+        self.offset_y += (y - new_y) / self.zoom
+
+        self.build_tech_buttons()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.parent)
+
+
     def on_draw(self):
         self.clear()
         self.cost_labels.clear()
@@ -222,10 +251,7 @@ class DiscoveryView(arcade.View):
         self.batch.draw()
 
 
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.ESCAPE:
-            self.window.show_view(self.parent)
-
+# ---------------- HELPERS ----------------
 
 def get_tech_state(branch, index, tech_tree: TechTree):
     tech = branch[index]
