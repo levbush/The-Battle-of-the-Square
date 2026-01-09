@@ -518,6 +518,7 @@ class GameView(arcade.View):
 
     def update_sprites(self):
         self.reset_all()
+        self.star_label.text = f'{self.current_player.stars} (+ {self.get_stars_for_player()})'
 
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
@@ -680,7 +681,6 @@ class GameView(arcade.View):
         tile.add_population_to_city(self.selected_modifier.population)
         tile.modifier.collect()
         self.current_player.stars -= self.selected_modifier.cost
-        self.star_label.text = f'{self.current_player.stars} (+ {self.get_stars_for_player()})'
         self.update_sprites()
 
     def switch_selection_on_tile(self, tile: TileBase):
