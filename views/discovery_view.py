@@ -45,16 +45,14 @@ class DiscoveryView(arcade.View):
         self.batch = Batch()
         self.cost_labels: list[arcade.Text] = []
         
-        # Параметры трансформации
         self.zoom = 1.0
         self.offset_x = 0
         self.offset_y = 0
         self.panning = False
         self.last_mouse_pos = (0, 0)
         
-        # Для хранения элементов
-        self.tech_elements = []  # (x, y, texture, size, data)
-        self.line_elements = []  # (x1, y1, x2, y2)
+        self.tech_elements = []
+        self.line_elements = []
         
         self.manager = UIManager()
 
@@ -64,7 +62,6 @@ class DiscoveryView(arcade.View):
         self.create_tech_elements()
         self.build_tech_buttons()
         
-        # Сброс трансформации
         self.zoom = 1.0
         self.offset_x = 0
         self.offset_y = 0
@@ -73,7 +70,6 @@ class DiscoveryView(arcade.View):
         self.manager.disable()
 
     def create_tech_elements(self):
-        """Создает все элементы технологического дерева"""
         self.tech_elements.clear()
         self.line_elements.clear()
         
@@ -96,7 +92,6 @@ class DiscoveryView(arcade.View):
                 x = cx + dx * r
                 y = cy + dy * r
                 
-                # Определяем текстуру фона
                 if state == "completed":
                     bg_texture = self.completed
                 elif state == "open":
@@ -104,7 +99,6 @@ class DiscoveryView(arcade.View):
                 else:
                     bg_texture = self.hidden
                 
-                # Сохраняем элемент фона
                 self.tech_elements.append({
                     'x': x, 'y': y, 
                     'texture': bg_texture,
@@ -115,7 +109,6 @@ class DiscoveryView(arcade.View):
                     'depth': depth
                 })
                 
-                # Добавляем линии соединения
                 if depth > 0:
                     prev_r = CENTER_RADIUS + (depth - 1) * TECH_SPACING
                     px = cx + dx * prev_r
@@ -125,12 +118,10 @@ class DiscoveryView(arcade.View):
                         'x2': x, 'y2': y
                     })
                 
-                # Добавляем иконку технологии
                 if state in ("open", "completed"):
                     self.add_tech_icon(cls, x, y, depth)
 
     def add_tech_icon(self, cls, x, y, depth):
-        """Добавляет иконку технологии"""
         if isinstance(cls.textures, tuple):
             count = len(cls.textures)
             offset = TECH_SIZE * ICON_SCALE * 0.15
@@ -154,18 +145,15 @@ class DiscoveryView(arcade.View):
             })
 
     def apply_transform(self, x, y):
-        """Применяет трансформацию к координатам"""
         center_x = self.window.width / 2
         center_y = self.window.height / 2
         
-        # Сначала смещаем, затем масштабируем относительно центра
         tx = center_x + (x - center_x + self.offset_x) * self.zoom
         ty = center_y + (y - center_y + self.offset_y) * self.zoom
         
         return tx, ty
 
     def inverse_transform(self, x, y):
-        """Обратная трансформация координат"""
         center_x = self.window.width / 2
         center_y = self.window.height / 2
         
@@ -177,19 +165,16 @@ class DiscoveryView(arcade.View):
     def on_draw(self):
         self.clear()
         
-        # Рисуем линии соединения с трансформацией
         for line in self.line_elements:
             x1, y1 = self.apply_transform(line['x1'], line['y1'])
             x2, y2 = self.apply_transform(line['x2'], line['y2'])
             arcade.draw_line(x1, y1, x2, y2, arcade.color.GRAY, 2)
         
-        # Рисуем элементы технологий с трансформацией
         for element in self.tech_elements:
             x, y = self.apply_transform(element['x'], element['y'])
             texture = element['texture']
             size = element['size'] * self.zoom
             
-            # Используем draw_texture_rect вместо draw_texture_rectangle
             width = size
             height = size * texture.height / texture.width
             
@@ -201,14 +186,10 @@ class DiscoveryView(arcade.View):
             )
             arcade.draw_texture_rect(texture, rect)
         
-        # Рисуем текст стоимости
         self.draw_cost_labels()
-        
-        # Рисуем UI элементы без трансформации
         self.manager.draw()
 
     def draw_cost_labels(self):
-        """Рисует текст стоимости для открытых технологий"""
         self.cost_labels.clear()
         
         for element in self.tech_elements:
@@ -217,8 +198,6 @@ class DiscoveryView(arcade.View):
                 depth = element['depth']
                 
                 cost = 4 if depth == 0 else 5
-                
-                # Вычисляем размер с учетом зума
                 size = TECH_SIZE * self.zoom
                 
                 label = arcade.Text(
@@ -239,7 +218,6 @@ class DiscoveryView(arcade.View):
     def build_tech_buttons(self):
         self.manager.clear()
         
-        # Создаем невидимые кнопки для каждой технологии
         for element in self.tech_elements:
             if element['type'] == 'background':
                 cls = element['cls']
@@ -249,13 +227,9 @@ class DiscoveryView(arcade.View):
                 if state == 'hidden':
                     continue
                 
-                # Применяем трансформацию к координатам кнопки
                 x, y = self.apply_transform(element['x'], element['y'])
-                
-                # Размер кнопки с учетом зума
                 button_size = TECH_SIZE * self.zoom
                 
-                # Создаем прозрачную кнопку
                 button = UITextureButton(
                     x=int(x - button_size / 2),
                     y=int(y - button_size / 2),
@@ -281,61 +255,46 @@ class DiscoveryView(arcade.View):
                 self.manager.add(button)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
-        """Обработка нажатия мыши"""
         if button == arcade.MOUSE_BUTTON_RIGHT:
             self.panning = True
             self.last_mouse_pos = (x, y)
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
-        """Обработка отпускания мыши"""
         if button == arcade.MOUSE_BUTTON_RIGHT:
             self.panning = False
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
-        """Обработка перетаскивания мыши"""
         if buttons & arcade.MOUSE_BUTTON_RIGHT:
-            # Панорамирование
             self.offset_x += dx / self.zoom
             self.offset_y += dy / self.zoom
-            self.build_tech_buttons()  # Обновляем позиции кнопок
+            self.build_tech_buttons()
         elif buttons & arcade.MOUSE_BUTTON_LEFT:
-            # Альтернативный способ панорамирования
             self.offset_x += dx / self.zoom
             self.offset_y += dy / self.zoom
             self.build_tech_buttons()
 
     def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
-        """Обработка прокрутки колесика мыши"""
-        # Сохраняем старый зум
         old_zoom = self.zoom
         
-        # Меняем зум
         if scroll_y > 0:
             self.zoom = min(self.zoom * 1.1, MAX_ZOOM)
         else:
             self.zoom = max(self.zoom / 1.1, MIN_ZOOM)
         
-        # Корректируем смещение для зумирования относительно курсора
         if old_zoom != self.zoom:
-            # Преобразуем координаты мыши в мировые координаты
             world_x, world_y = self.inverse_transform(x, y)
-            
-            # Пересчитываем смещение
             center_x = self.window.width / 2
             center_y = self.window.height / 2
             
-            # Новое смещение для сохранения точки под курсором
             self.offset_x = (world_x - center_x) * (1 - self.zoom / old_zoom) + self.offset_x * (self.zoom / old_zoom)
             self.offset_y = (world_y - center_y) * (1 - self.zoom / old_zoom) + self.offset_y * (self.zoom / old_zoom)
             
-            # Обновляем кнопки
             self.build_tech_buttons()
 
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.ESCAPE or key == arcade.key.H: 
+        if key == arcade.key.ESCAPE or key == arcade.key.H:
             self.window.show_view(self.parent)
         elif key == arcade.key.R:
-            # Сброс трансформации
             self.zoom = 1.0
             self.offset_x = 0
             self.offset_y = 0
@@ -360,8 +319,6 @@ class DiscoveryView(arcade.View):
             self.build_tech_buttons()
 
     def on_update(self, delta_time: float):
-        """Обновление позиций кнопок"""
-        # Позиции кнопок обновляются при изменении трансформации
         pass
 
 
@@ -393,9 +350,6 @@ def draw_centered_texture(texture, x, y, max_w, max_h):
 
 
 def draw_tech_textures(cls, x, y, size):
-    """
-    Draws tech icon(s) depending on cls.textures structure.
-    """
     if isinstance(cls.textures, tuple):
         count = len(cls.textures)
         offset = size * 0.15
