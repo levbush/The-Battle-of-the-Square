@@ -1,4 +1,5 @@
 import arcade
+from pyglet.graphics import Batch
 
 class SettingsView(arcade.View):
     def __init__(self, music_volume=50, sfx_volume=70):
@@ -16,7 +17,37 @@ class SettingsView(arcade.View):
         self.dragging_music = False
         self.dragging_sfx = False
         
-        arcade.set_background_color(arcade.color.DARK_BLUE_GRAY)
+        self.background_color = arcade.color.DARK_BLUE_GRAY
+        
+        self.batch = Batch()
+        self.title = arcade.Text("НАСТРОЙКИ", 400, 650,
+                               arcade.color.GOLD, 54, anchor_x="center",
+                               batch=self.batch)
+        
+        self.music_text = arcade.Text(f"Громкость музыки: {self.music_volume}%", 
+                                    250, 450, arcade.color.LIGHT_GRAY, 28,
+                                    batch=self.batch)
+        
+        self.sfx_text = arcade.Text(f"Громкость звуков: {self.sfx_volume}%", 
+                                  250, 350, arcade.color.LIGHT_GRAY, 28,
+                                  batch=self.batch)
+        
+        self.exit_text = arcade.Text("Выход из игры", 400, 200,
+                                   arcade.color.WHITE, 32, anchor_x="center", 
+                                   anchor_y="center", batch=self.batch)
+        
+        self.back_text = arcade.Text("Назад в меню", 400, 100,
+                                   arcade.color.WHITE, 32, anchor_x="center", 
+                                   anchor_y="center", batch=self.batch)
+        
+        self.exit_rect_shape = None
+        self.back_rect_shape = None
+        self.music_slider_bg_shape = None
+        self.music_slider_fill_shape = None
+        self.sfx_slider_bg_shape = None
+        self.sfx_slider_fill_shape = None
+        self.music_slider_handle_shape = None
+        self.sfx_slider_handle_shape = None
         
     def on_draw(self):
         self.clear()
@@ -24,22 +55,26 @@ class SettingsView(arcade.View):
         width = self.window.width
         slider_x = width // 2 - self.slider_width // 2
         
-        arcade.draw_text("НАСТРОЙКИ", width // 2, 650,
-                        arcade.color.GOLD, 54, anchor_x="center")
-        
-        music_label = f"Громкость музыки: {self.music_volume}%"
-        sfx_label = f"Громкость звуков: {self.sfx_volume}%"
-        
         music_color = arcade.color.GOLD if self.current_selection == 0 else arcade.color.LIGHT_GRAY
         sfx_color = arcade.color.GOLD if self.current_selection == 1 else arcade.color.LIGHT_GRAY
         exit_color = arcade.color.GOLD if self.current_selection == 2 else arcade.color.LIGHT_GRAY
         back_color = arcade.color.GOLD if self.current_selection == 3 else arcade.color.LIGHT_GRAY
         
-        arcade.draw_text(music_label, slider_x, 450, music_color, 28)
-        arcade.draw_text(sfx_label, slider_x, 350, sfx_color, 28)
+        self.music_text.text = f"Громкость музыки: {self.music_volume}%"
+        self.music_text.color = music_color
+        
+        self.sfx_text.text = f"Громкость звуков: {self.sfx_volume}%"
+        self.sfx_text.color = sfx_color
         
         music_fill_width = int(self.slider_width * (self.music_volume / 100))
         sfx_fill_width = int(self.slider_width * (self.sfx_volume / 100))
+        
+        button_width = 350
+        button_height = 60
+        button_x = width // 2
+        
+        exit_rect = arcade.rect.XYWH(button_x, 200, button_width, button_height)
+        back_rect = arcade.rect.XYWH(button_x, 100, button_width, button_height)
         
         music_slider_bg = arcade.rect.XYWH(slider_x + self.slider_width/2, self.music_slider_y + self.slider_height/2,
                                          self.slider_width, self.slider_height)
@@ -51,14 +86,20 @@ class SettingsView(arcade.View):
         sfx_slider_fill = arcade.rect.XYWH(slider_x + sfx_fill_width/2, self.sfx_slider_y + self.slider_height/2,
                                           sfx_fill_width, self.slider_height)
         
+        music_slider_pos = slider_x + music_fill_width
+        sfx_slider_pos = slider_x + sfx_fill_width
+        
+        arcade.draw_rect_filled(exit_rect, exit_color)
+        arcade.draw_rect_outline(exit_rect, arcade.color.WHITE, 3)
+        
+        arcade.draw_rect_filled(back_rect, back_color)
+        arcade.draw_rect_outline(back_rect, arcade.color.WHITE, 3)
+        
         arcade.draw_rect_filled(music_slider_bg, arcade.color.DARK_GRAY)
         arcade.draw_rect_filled(music_slider_fill, arcade.color.CORNFLOWER_BLUE)
         
         arcade.draw_rect_filled(sfx_slider_bg, arcade.color.DARK_GRAY)
         arcade.draw_rect_filled(sfx_slider_fill, arcade.color.CORNFLOWER_BLUE)
-        
-        music_slider_pos = slider_x + music_fill_width
-        sfx_slider_pos = slider_x + sfx_fill_width
         
         arcade.draw_circle_filled(music_slider_pos, 
                                  self.music_slider_y + self.slider_height // 2,
@@ -67,22 +108,7 @@ class SettingsView(arcade.View):
                                  self.sfx_slider_y + self.slider_height // 2,
                                  self.slider_height + 2, arcade.color.GOLD)
         
-        button_width = 350
-        button_height = 60
-        button_x = width // 2
-        
-        exit_rect = arcade.rect.XYWH(button_x, 200, button_width, button_height)
-        back_rect = arcade.rect.XYWH(button_x, 100, button_width, button_height)
-        
-        arcade.draw_rect_filled(exit_rect, exit_color)
-        arcade.draw_rect_outline(exit_rect, arcade.color.WHITE, 3)
-        arcade.draw_text("Выход из игры", button_x, 200,
-                        arcade.color.WHITE, 32, anchor_x="center", anchor_y="center")
-        
-        arcade.draw_rect_filled(back_rect, back_color)
-        arcade.draw_rect_outline(back_rect, arcade.color.WHITE, 3)
-        arcade.draw_text("Назад в меню", button_x, 100,
-                        arcade.color.WHITE, 32, anchor_x="center", anchor_y="center")
+        self.batch.draw()
         
     def on_update(self, delta_time):
         mouse_x = self.window._mouse_x
@@ -192,7 +218,7 @@ class SettingsView(arcade.View):
         self.sfx_volume = max(0, min(100, int((relative_x / self.slider_width) * 100)))
 
 def main():
-    window = arcade.Window(800, 600, "Настройки")
+    window = arcade.Window(800, 700, "Настройки")
     settings_view = SettingsView()
     window.show_view(settings_view)
     arcade.run()
