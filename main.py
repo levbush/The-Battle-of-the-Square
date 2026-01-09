@@ -17,7 +17,7 @@ class MainWindow(arcade.Window):
         self.music_counter = 0
 
     def on_key_press(self, key, modifiers):
-        if arcade.key.ESCAPE == key:
+        if arcade.key.F11 == key:
             self.is_fullscreen = not (self.is_fullscreen)
             self.set_fullscreen(self.is_fullscreen)
 
