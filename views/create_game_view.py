@@ -29,10 +29,7 @@ class CreateGameView(arcade.View):
             emit_controller=EmitMaintainCount(45),
             particle_factory=lambda e: FadeParticle(
                 filename_or_texture=random.choice(SPARK_TEX),
-                change_xy=(
-                    random.uniform(-0.2, 0.2),
-                    random.uniform(-0.8, -0.4),
-                ),
+                change_xy=(random.uniform(-0.2, 0.2), random.uniform(-0.8, -0.4)),
                 lifetime=random.uniform(1.0, 1.6),
                 start_alpha=150,
                 end_alpha=0,
@@ -106,7 +103,6 @@ class CreateGameView(arcade.View):
             if self.bot_difficulty_selector.widget in self.vertical_layout.children:
                 self.vertical_layout.remove(self.bot_difficulty_label)
                 self.vertical_layout.remove(self.bot_difficulty_selector.widget)
-                
 
     def on_draw(self):
         self.clear()
@@ -136,7 +132,6 @@ class CreateGameView(arcade.View):
         view = GameView(size, bot_amount, player_amount, bot_difficulty)
         self.manager.disable()
         self.window.show_view(view)
-
 
     def on_mouse_motion(self, x, y, dx, dy):
         self.trail.center_x = x

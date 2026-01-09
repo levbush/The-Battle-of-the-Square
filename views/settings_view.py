@@ -9,8 +9,8 @@ class SettingsView(arcade.View):
         super().__init__()
 
         self.parent = parent
-        self.music_volume = self.window.music_volume * 100
-        self.sfx_volume = self.window.sfx_volume * 100
+        self.music_volume = int(self.window.music_volume * 100)
+        self.sfx_volume = int(self.window.sfx_volume * 100)
 
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
@@ -49,11 +49,7 @@ class SettingsView(arcade.View):
         }
 
         title = arcade.gui.UILabel(
-            text="НАСТРОЙКИ",
-            text_color=arcade.color.GOLD,
-            font_size=48,
-            width=600,
-            align="center",
+            text="НАСТРОЙКИ", text_color=arcade.color.GOLD, font_size=48, width=600, align="center"
         )
         self.v_box.add(title.with_padding(top=40, bottom=40))
 
@@ -67,11 +63,7 @@ class SettingsView(arcade.View):
         self.v_box.add(self.music_label)
 
         self.music_slider = arcade.gui.UISlider(
-            value=self.music_volume,
-            min_value=0,
-            max_value=100,
-            width=400,
-            height=20,
+            value=self.music_volume, min_value=0, max_value=100, width=400, height=20
         )
         self.music_slider.on_change = self.on_music_change
         self.v_box.add(self.music_slider)
@@ -85,51 +77,25 @@ class SettingsView(arcade.View):
         )
         self.v_box.add(self.sfx_label.with_padding(top=20))
 
-        self.sfx_slider = arcade.gui.UISlider(
-            value=self.sfx_volume,
-            min_value=0,
-            max_value=100,
-            width=400,
-            height=20,
-        )
+        self.sfx_slider = arcade.gui.UISlider(value=self.sfx_volume, min_value=0, max_value=100, width=400, height=20)
         self.sfx_slider.on_change = self.on_sfx_change
         self.v_box.add(self.sfx_slider)
 
-        exit_button = arcade.gui.UIFlatButton(
-            text="Выход из игры",
-            width=350,
-            style=BUTTON_STYLE,
-        )
+        exit_button = arcade.gui.UIFlatButton(text="Выход из игры", width=350, style=BUTTON_STYLE)
         exit_button.on_click = self.on_exit
         self.v_box.add(exit_button)
 
-        to_menu_button = arcade.gui.UIFlatButton(
-            text="Назад в меню",
-            width=350,
-            style=BUTTON_STYLE,
-        )
+        to_menu_button = arcade.gui.UIFlatButton(text="Назад в меню", width=350, style=BUTTON_STYLE)
         to_menu_button.on_click = self.on_back
         self.v_box.add(to_menu_button)
 
-        resign_button = arcade.gui.UIFlatButton(
-            text="Сдаться",
-            width=350,
-            style=BUTTON_STYLE,
-        )
+        resign_button = arcade.gui.UIFlatButton(text="Сдаться", width=350, style=BUTTON_STYLE)
         resign_button.on_click = self.resign
         self.v_box.add(resign_button)
 
-        self.container = arcade.gui.UIAnchorLayout(
-            x=0, y=0,
-            width=self.window.width,
-            height=self.window.height
-        )
+        self.container = arcade.gui.UIAnchorLayout(x=0, y=0, width=self.window.width, height=self.window.height)
 
-        self.container.add(
-            child=self.v_box,
-            anchor_x="center",
-            anchor_y="center",
-        )
+        self.container.add(child=self.v_box, anchor_x="center", anchor_y="center")
 
         self.manager.add(self.container)
 
@@ -166,7 +132,7 @@ class SettingsView(arcade.View):
     def save(self):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-    
+
         ...
 
         self.window.set_settings(music_volume=self.music_volume, sfx_volume=self.sfx_volume)
@@ -175,3 +141,9 @@ class SettingsView(arcade.View):
         self.on_key_press(arcade.key.ESCAPE, 0)
         self.parent.current_player.is_bot = True
         self.parent.change_POV()
+
+    def on_show_view(self):
+        self.parent.manager.disable()
+
+    def on_hide_view(self):
+        self.manager.disable()

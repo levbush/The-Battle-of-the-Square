@@ -30,10 +30,7 @@ class StartView(arcade.View):
             emit_controller=EmitMaintainCount(45),
             particle_factory=lambda e: FadeParticle(
                 filename_or_texture=random.choice(SPARK_TEX),
-                change_xy=(
-                    random.uniform(-0.2, 0.2),
-                    random.uniform(-0.8, -0.4),
-                ),
+                change_xy=(random.uniform(-0.2, 0.2), random.uniform(-0.8, -0.4)),
                 lifetime=random.uniform(1.0, 1.6),
                 start_alpha=150,
                 end_alpha=0,

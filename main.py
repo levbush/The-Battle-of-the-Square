@@ -18,7 +18,9 @@ class MainWindow(arcade.Window):
         self.reset()
 
     def reset(self):
-        self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), self.music_volume, loop=True)
+        self.music = arcade.play_sound(
+            arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), self.music_volume, loop=True
+        )
         self.music_counter = 0
 
     def on_key_press(self, key, modifiers):
@@ -31,12 +33,15 @@ class MainWindow(arcade.Window):
         if self.music_counter >= 120:
             self.music_counter = 0
             arcade.stop_sound(self.music)
-            self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), self.music_volume, loop=True)
+            self.music = arcade.play_sound(
+                arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"),
+                self.music_volume,
+                loop=True,
+            )
 
     def set_settings(self, **kwargs):
         self.music_volume = kwargs.get('music_volume') / 100 or self.music_volume
         self.sfx_volume = kwargs.get('sfx_volume') / 100 or self.sfx_volume
-        print(self.music_volume, self.sfx_volume)
 
     def to_menu(self):
         self.show_view(StartView())

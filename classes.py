@@ -2,6 +2,8 @@ import arcade.gui
 from arcade.types import AnchorPoint
 import arcade
 from dataclasses import dataclass, field
+from views.discovery_view import TechTree
+
 if __name__ == '__main__':
     from terrain.terrain_classes import TileBase
 
@@ -173,6 +175,7 @@ class Player:
     is_alive: bool = True
     cities: list["City"] = field(default_factory=list, repr=False)
     stars: int = 3
+    open_tech: TechTree = TechTree()
 
     def __post_init__(self):
         for city in self.cities:
@@ -183,12 +186,6 @@ class Player:
         if isinstance(value, Player):
             return self.id == value.id
         return NotImplemented
-    
-    # def __repr__(self):
-    #     return (
-    #         f"Player(id={self.id}, is_bot={self.is_bot}, "
-    #         f"is_alive={self.is_alive}, stars={self.stars})"
-    #     )
 
 
 @dataclass

@@ -1,6 +1,7 @@
-from classes import City, Player
+if __name__ == '__main__':
+    from classes import City
 from unitclasses import UnitBase, Unit, UnitType
-from arcade import load_texture, Texture
+from arcade import load_texture
 from dataclasses import dataclass, field
 from enum import IntEnum
 
@@ -24,7 +25,7 @@ class CustomTexture:
     def __init__(self, path):
         self.path = path
         self.texture = load_texture(path)
-    
+
     def __repr__(self):
         return f'CustomTexture("{self.path}")'
 
@@ -47,7 +48,7 @@ class ModifierBase:
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.is_collected})'
-    
+
     def collect(self):
         self.is_collected = True
 
@@ -63,7 +64,7 @@ class Fruits(ModifierBase):
 
     def __repr__(self):
         return super().__repr__()
-    
+
     def collect(self):
         self.tile.modifier = None
 
@@ -79,7 +80,7 @@ class Animal(ModifierBase):
 
     def __repr__(self):
         return super().__repr__()
-    
+
     def collect(self):
         self.tile.modifier = None
 
@@ -173,7 +174,7 @@ def water_modifiers_weights():
 @dataclass
 class TileBase:
     visible_mapping: list[bool]
-    city: City | None = None
+    city: 'City' = None
     unit: UnitBase | None = None
     modifier: ModifierBase | None = None
 
@@ -182,7 +183,7 @@ class TileBase:
     texture: CustomTexture = field(init=False, repr=False)
     row: int = field(init=False, repr=False)
     col: int = field(init=False, repr=False)
-    owner: City | None = None
+    owner: 'City' = None
 
     def add_population_to_city(self, n: int):
         if not self.owner:
@@ -195,7 +196,7 @@ class TileBase:
                 # self.unit.random_move()
                 self.owner.tile.unit = Unit(UnitType.GIANT, self.owner.owner, self.row, self.col)
                 self.owner.tile.unit.move_remains = False
-    
+
     def __post_init__(self):
         if self.modifier:
             self.modifier.tile = self
@@ -207,6 +208,7 @@ class Land(TileBase):
     weight = 75
     type = TerrainType.LAND
     texture = CustomTexture("assets/terrain/ground.png")
+
     def __str__(self):
         return "."
 
@@ -215,6 +217,7 @@ class Water(TileBase):
     weight = 20
     type = TerrainType.WATER
     texture = CustomTexture("assets/terrain/water.png")
+
     def __str__(self):
         return "~"
 
@@ -229,11 +232,12 @@ def terrain_types_weights():
 class Tile:
     def __new__(
         cls,
-        row, col,
+        row,
+        col,
         terrain_type: type,
         visible_mapping: list[bool],
         modifier: ModifierBase | None = None,
-        city: City | None = None,
+        city: 'City' = None,
         unit: UnitBase | None = None,
     ) -> TileBase:
         tile: TileBase = terrain_type(visible_mapping, city, unit, modifier)

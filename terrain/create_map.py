@@ -22,7 +22,7 @@ def create_map(side: int, players: list[Player]):
             elif terrain_type == Water:
                 modifier_type = choices(WATER_MODIFIERS, water_modifiers_weights(), k=1)[0]()
                 map[x].append(Tile(x, y, Water, [False] * len(players), modifier=modifier_type))
-    
+
     for player in players:
         visible_tiles: list[tuple[int]] = []
         while True:
@@ -30,7 +30,8 @@ def create_map(side: int, players: list[Player]):
             x, y = randint(2, side - 3), randint(2, side - 3)
             for i in range(x - 2, x + 3):
                 for j in range(y - 2, y + 3):
-                    if x - 2 <= i <= x + 2 and y - 2 <= j <= y + 2: visible_tiles.append((i, j))
+                    if x - 2 <= i <= x + 2 and y - 2 <= j <= y + 2:
+                        visible_tiles.append((i, j))
                     if map[i][j].city:
                         flag = False
                         visible_tiles.clear()
@@ -41,7 +42,7 @@ def create_map(side: int, players: list[Player]):
                     break
             if not flag:
                 continue
-            for (i, j) in visible_tiles:
+            for i, j in visible_tiles:
                 j: int
                 map[i][j].visible_mapping[player.id] = True
             vm = map[x][y].visible_mapping[:]

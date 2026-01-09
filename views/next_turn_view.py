@@ -22,36 +22,15 @@ class NextTurnView(arcade.View):
         anchor = UIAnchorLayout()
         box = UIBoxLayout(vertical=True, space_between=15)
 
-        label = UILabel(
-            text=f"Игрок {player.id + 1}",
-            font_size=18,
-            text_color=arcade.color.WHITE,
-        )
+        label = UILabel(text=f"Игрок {player.id + 1}", font_size=18, text_color=arcade.color.WHITE)
 
         button_style = {
-            "normal": UIFlatButton.UIStyle(
-                font_size=14,
-                font_color=arcade.color.WHITE,
-                bg=arcade.color.BLUE,
-            ),
-            "hover": UIFlatButton.UIStyle(
-                font_size=14,
-                font_color=arcade.color.WHITE,
-                bg=arcade.color.SAPPHIRE_BLUE,
-            ),
-            "press": UIFlatButton.UIStyle(
-                font_size=14,
-                font_color=arcade.color.BLACK,
-                bg=arcade.color.BLUE_BELL,
-            ),
+            "normal": UIFlatButton.UIStyle(font_size=14, font_color=arcade.color.WHITE, bg=arcade.color.BLUE),
+            "hover": UIFlatButton.UIStyle(font_size=14, font_color=arcade.color.WHITE, bg=arcade.color.SAPPHIRE_BLUE),
+            "press": UIFlatButton.UIStyle(font_size=14, font_color=arcade.color.BLACK, bg=arcade.color.BLUE_BELL),
         }
 
-        btn = UIFlatButton(
-            text="Продолжить",
-            width=150,
-            height=30,
-            style=button_style,
-        )
+        btn = UIFlatButton(text="Продолжить", width=150, height=30, style=button_style)
 
         def on_click(_):
             self.fade_out = True
@@ -82,14 +61,13 @@ class NextTurnView(arcade.View):
         self.clear()
 
         arcade.draw_lrbt_rectangle_filled(
-            0,
-            self.window.width,
-            0,
-            self.window.height,
-            (0, 0, 0, int(self.overlay_alpha)),
+            0, self.window.width, 0, self.window.height, (0, 0, 0, int(self.overlay_alpha))
         )
 
         self.manager.draw()
 
     def on_hide_view(self):
         self.manager.disable()
+
+    def on_show_view(self):
+        self.parent.manager.disable()

@@ -1,8 +1,7 @@
-from classes import Player
+if __name__ == '__main__':
+    from classes import Player
 from dataclasses import dataclass, field
-from typing import Type
-from classes import Player
-from arcade import Texture, load_texture
+from arcade import load_texture
 from enum import IntEnum
 
 
@@ -16,7 +15,7 @@ class UnitType(IntEnum):
 
 @dataclass
 class UnitBase:
-    owner: Player
+    owner: 'Player'
     pos: tuple[int, int]
     max_health: int = field(repr=False)
     attack: int = field(repr=False)
@@ -129,17 +128,18 @@ UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
 }
 
 
-
 class Unit:
-    def __new__(cls, unit_type: UnitType, owner: Player, x: int, y: int):
+    def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int):
         return UNIT_TYPES[unit_type](owner, (x, y))
 
 
 class UnitTexture:
     def __init__(self, name):
         self.name = name
-        self.ally, self.enemy, self.bot = (load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/'))
-    
+        self.ally, self.enemy, self.bot = (
+            load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/')
+        )
+
     def __repr__(self):
         return f'UnitTexture("{self.name}")'
 
