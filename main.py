@@ -26,7 +26,7 @@ class MainWindow(arcade.Window):
         if self.music_counter >= 120:
             self.music_counter = 0
             arcade.stop_sound(self.music)
-            self.music = arcade.play_sound(arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 0.6, loop=True)
+            self.music = arcade.play_sound(arcade.r(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), 0.6, loop=True)
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
