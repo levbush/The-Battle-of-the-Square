@@ -1,5 +1,5 @@
 from classes import City, Player
-from unitclasses import UnitBase, Giant
+from unitclasses import UnitBase, Unit, UnitType
 from arcade import load_texture, Texture
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -193,7 +193,7 @@ class TileBase:
             self.owner.level += 1
             if self.owner.level > 1:
                 # self.unit.random_move()
-                self.owner.tile.unit = Giant(self.owner.owner, (self.row, self.col))
+                self.owner.tile.unit = Unit(UnitType.GIANT, self.owner.owner, self.row, self.col)
                 self.owner.tile.unit.move_remains = False
     
     def __post_init__(self):

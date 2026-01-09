@@ -8,6 +8,7 @@ from random import shuffle
 from terrain.terrain_classes import *
 from pyglet.graphics import Batch
 import math
+from views.settings_view import SettingsView
 
 
 class GameView(arcade.View):
@@ -58,13 +59,18 @@ class GameView(arcade.View):
             self.move_popups = arcade.SpriteList()
             self.map = create_map(self.size_map, self.players)
   
-            btn_normal = arcade.load_texture("assets/misc/next_turn.png")
             self.next_turn_btn = UITextureButton(
-                x=self.width // 2 + self.width * 0.05,
+                x=self.width // 2 + self.width * 0.075,
                 y=self.height * 0.05,
-                texture=btn_normal,
+                texture=arcade.load_texture("assets/misc/next_turn.png"),
                 scale=2)
+            self.tech_btn = UITextureButton(
+                x=self.width // 2 + self.width * 0.035,
+                y=self.height * 0.05,
+                texture=arcade.load_texture('assets/misc/techbg.png'),
+                scale=0.2098)
             self.manager.add(self.next_turn_btn)
+            self.manager.add(self.tech_btn)
             self.next_turn_btn.on_click = lambda *_: self.change_POV()
             self.move_n = 0
         
@@ -542,7 +548,7 @@ class GameView(arcade.View):
                     else:
                         texture = tile.unit.textures.enemy
                     self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
-                    
+
                     self.health_tooltips.append(arcade.Text(
                         f"{tile.unit.health}",
                         screen_x - 50,
@@ -579,7 +585,6 @@ class GameView(arcade.View):
             for tile in row:
                 if tile.unit and tile.unit.owner == self.current_player:
                     tile.unit.move_remains = True
-                    
                     self.update_visibility_around_unit(tile)
         
         self.update_sprites()
@@ -705,3 +710,8 @@ class GameView(arcade.View):
         self.path = []
         self.move_popups.clear()
         self.cost_tooltip = None
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            self.manager.disable()
+            arcade.get_window().show_view(SettingsView(parent=self))
