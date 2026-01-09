@@ -1,6 +1,5 @@
 import arcade
-from arcade.gui import UIManager, UIFlatButton, UILabel
-from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
+from arcade.gui import UIManager, UITextureButton
 from unitclasses import Rider, Archer, Defender
 from terrain.terrain_classes import Mountain, GoldMountain, Animal, Forest, Fish, Fruits
 import math
@@ -20,8 +19,12 @@ class TechTree:
     techs = (Mountain, GoldMountain, Rider, Archer, Fruits, Defender, Animal, Forest, Fish)
 
     def __init__(self, tech_map=None):
-        self.__tech_map = tech_map or (False, False, False, False, False, False, False, False, False)
+        self.__tech_map = tech_map or [False, False, False, False, False, False, False, False, False]
         self.tech_map = {cls: flag for cls, flag in zip(self.techs, self.__tech_map)}
+
+    def set_tech_map(self, cls):
+        self.tech_map[cls] = True
+        self.__tech_map[self.techs.index(cls)] = True
 
     def __repr__(self):
         return f'TechTree({self.__tech_map})'
@@ -74,7 +77,6 @@ class DiscoveryView(arcade.View):
                 x = cx + dx * r
                 y = cy + dy * r
 
-                # background
                 if state == "completed":
                     bg = self.completed
                 elif state == "open":
@@ -84,14 +86,12 @@ class DiscoveryView(arcade.View):
 
                 draw_centered_texture(bg, x, y, TECH_SIZE, TECH_SIZE)
 
-                # branch connection
                 if depth > 0:
                     prev_r = CENTER_RADIUS + (depth - 1) * TECH_SPACING
                     px = cx + dx * prev_r
                     py = cy + dy * prev_r
                     arcade.draw_line(px, py, x, y, arcade.color.GRAY, 2)
 
-                # tech icon
                 if state in ("open", "completed"):
                     draw_tech_textures(cls, x, y, TECH_SIZE * ICON_SCALE)
 
@@ -142,13 +142,19 @@ class DiscoveryView(arcade.View):
                 else:
                     tex = self.hidden
 
-                button = arcade.gui.UITextureButton(
+                button = UITextureButton(
                     texture=tex, x=int(x - TECH_SIZE / 2), y=int(y - TECH_SIZE / 2), width=TECH_SIZE, height=TECH_SIZE
                 )
-
                 def make_handler(tech_cls=cls):
                     def on_click(event):
-                        print(f"Clicked tech: {tech_cls.__name__}")
+                        print(tech_cls)
+                        cost = 4 if depth == 0 else 5
+                        if self.parent.current_player.stars < cost or self.parent.current_player.open_tech.tech_map[tech_cls]:
+                            return
+                        self.parent.current_player.stars -= cost
+                        self.parent.current_player.open_tech.set_tech_map(tech_cls)
+                        self.build_tech_buttons()
+                        self.parent.update_sprites()
 
                     return on_click
 
