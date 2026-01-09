@@ -744,3 +744,6 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
             arcade.get_window().show_view(SettingsView(parent=self))
+
+        if key == arcade.key.H:
+            arcade.get_window().show_view(DiscoveryView(parent=self))

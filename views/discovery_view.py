@@ -12,6 +12,9 @@ TECH_SIZE = 72
 ICON_SCALE = 0.7
 RESOURCE_SIZE = 20
 RESOURCE_SPACING = 6
+ZOOM_SPEED = 0.1
+MIN_ZOOM = 0.3
+MAX_ZOOM = 3.0
 
 
 class TechTree:
@@ -41,129 +44,325 @@ class DiscoveryView(arcade.View):
         self.resource = arcade.load_texture("assets/misc/resource.png")
         self.batch = Batch()
         self.cost_labels: list[arcade.Text] = []
-
+        
+        # Параметры трансформации
+        self.zoom = 1.0
+        self.offset_x = 0
+        self.offset_y = 0
+        self.panning = False
+        self.last_mouse_pos = (0, 0)
+        
+        # Для хранения элементов
+        self.tech_elements = []  # (x, y, texture, size, data)
+        self.line_elements = []  # (x1, y1, x2, y2)
+        
         self.manager = UIManager()
 
     def on_show_view(self):
         self.parent.manager.disable()
         self.manager.enable()
+        self.create_tech_elements()
         self.build_tech_buttons()
+        
+        # Сброс трансформации
+        self.zoom = 1.0
+        self.offset_x = 0
+        self.offset_y = 0
 
     def on_hide_view(self):
         self.manager.disable()
 
-    def on_draw(self):
-        self.clear()
-        self.cost_labels.clear()
-        self.window.default_camera.use()
-
+    def create_tech_elements(self):
+        """Создает все элементы технологического дерева"""
+        self.tech_elements.clear()
+        self.line_elements.clear()
+        
         tech_tree = self.parent.current_player.open_tech
-
         cx = self.window.width // 2
         cy = self.window.height // 2
-
+        
         branches = TechTree.tech_tree_map
         branch_count = len(branches)
-
+        
         for branch_index, branch in enumerate(branches):
             angle = 2 * math.pi * branch_index / branch_count
             dx = math.cos(angle)
             dy = math.sin(angle)
-
+            
             for depth, cls in enumerate(branch):
                 state = get_tech_state(branch, depth, tech_tree)
-
+                
                 r = CENTER_RADIUS + depth * TECH_SPACING
                 x = cx + dx * r
                 y = cy + dy * r
-
+                
+                # Определяем текстуру фона
                 if state == "completed":
-                    bg = self.completed
+                    bg_texture = self.completed
                 elif state == "open":
-                    bg = self.open
+                    bg_texture = self.open
                 else:
-                    bg = self.hidden
-
-                draw_centered_texture(bg, x, y, TECH_SIZE, TECH_SIZE)
-
+                    bg_texture = self.hidden
+                
+                # Сохраняем элемент фона
+                self.tech_elements.append({
+                    'x': x, 'y': y, 
+                    'texture': bg_texture,
+                    'size': TECH_SIZE,
+                    'type': 'background',
+                    'cls': cls,
+                    'state': state,
+                    'depth': depth
+                })
+                
+                # Добавляем линии соединения
                 if depth > 0:
                     prev_r = CENTER_RADIUS + (depth - 1) * TECH_SPACING
                     px = cx + dx * prev_r
                     py = cy + dy * prev_r
-                    arcade.draw_line(px, py, x, y, arcade.color.GRAY, 2)
-
+                    self.line_elements.append({
+                        'x1': px, 'y1': py,
+                        'x2': x, 'y2': y
+                    })
+                
+                # Добавляем иконку технологии
                 if state in ("open", "completed"):
-                    draw_tech_textures(cls, x, y, TECH_SIZE * ICON_SCALE)
+                    self.add_tech_icon(cls, x, y, depth)
 
-                    cost = 4 if depth == 0 else 5
+    def add_tech_icon(self, cls, x, y, depth):
+        """Добавляет иконку технологии"""
+        if isinstance(cls.textures, tuple):
+            count = len(cls.textures)
+            offset = TECH_SIZE * ICON_SCALE * 0.15
+            
+            for i, tex_wrapper in enumerate(cls.textures):
+                ox = (i - (count - 1) / 2) * offset
+                self.tech_elements.append({
+                    'x': x + ox, 'y': y,
+                    'texture': tex_wrapper.texture,
+                    'size': TECH_SIZE * ICON_SCALE,
+                    'type': 'icon',
+                    'depth': depth
+                })
+        else:
+            self.tech_elements.append({
+                'x': x, 'y': y,
+                'texture': cls.textures.ally,
+                'size': TECH_SIZE * ICON_SCALE,
+                'type': 'icon',
+                'depth': depth
+            })
 
-                    label = arcade.Text(
-                        text=str(cost),
-                        font_name='Arial',
-                        font_size=14,
-                        color=arcade.color.BLACK,
-                        x=int(x),
-                        y=int(y - TECH_SIZE / 2 - 22),
-                        anchor_x='center',
-                        anchor_y='center',
-                        batch=self.batch,
-                    )
+    def apply_transform(self, x, y):
+        """Применяет трансформацию к координатам"""
+        center_x = self.window.width / 2
+        center_y = self.window.height / 2
+        
+        # Сначала смещаем, затем масштабируем относительно центра
+        tx = center_x + (x - center_x + self.offset_x) * self.zoom
+        ty = center_y + (y - center_y + self.offset_y) * self.zoom
+        
+        return tx, ty
 
-                    self.cost_labels.append(label)
+    def inverse_transform(self, x, y):
+        """Обратная трансформация координат"""
+        center_x = self.window.width / 2
+        center_y = self.window.height / 2
+        
+        tx = (x - center_x) / self.zoom + center_x - self.offset_x
+        ty = (y - center_y) / self.zoom + center_y - self.offset_y
+        
+        return tx, ty
 
+    def on_draw(self):
+        self.clear()
+        
+        # Рисуем линии соединения с трансформацией
+        for line in self.line_elements:
+            x1, y1 = self.apply_transform(line['x1'], line['y1'])
+            x2, y2 = self.apply_transform(line['x2'], line['y2'])
+            arcade.draw_line(x1, y1, x2, y2, arcade.color.GRAY, 2)
+        
+        # Рисуем элементы технологий с трансформацией
+        for element in self.tech_elements:
+            x, y = self.apply_transform(element['x'], element['y'])
+            texture = element['texture']
+            size = element['size'] * self.zoom
+            
+            # Используем draw_texture_rect вместо draw_texture_rectangle
+            width = size
+            height = size * texture.height / texture.width
+            
+            rect = arcade.rect.LBWH(
+                x - width / 2,
+                y - height / 2,
+                width,
+                height
+            )
+            arcade.draw_texture_rect(texture, rect)
+        
+        # Рисуем текст стоимости
+        self.draw_cost_labels()
+        
+        # Рисуем UI элементы без трансформации
+        self.manager.draw()
+
+    def draw_cost_labels(self):
+        """Рисует текст стоимости для открытых технологий"""
+        self.cost_labels.clear()
+        
+        for element in self.tech_elements:
+            if element['type'] == 'background' and element['state'] in ("open", "completed"):
+                x, y = self.apply_transform(element['x'], element['y'])
+                depth = element['depth']
+                
+                cost = 4 if depth == 0 else 5
+                
+                # Вычисляем размер с учетом зума
+                size = TECH_SIZE * self.zoom
+                
+                label = arcade.Text(
+                    text=str(cost),
+                    font_name='Arial',
+                    font_size=14,
+                    color=arcade.color.BLACK,
+                    x=int(x),
+                    y=int(y - size / 2 - 22),
+                    anchor_x='center',
+                    anchor_y='center',
+                    batch=self.batch,
+                )
+                self.cost_labels.append(label)
+        
         self.batch.draw()
 
     def build_tech_buttons(self):
         self.manager.clear()
-
-        tech_tree = self.parent.current_player.open_tech
-        cx = self.window.width // 2
-        cy = self.window.height // 2
-
-        branches = TechTree.tech_tree_map
-        branch_count = len(branches)
-
-        for branch_index, branch in enumerate(branches):
-            angle = 2 * math.pi * branch_index / branch_count
-            dx = math.cos(angle)
-            dy = math.sin(angle)
-
-            for depth, cls in enumerate(branch):
-                state = get_tech_state(branch, depth, tech_tree)
-
-                r = CENTER_RADIUS + depth * TECH_SPACING
-                x = cx + dx * r
-                y = cy + dy * r
-
-                if state == "completed":
-                    tex = self.completed
-                elif state == "open":
-                    tex = self.open
-                else:
-                    tex = self.hidden
-
+        
+        # Создаем невидимые кнопки для каждой технологии
+        for element in self.tech_elements:
+            if element['type'] == 'background':
+                cls = element['cls']
+                depth = element['depth']
+                state = element['state']
+                
+                if state == 'hidden':
+                    continue
+                
+                # Применяем трансформацию к координатам кнопки
+                x, y = self.apply_transform(element['x'], element['y'])
+                
+                # Размер кнопки с учетом зума
+                button_size = TECH_SIZE * self.zoom
+                
+                # Создаем прозрачную кнопку
                 button = UITextureButton(
-                    texture=tex, x=int(x - TECH_SIZE / 2), y=int(y - TECH_SIZE / 2), width=TECH_SIZE, height=TECH_SIZE
+                    x=int(x - button_size / 2),
+                    y=int(y - button_size / 2),
+                    width=int(button_size),
+                    height=int(button_size),
+                    texture=arcade.load_texture(":resources:gui_basic_assets/transparent.png")
                 )
-                def make_handler(tech_cls=cls):
+                
+                def make_handler(tech_cls=cls, tech_depth=depth):
                     def on_click(event):
-                        print(tech_cls)
-                        cost = 4 if depth == 0 else 5
-                        if self.parent.current_player.stars < cost or self.parent.current_player.open_tech.tech_map[tech_cls]:
-                            return
-                        self.parent.current_player.stars -= cost
-                        self.parent.current_player.open_tech.set_tech_map(tech_cls)
-                        self.build_tech_buttons()
-                        self.parent.update_sprites()
-
+                        cost = 4 if tech_depth == 0 else 5
+                        if (self.parent.current_player.stars >= cost and 
+                            not self.parent.current_player.open_tech.tech_map.get(tech_cls, False)):
+                            self.parent.current_player.stars -= cost
+                            self.parent.current_player.open_tech.set_tech_map(tech_cls)
+                            self.create_tech_elements()
+                            self.build_tech_buttons()
+                            self.parent.update_sprites()
+                    
                     return on_click
-
+                
                 button.on_click = make_handler()
                 self.manager.add(button)
 
+    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
+        """Обработка нажатия мыши"""
+        if button == arcade.MOUSE_BUTTON_RIGHT:
+            self.panning = True
+            self.last_mouse_pos = (x, y)
+
+    def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
+        """Обработка отпускания мыши"""
+        if button == arcade.MOUSE_BUTTON_RIGHT:
+            self.panning = False
+
+    def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
+        """Обработка перетаскивания мыши"""
+        if buttons & arcade.MOUSE_BUTTON_RIGHT:
+            # Панорамирование
+            self.offset_x += dx / self.zoom
+            self.offset_y += dy / self.zoom
+            self.build_tech_buttons()  # Обновляем позиции кнопок
+        elif buttons & arcade.MOUSE_BUTTON_LEFT:
+            # Альтернативный способ панорамирования
+            self.offset_x += dx / self.zoom
+            self.offset_y += dy / self.zoom
+            self.build_tech_buttons()
+
+    def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
+        """Обработка прокрутки колесика мыши"""
+        # Сохраняем старый зум
+        old_zoom = self.zoom
+        
+        # Меняем зум
+        if scroll_y > 0:
+            self.zoom = min(self.zoom * 1.1, MAX_ZOOM)
+        else:
+            self.zoom = max(self.zoom / 1.1, MIN_ZOOM)
+        
+        # Корректируем смещение для зумирования относительно курсора
+        if old_zoom != self.zoom:
+            # Преобразуем координаты мыши в мировые координаты
+            world_x, world_y = self.inverse_transform(x, y)
+            
+            # Пересчитываем смещение
+            center_x = self.window.width / 2
+            center_y = self.window.height / 2
+            
+            # Новое смещение для сохранения точки под курсором
+            self.offset_x = (world_x - center_x) * (1 - self.zoom / old_zoom) + self.offset_x * (self.zoom / old_zoom)
+            self.offset_y = (world_y - center_y) * (1 - self.zoom / old_zoom) + self.offset_y * (self.zoom / old_zoom)
+            
+            # Обновляем кнопки
+            self.build_tech_buttons()
+
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.ESCAPE:
+        if key == arcade.key.ESCAPE or key == arcade.key.H: 
             self.window.show_view(self.parent)
+        elif key == arcade.key.R:
+            # Сброс трансформации
+            self.zoom = 1.0
+            self.offset_x = 0
+            self.offset_y = 0
+            self.build_tech_buttons()
+        elif key == arcade.key.EQUAL or key == arcade.key.PLUS:
+            self.zoom = min(self.zoom * 1.1, MAX_ZOOM)
+            self.build_tech_buttons()
+        elif key == arcade.key.MINUS:
+            self.zoom = max(self.zoom / 1.1, MIN_ZOOM)
+            self.build_tech_buttons()
+        elif key == arcade.key.UP:
+            self.offset_y -= 20 / self.zoom
+            self.build_tech_buttons()
+        elif key == arcade.key.DOWN:
+            self.offset_y += 20 / self.zoom
+            self.build_tech_buttons()
+        elif key == arcade.key.LEFT:
+            self.offset_x += 20 / self.zoom
+            self.build_tech_buttons()
+        elif key == arcade.key.RIGHT:
+            self.offset_x -= 20 / self.zoom
+            self.build_tech_buttons()
+
+    def on_update(self, delta_time: float):
+        """Обновление позиций кнопок"""
+        # Позиции кнопок обновляются при изменении трансформации
+        pass
 
 
 def get_tech_state(branch, index, tech_tree: TechTree):
