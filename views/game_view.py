@@ -812,7 +812,7 @@ class GameView(arcade.View):
             if player.is_alive:
                 c += 1
                 p = player
-        if c > 1 or self.player_amount == 1:
+        if c > 1 or (self.player_amount == 1 and c == 1):
             return False
         self.end_game(p)
         return True
