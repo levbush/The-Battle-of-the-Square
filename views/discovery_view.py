@@ -210,6 +210,9 @@ class DiscoveryView(arcade.View):
         if key == arcade.key.ESCAPE:
             self.window.show_view(self.parent)
 
+        if key == arcade.key.H:
+            self.window.show_view(self.parent)
+
 
     def on_draw(self):
         self.clear()
