@@ -75,8 +75,6 @@ class DiscoveryView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
-    # ---------------- TRANSFORMS ----------------
-
     def apply_transform(self, x, y):
         cx = self.window.width / 2
         cy = self.window.height / 2
@@ -92,8 +90,6 @@ class DiscoveryView(arcade.View):
             (x - cx) / self.zoom + cx - self.offset_x,
             (y - cy) / self.zoom + cy - self.offset_y,
         )
-
-    # ---------------- BUILD ----------------
 
     def rebuild(self):
         self.create_tech_elements()
@@ -185,8 +181,6 @@ class DiscoveryView(arcade.View):
             button.on_click = make_handler()
             self.manager.add(button)
 
-    # ---------------- INPUT ----------------
-
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         old_zoom = self.zoom
 
@@ -253,8 +247,6 @@ class DiscoveryView(arcade.View):
 
         self.batch.draw()
 
-
-# ---------------- HELPERS ----------------
 
 def get_tech_state(branch, index, tech_tree: TechTree):
     tech = branch[index]
