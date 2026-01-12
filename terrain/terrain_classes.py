@@ -7,6 +7,8 @@ from enum import IntEnum
 
 
 class ModifierType(IntEnum):
+    'Enum class for modifier types'
+
     FRUITS = 0
     ANIMAL = 1
     MOUNTAIN = 2
@@ -17,11 +19,15 @@ class ModifierType(IntEnum):
 
 
 class TerrainType(IntEnum):
+    'Enum class for tile types'
+
     LAND = 0
     WATER = 1
 
 
 class CustomTexture:
+    'Class for storing textures and simultaneously having the property eval(repr(self)) == self for storing'
+
     def __init__(self, path):
         self.path = path
         self.texture = load_texture(path)
@@ -31,9 +37,11 @@ class CustomTexture:
 
 
 class ModifierBase:
+    'Base class for modifiers'
+
     weight: int
     type: ModifierType
-    textures: tuple[CustomTexture]
+    textures: tuple[CustomTexture]  # These are tuples because some modifiers use multiple textures
     offsets: tuple[int]
     scales: tuple[float]
     cost: int | None
@@ -54,6 +62,7 @@ class ModifierBase:
 
 
 class Fruits(ModifierBase):
+    'Fruits modifier class'
     weight = 18
     type = ModifierType.FRUITS
     textures = (CustomTexture("assets/resources/fruits.png"),)
@@ -70,6 +79,8 @@ class Fruits(ModifierBase):
 
 
 class Animal(ModifierBase):
+    'Animal modifier class'
+
     weight = 18
     type = ModifierType.ANIMAL
     textures = (CustomTexture("assets/resources/animal.png"),)
@@ -86,6 +97,8 @@ class Animal(ModifierBase):
 
 
 class Mountain(ModifierBase):
+    'Mountain modifier class'
+
     weight = 6
     type = ModifierType.MOUNTAIN
     textures = (CustomTexture("assets/terrain/mountain.png"),)
@@ -99,9 +112,11 @@ class Mountain(ModifierBase):
 
 
 class GoldMountain(ModifierBase):
+    'Mountain with gold modifier class'
+
     weight = 3
     type = ModifierType.GOLD_MOUNTAIN
-    textures = CustomTexture("assets/resources/gold.png"), Mountain.textures[0]
+    textures = CustomTexture("assets/resources/gold.png"), Mountain.textures[0]  # Multiple as gold isn't a mountain by itself
     offsets = 75, Mountain.offsets[0]
     scales = 0.2, Mountain.scales[0]
     cost = 4
@@ -113,6 +128,8 @@ class GoldMountain(ModifierBase):
 
 
 class Forest(ModifierBase):
+    'Mountain modifier class'
+
     weight = 13
     type = ModifierType.FOREST
     textures = (CustomTexture("assets/terrain/forest.png"),)
@@ -129,6 +146,8 @@ class Forest(ModifierBase):
 
 
 class Village(ModifierBase):
+    'Village modifier class'
+
     weight = 5
     type = ModifierType.VILLAGE
     textures = (CustomTexture("assets/misc/village.png"),)
@@ -142,9 +161,11 @@ class Village(ModifierBase):
 
 
 class Fish(ModifierBase):
+    'Fish modifier class'
+
     weight = 35
     type = ModifierType.FISH
-    textures = (CustomTexture("assets/resources/fish.png"),)
+    textures = (CustomTexture("assets/resources/fish.png"),)  # It's a very exotic type of fish
     offsets = (60,)
     scales = (0.2,)
     cost = 2
@@ -159,13 +180,16 @@ LAND_MODIFIERS: list[type] = [lambda: None, Fruits, Animal, Mountain, GoldMounta
 WATER_MODIFIERS: list[type] = [lambda: None, Fish]
 
 
-def land_modifiers_weights():
+def land_modifiers_weights() -> list[int]:
+    'Gives a list of weights using `LAND_MODIFIERS`. `sum(land_modifiers_weights()) == 100`'
     return [100 - sum([modifier.weight for modifier in LAND_MODIFIERS if modifier()])] + [
         modifier.weight for modifier in LAND_MODIFIERS if modifier()
     ]
 
 
-def water_modifiers_weights():
+def water_modifiers_weights() -> list[int]:
+    'Gives a list of weights using `WATER_MODIFIERS`. `sum(water_modifiers_weights()) == 100`'
+
     return [100 - sum([modifier.weight for modifier in WATER_MODIFIERS if modifier()])] + [
         modifier.weight for modifier in WATER_MODIFIERS if modifier()
     ]
@@ -173,6 +197,8 @@ def water_modifiers_weights():
 
 @dataclass
 class TileBase:
+    'Base class for tiles'
+
     visible_mapping: list[bool]
     city: 'City' = None
     unit: UnitBase | None = None
@@ -205,6 +231,8 @@ class TileBase:
 
 
 class Land(TileBase):
+    'Land tile class'
+
     weight = 75
     type = TerrainType.LAND
     texture = CustomTexture("assets/terrain/ground.png")
@@ -214,6 +242,8 @@ class Land(TileBase):
 
 
 class Water(TileBase):
+    'Water tile class'
+
     weight = 20
     type = TerrainType.WATER
     texture = CustomTexture("assets/terrain/water.png")
@@ -225,11 +255,14 @@ class Water(TileBase):
 TERRAIN_TYPES: list[TileBase] = [Land, Water]
 
 
-def terrain_types_weights():
+def terrain_types_weights() -> list[int]:
+    'Gives a list of weights using `TERRAIN_TYPES`'
     return [t.weight for t in TERRAIN_TYPES]
 
 
 class Tile:
+    'Builder class for tiles, uses `TERRAIN_TYPES`'
+
     def __new__(
         cls,
         row,

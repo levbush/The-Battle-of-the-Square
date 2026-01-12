@@ -5,6 +5,8 @@ from database import DB_PATH
 
 
 class SettingsView(arcade.View):
+    'Settings'
+
     def __init__(self, parent=None):
         super().__init__()
 

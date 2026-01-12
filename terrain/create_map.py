@@ -5,6 +5,8 @@ from unitclasses import Unit
 
 
 def create_map(side: int, players: list[Player]):
+    '''Create randomly filled game map'''
+
     map: list[list[TileBase]] = []
     villages: list[tuple[int, int]] = []
     for x in range(side):
@@ -14,18 +16,20 @@ def create_map(side: int, players: list[Player]):
                 map[x].append(Tile(x, y, Land, [False] * len(players)))
                 continue
             terrain_type = choices(TERRAIN_TYPES, terrain_types_weights(), k=1)[0]
+
             if terrain_type == Land:
                 modifier_type = choices(LAND_MODIFIERS, land_modifiers_weights(), k=1)[0]()
                 map[x].append(Tile(x, y, Land, [False] * len(players), modifier=modifier_type))
-                if modifier_type.__class__ == Village:
+                if modifier_type.__class__ == Village:  # We need to take into account that villages and towns can't intersect with each other.
                     villages.append((x, y))
+            
             elif terrain_type == Water:
                 modifier_type = choices(WATER_MODIFIERS, water_modifiers_weights(), k=1)[0]()
                 map[x].append(Tile(x, y, Water, [False] * len(players), modifier=modifier_type))
 
     for player in players:
         visible_tiles: list[tuple[int]] = []
-        while True:
+        while True:  # Creating a capital for each player
             flag = True
             x, y = randint(2, side - 3), randint(2, side - 3)
             for i in range(x - 2, x + 3):
@@ -43,7 +47,6 @@ def create_map(side: int, players: list[Player]):
             if not flag:
                 continue
             for i, j in visible_tiles:
-                j: int
                 map[i][j].visible_mapping[player.id] = True
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
@@ -54,7 +57,7 @@ def create_map(side: int, players: list[Player]):
                     map[x + dx][y + dy].owner = city
             break
 
-    for x, y in villages:
+    for x, y in villages:  # Deleting overlapping villages
         if map[x][y].modifier.__class__ != Village or not (1 <= x <= side - 2 and 1 <= y <= side - 2):
             map[x][y].modifier = None
             continue

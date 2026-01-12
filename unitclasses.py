@@ -6,6 +6,7 @@ from enum import IntEnum
 
 
 class UnitType(IntEnum):
+    'Enum class for unit types'
     WARRIOR = 0
     DEFENDER = 1
     RIDER = 2
@@ -15,6 +16,8 @@ class UnitType(IntEnum):
 
 @dataclass
 class UnitBase:
+    'The base class for units'
+
     owner: 'Player'
     pos: tuple[int, int]
     max_health: int = field(repr=False)
@@ -36,6 +39,7 @@ class UnitBase:
 
     @staticmethod
     def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
+        '''Attack unit'''
         if attacker.owner == defender.owner:
             return
 
@@ -55,7 +59,7 @@ class UnitBase:
         defense_damage = round((defense_force / total) * defender.defense * 4.5)
 
         defender.health -= attack_damage
-        if defender.health <= 0:
+        if defender.health <= 0 and abs(attacker.pos[0] - defender.pos[0]) <= 1 and abs(attacker.pos[1] - defender.pos[1]) <= 1:
             attacker.move(defender.pos)
             defender.die()
             return
@@ -69,17 +73,20 @@ class UnitBase:
                 attacker.die()
 
     def move(self, pos: tuple[int, int]):
-        # TODO: add animation
+        '''Well it should move, but it's implemented in the `GameView`. To be reworked'''
+        # TODO: add animation and logic
         self.pos = pos
 
     def die(self):
-        """Помечает юнита как мертвого"""
+        """Mark the unit as dead"""
         self.is_alive = False
         self.health = 0
         print(f"Unit died: {self}")
 
 
 class Warrior(UnitBase):
+    'The warrior unit class'
+
     type = UnitType.WARRIOR
     name = 'warrior'
 
@@ -88,6 +95,8 @@ class Warrior(UnitBase):
 
 
 class Defender(UnitBase):
+    'The defender unit class'
+
     type = UnitType.DEFENDER
     name = 'defender'
 
@@ -96,6 +105,8 @@ class Defender(UnitBase):
 
 
 class Rider(UnitBase):
+    'The rider unit class'
+
     type = UnitType.RIDER
     name = 'rider'
 
@@ -104,6 +115,8 @@ class Rider(UnitBase):
 
 
 class Archer(UnitBase):
+    'The archer unit class'
+
     type = UnitType.ARCHER
     name = 'archer'
 
@@ -112,6 +125,8 @@ class Archer(UnitBase):
 
 
 class Giant(UnitBase):
+    'The giant unit class'
+
     type = UnitType.GIANT
     name = 'giant'
 
@@ -129,11 +144,15 @@ UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
 
 
 class Unit:
+    'Builder class for units, uses `UNIT_TYPES`'
+
     def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int):
         return UNIT_TYPES[unit_type](owner, (x, y))
 
 
 class UnitTexture:
+    'Fancy and repr-able texture for a unit'
+
     def __init__(self, name):
         self.name = name
         self.ally, self.enemy, self.bot = (

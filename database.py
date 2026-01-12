@@ -5,6 +5,7 @@ DB_PATH = 'game.db'
 
 
 def init_dbs():
+    'Init the database. Does none if it exists.'
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
