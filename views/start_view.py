@@ -10,6 +10,8 @@ import random
 
 
 class StartView(arcade.View):
+    'The fist view'
+
     def __init__(self):
         super().__init__()
         self.back_img = arcade.load_texture(r'assets/misc/menu_background.jpg')
@@ -39,6 +41,7 @@ class StartView(arcade.View):
         )
 
     def setup_widgets(self):
+        'Setup buttons'
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         data = c.execute('SELECT * FROM map').fetchone()
@@ -69,6 +72,9 @@ class StartView(arcade.View):
 
         self.new_game_button.on_click = lambda event: self.new_game()
         self.box_layout.add(self.new_game_button)
+        if self.resume_game_button:
+            self.box_layout.add(self.resume_game_button)
+            # TODO: resume game
 
     def on_draw(self):
         self.clear()
@@ -85,6 +91,7 @@ class StartView(arcade.View):
         self.trail.update()
 
     def new_game(self):
+        'Start the creation of a new game'
         view = CreateGameView()
         self.manager.disable()
         self.window.show_view(view)

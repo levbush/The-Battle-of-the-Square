@@ -1,4 +1,4 @@
-import arcade.gui
+from arcade.gui import UIFlatButton, UIBoxLayout
 from arcade.types import AnchorPoint
 import arcade
 from dataclasses import dataclass, field
@@ -8,7 +8,9 @@ if __name__ == '__main__':
     from terrain.terrain_classes import TileBase
 
 
-class AnimatedButton(arcade.gui.UIFlatButton):
+class AnimatedButton(UIFlatButton):
+    'A button with animation'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -32,6 +34,7 @@ class AnimatedButton(arcade.gui.UIFlatButton):
 
 
 class HorizontalRadioButtonGroup:
+    'A group of radio buttons'
     def __init__(
         self,
         options: list[str],
@@ -49,12 +52,12 @@ class HorizontalRadioButtonGroup:
         self.button_width = button_width
         self.button_height = button_height
 
-        self.layout = arcade.gui.UIBoxLayout(vertical=False, space_between=spacing)
+        self.layout = UIBoxLayout(vertical=False, space_between=spacing)
 
-        self.buttons: list[arcade.gui.UIFlatButton] = []
+        self.buttons: list[UIFlatButton] = []
 
         for i, label in enumerate(options):
-            button = arcade.gui.UIFlatButton(text=str(label), width=button_width, height=button_height)
+            button = UIFlatButton(text=str(label), width=button_width, height=button_height)
             button.on_click = self._make_handler(i)
             self.buttons.append(button)
             self.layout.add(button)
@@ -100,7 +103,7 @@ class HorizontalRadioButtonGroup:
         self.options = [str(o) for o in options]
 
         for i, label in enumerate(self.options):
-            button = arcade.gui.UIFlatButton(text=label, width=self.button_width, height=self.button_height)
+            button = UIFlatButton(text=label, width=self.button_width, height=self.button_height)
             button.on_click = self._make_handler(i)
             self.buttons.append(button)
             self.layout.add(button)
@@ -170,6 +173,7 @@ class HorizontalRadioButtonGroup:
 
 @dataclass(eq=False)
 class Player:
+    'Class defining a player'
     id: int
     is_bot: bool
     is_alive: bool = True
@@ -190,6 +194,7 @@ class Player:
 
 @dataclass
 class City:
+    'Class defining a city'
     owner: Player | int
     level: int = 0
     population: int = 0

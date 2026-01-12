@@ -5,6 +5,8 @@ from classes import Player
 
 
 class NextTurnView(arcade.View):
+    'Transit view to the next turn'
+
     def __init__(self, player: Player, parent: arcade.View):
         super().__init__(background_color=parent.background_color)
 

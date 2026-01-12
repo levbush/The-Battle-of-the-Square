@@ -10,6 +10,8 @@ COUNT_MUSIC = 6
 
 
 class MainWindow(arcade.Window):
+    'The window of the game.'
+
     def __init__(self, width, height, title):
         super().__init__(width, height, title, fullscreen=True)
         self.music_volume = 0.6
@@ -18,6 +20,7 @@ class MainWindow(arcade.Window):
         self.reset()
 
     def reset(self):
+        'Reset self'
         self.music = arcade.play_sound(
             arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), self.music_volume, loop=True
         )
@@ -40,14 +43,17 @@ class MainWindow(arcade.Window):
             )
 
     def set_settings(self, **kwargs):
+        'Set settings'
         self.music_volume = kwargs.get('music_volume') / 100 or self.music_volume
         self.sfx_volume = kwargs.get('sfx_volume') / 100 or self.sfx_volume
 
     def to_menu(self):
+        'Return to the very first view (`StartView()`)'
         self.show_view(StartView())
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
+    '''Setup the game'''
     window = MainWindow(width, height, title)
     start_view = StartView()
     window.show_view(start_view)
@@ -55,6 +61,7 @@ def setup_game(width=800, height=600, title="Battle of the Square"):
 
 
 def main():
+    '''Start the game'''
     init_dbs()
     setup_game(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.run()

@@ -9,6 +9,8 @@ from database import SPARK_TEX
 
 
 class CreateGameView(arcade.View):
+    'View for creating a new game'
+
     def __init__(self):
         super().__init__()
         self.back_img = arcade.load_texture('assets/misc/menu_background.jpg')
@@ -73,6 +75,8 @@ class CreateGameView(arcade.View):
         self.update_selectors('')
 
     def update_selectors(self, sender):
+        'Update the options depending on the selection'
+
         if self.area_selector._selected_index is None:
             return
 
@@ -113,6 +117,7 @@ class CreateGameView(arcade.View):
         self.trail.draw()
 
     def start_game(self):
+        'Start the game if appropriate'
         area, bot_amount, player_amount, bot_difficulty = (
             self.area_selector.selected(),
             self.bot_amount_selector.selected(),
