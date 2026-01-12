@@ -150,6 +150,79 @@ class DiscoveryView(arcade.View):
             button.on_click = make_handler()
             self.manager.add(button)
 
+    def on_show_view(self):
+        self.parent.manager.disable()
+        self.manager.enable()
+        self.rebuild()
+
+    def on_hide_view(self):
+        self.manager.disable()
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        old_zoom = self.zoom
+
+        if scroll_y > 0:
+            self.zoom = min(self.zoom * (1 + ZOOM_SPEED), MAX_ZOOM)
+        elif scroll_y < 0:
+            self.zoom = max(self.zoom * (1 - ZOOM_SPEED), MIN_ZOOM)
+
+        if self.zoom == old_zoom:
+            return
+
+        world_x, world_y = self.inverse_transform(x, y)
+        new_x, new_y = self.apply_transform(world_x, world_y)
+
+        self.offset_x += (x - new_x) / self.zoom
+        self.offset_y += (y - new_y) / self.zoom
+
+        self.build_tech_buttons()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.parent)
+
+        if key == arcade.key.H:
+            self.window.show_view(self.parent)
+
+    def on_draw(self):
+        self.clear()
+        self.cost_labels.clear()
+        self.manager.draw()
+
+        for line in self.line_elements:
+            x1, y1 = self.apply_transform(line["x1"], line["y1"])
+            x2, y2 = self.apply_transform(line["x2"], line["y2"])
+            arcade.draw_line(x1, y1, x2, y2, arcade.color.GRAY, 2)
+
+        for element in self.tech_elements:
+            x, y = self.apply_transform(element["x"], element["y"])
+            size = TECH_SIZE * self.zoom
+
+            draw_centered_texture(element["texture"], x, y, size, size)
+
+            if element["state"] in ("open", "completed"):
+                draw_tech_textures(
+                    element["cls"],
+                    x,
+                    y,
+                    size * ICON_SCALE
+                )
+
+                cost = 4 if element["depth"] == 0 else 5
+                label = arcade.Text(
+                    text=str(cost),
+                    font_size=14,
+                    color=arcade.color.BLACK,
+                    x=int(x),
+                    y=int(y - size / 2 - 22),
+                    anchor_x="center",
+                    anchor_y="center",
+                    batch=self.batch,
+                )
+                self.cost_labels.append(label)
+
+        self.batch.draw()
+
 
 def get_tech_state(branch: tuple[type, ...], index: int, tech_tree: TechTree) -> str:
     '''Return tech state: completed, open or hidden'''

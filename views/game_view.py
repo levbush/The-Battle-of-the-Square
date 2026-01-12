@@ -173,7 +173,6 @@ class GameView(arcade.View):
         self.draw_city_borders()
         self.world_batch.draw()
         self.draw_valid_moves()
-        self.draw_path()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
@@ -813,7 +812,7 @@ class GameView(arcade.View):
             if player.is_alive:
                 c += 1
                 p = player
-        if c > 1:
+        if c > 1 or self.player_amount == 1:
             return False
         self.end_game(p)
         return True
