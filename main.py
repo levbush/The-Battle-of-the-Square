@@ -1,6 +1,7 @@
 import arcade
 from views.start_view import StartView
-from database import init_dbs
+from views.game_view import GameView
+from database import init_db
 import random
 
 
@@ -51,6 +52,9 @@ class MainWindow(arcade.Window):
         'Return to the very first view (`StartView()`)'
         self.show_view(StartView())
 
+    def on_close(self):
+        if isinstance(self.current_view, GameView): self.current_view.save_map()
+
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
     '''Setup the game'''
@@ -62,7 +66,7 @@ def setup_game(width=800, height=600, title="Battle of the Square"):
 
 def main():
     '''Start the game'''
-    init_dbs()
+    init_db()
     setup_game(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.run()
 

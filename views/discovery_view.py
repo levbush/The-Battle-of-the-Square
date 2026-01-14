@@ -190,25 +190,25 @@ class DiscoveryView(arcade.View):
         self.manager.draw()
 
         for line in self.line_elements:
-            x1, y1 = self.apply_transform(line["x1"], line["y1"])
-            x2, y2 = self.apply_transform(line["x2"], line["y2"])
+            x1, y1 = self.apply_transform(line.x1, line.y1)
+            x2, y2 = self.apply_transform(line.x2, line.y2)
             arcade.draw_line(x1, y1, x2, y2, arcade.color.GRAY, 2)
 
         for element in self.tech_elements:
-            x, y = self.apply_transform(element["x"], element["y"])
+            x, y = self.apply_transform(element.x, element.y)
             size = TECH_SIZE * self.zoom
 
-            draw_centered_texture(element["texture"], x, y, size, size)
+            draw_centered_texture(element.texture, x, y, size, size)
 
-            if element["state"] in ("open", "completed"):
+            if element.state in ("open", "completed"):
                 draw_tech_textures(
-                    element["cls"],
+                    element.cls,
                     x,
                     y,
                     size * ICON_SCALE
                 )
 
-                cost = 4 if element["depth"] == 0 else 5
+                cost = 4 if element.depth == 0 else 5
                 label = arcade.Text(
                     text=str(cost),
                     font_size=14,
@@ -251,7 +251,7 @@ def draw_centered_texture(texture: arcade.Texture, x: float, y: float, max_w: fl
 
 def draw_tech_textures(cls: type, x: float, y: float, size: float) -> None:
     '''Draw tech icon depending on class type'''
-    if isinstance(cls, ModifierBase):
+    if issubclass(cls, ModifierBase):
         count = len(cls.textures)
         offset = size * 0.15
 
@@ -260,8 +260,8 @@ def draw_tech_textures(cls: type, x: float, y: float, size: float) -> None:
             draw_centered_texture(tex_wrapper.texture, x + ox, y, size, size)
         return
 
-    if isinstance(cls, UnitBase):
+    if issubclass(cls, UnitBase):
         draw_centered_texture(cls.textures.ally, x, y, size, size)
         return
 
-    raise TypeError('Accepts only ModifierBase and UnitBase subclasses')
+    raise TypeError(f'Accepts only ModifierBase and UnitBase subclasses, given: {cls}')

@@ -1,7 +1,5 @@
 import arcade
 import arcade.gui
-import sqlite3
-from database import DB_PATH
 
 
 class SettingsView(arcade.View):
@@ -132,10 +130,7 @@ class SettingsView(arcade.View):
         self.manager.draw()
 
     def save(self):
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-
-        ...
+        self.parent.save_map()
 
         self.window.set_settings(music_volume=self.music_volume, sfx_volume=self.sfx_volume)
 

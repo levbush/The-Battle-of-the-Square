@@ -179,7 +179,7 @@ class Player:
     is_alive: bool = True
     cities: list["City"] = field(default_factory=list, repr=False)
     stars: int = 3
-    open_tech: TechTree = TechTree()
+    open_tech: TechTree = field(default_factory=TechTree)
 
     def __post_init__(self):
         for city in self.cities:

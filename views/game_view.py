@@ -3,14 +3,16 @@ import arcade.color
 from arcade.gui import UIManager, UITextureButton
 from views.next_turn_view import NextTurnView
 from terrain.create_map import create_map
-from classes import Player
+from classes import Player, TechTree, City
 from random import shuffle
 from terrain.terrain_classes import *
 from pyglet.graphics import Batch
-import math
+import sqlite3
+from database import DB_PATH, init_db, SETTINGS
 from views.settings_view import SettingsView
 from views.discovery_view import DiscoveryView
 from views.winner_view import WinnerView
+from unitclasses import *
 
 
 class GameView(arcade.View):
@@ -36,6 +38,7 @@ class GameView(arcade.View):
         self.valid_move_tiles = []
         self.path = []
         self.cost_tooltip = None
+        self.first_move_in_session = True
 
         self.world_camera = arcade.camera.Camera2D()
         self.gui_camera = arcade.camera.Camera2D()
@@ -58,14 +61,17 @@ class GameView(arcade.View):
                 self.players[i].id = i
             self.current_player: Player | None = None
 
-            self.tiles = arcade.SpriteList(use_spatial_hash=True)
-            self.modifiers = arcade.SpriteList(use_spatial_hash=True)
-            self.cities = arcade.SpriteList(use_spatial_hash=True)
-            self.units = arcade.SpriteList(use_spatial_hash=True)
-            self.move_popups = arcade.SpriteList()
             self.map = create_map(self.size_map, self.players)
             self.move_n = 0
 
+        else:
+            self.load_game()
+
+        self.tiles = arcade.SpriteList(use_spatial_hash=True)
+        self.modifiers = arcade.SpriteList(use_spatial_hash=True)
+        self.cities = arcade.SpriteList(use_spatial_hash=True)
+        self.units = arcade.SpriteList(use_spatial_hash=True)
+        self.move_popups = arcade.SpriteList()
         self.next_turn_btn = UITextureButton(
             x=self.width // 2 + self.width * 0.075,
             y=self.height * 0.05,
@@ -121,7 +127,7 @@ class GameView(arcade.View):
 
     def on_show_view(self):
         self.manager.enable()
-        if self.current_player is None:
+        if self.current_player is None or self.first_move_in_session:
             self.change_POV()
 
     def change_POV(self):
@@ -132,9 +138,12 @@ class GameView(arcade.View):
         
         if self.check_win():
             return
+            
 
-        if self.current_player is None:
-            self.current_player = self.players[0]
+        if self.current_player is None or self.first_move_in_session:
+            if self.current_player is None:
+                self.current_player = self.players[0]
+            self.first_move_in_session = False
             self.make_player_move()
         else:
             prev = self.current_player.id
@@ -818,7 +827,96 @@ class GameView(arcade.View):
         self.end_game(p)
         return True
 
-
     def end_game(self, winner=None):
         'End the game.'
         self.window.show_view(WinnerView(winner, self))
+
+    def save_map(self):
+        with open(DB_PATH, 'w'):
+            pass
+
+        init_db()
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+
+        data = [
+            (x, y, repr(self.map[x][y]))
+            for x in range(self.size_map)
+            for y in range(self.size_map)
+        ]
+
+        c.executemany(
+            '''
+            INSERT OR REPLACE INTO map (x, y, value)
+            VALUES (?, ?, ?)
+            ''',
+            data
+        )
+
+        c.executemany(
+            'INSERT OR REPLACE INTO players (id, value) VALUES (?, ?)',
+            [(p.id, repr(p)) for p in self.players]
+        )
+
+        c.executemany(
+            'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+            [(k, getattr(self.window, k) * 100) for k in SETTINGS]
+        )
+
+        game_state = {
+            "current_player": self.current_player.id,
+            "move_n": self.move_n,
+            "size_map": self.size_map,
+            "bot_amount": self.bot_amount,
+            "player_amount": self.player_amount,
+            "bot_difficulty": self.bot_difficulty,
+        }
+
+        c.executemany(
+            'INSERT OR REPLACE INTO game_state (key, value) VALUES (?, ?)',
+            [(k, str(v)) for k, v in game_state.items()]
+        )
+
+        conn.commit()
+        conn.close()
+
+    def load_game(self):
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        self.map = [[0 for _ in range(self.size_map)] for _ in range(self.size_map)]
+        c.execute('SELECT value FROM players')
+        self.players = [eval(v) for (v,) in c.fetchall()]
+        players_by_id = {p.id: p for p in self.players}
+
+        c.execute('SELECT x, y, value FROM map')
+        for x, y, value in c.fetchall():
+            print(value)
+            tile: TileBase = eval(value)
+            tile.row = x
+            tile.col = y
+
+            if tile.unit:
+                tile.unit.owner = players_by_id[tile.unit.owner.id]
+
+            if tile.city:
+                tile.city.owner = players_by_id[tile.city.owner.id]
+
+            if tile.owner:
+                tile.owner.owner = players_by_id[tile.owner.owner.id]
+
+            self.map[x][y] = tile
+
+        c.execute('SELECT key, value FROM settings')
+        for key, value in c.fetchall():
+            setattr(self.window, key, value / 100)
+
+        c.execute('SELECT key, value FROM game_state')
+        game_state = {k: eval(v) for k, v in c.fetchall()}
+
+        if "current_player" in game_state:
+            self.current_player = players_by_id[game_state["current_player"]]
+
+        if "move_n" in game_state:
+            self.move_n = game_state["move_n"]
+
+        conn.close()

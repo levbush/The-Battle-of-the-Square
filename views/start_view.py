@@ -4,7 +4,7 @@ from arcade.gui import UIManager
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 import sqlite3
 from database import DB_PATH, SPARK_TEX
-from views.create_game_view import CreateGameView
+from views.create_game_view import CreateGameView, GameView
 from arcade.particles import EmitMaintainCount, Emitter, FadeParticle
 import random
 
@@ -70,11 +70,11 @@ class StartView(arcade.View):
         else:
             self.resume_game_button = None
 
-        self.new_game_button.on_click = lambda event: self.new_game()
+        self.new_game_button.on_click = lambda _: self.new_game()
         self.box_layout.add(self.new_game_button)
         if self.resume_game_button:
             self.box_layout.add(self.resume_game_button)
-            # TODO: resume game
+            self.resume_game_button.on_click = lambda _: self.resume_game()
 
     def on_draw(self):
         self.clear()
@@ -99,3 +99,23 @@ class StartView(arcade.View):
     def on_mouse_motion(self, x, y, dx, dy):
         self.trail.center_x = x
         self.trail.center_y = y - 20
+
+    def resume_game(self):
+        'Load the game from db'
+
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+
+        c.execute('SELECT key, value FROM game_state')
+        state = {k: eval(v) for k, v in c.fetchall()}
+
+        conn.close()
+
+        size_map = state["size_map"]
+        bot_amount = state["bot_amount"]
+        player_amount = state["player_amount"]
+        bot_difficulty = state["bot_difficulty"]
+        view = GameView(new_game=False, size_map=size_map, bot_amount=bot_amount, player_amount=player_amount, bot_difficulty=bot_difficulty)
+
+        self.manager.disable()
+        self.window.show_view(view)
