@@ -37,6 +37,8 @@ class WinnerView(arcade.View):
             batch=self.batch
         )]
 
+        # TODO: add statistics?
+
     def on_show_view(self):
         arcade.set_background_color(arcade.color.BLACK)
 
