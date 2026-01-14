@@ -141,7 +141,7 @@ class SettingsView(arcade.View):
 
     def resign(self, _):
         self.on_key_press(arcade.key.ESCAPE, 0)
-        self.parent.current_player.is_bot = True
+        self.parent.current_player.is_alive = True
         self.parent.change_POV()
 
     def on_show_view(self):

@@ -10,6 +10,7 @@ from pyglet.graphics import Batch
 import math
 from views.settings_view import SettingsView
 from views.discovery_view import DiscoveryView
+from views.winner_view import WinnerView
 
 
 class GameView(arcade.View):
@@ -812,7 +813,7 @@ class GameView(arcade.View):
             if player.is_alive:
                 c += 1
                 p = player
-        if c > 1 or (self.player_amount == 1 and c == 1):
+        if c > 1 or (len(self.players) == 1 and c == 1):
             return False
         self.end_game(p)
         return True
@@ -820,5 +821,4 @@ class GameView(arcade.View):
 
     def end_game(self, winner=None):
         'End the game.'
-        # self.window.show_view(WinnerView)
-        ...
+        self.window.show_view(WinnerView(winner, self))
