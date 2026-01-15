@@ -54,6 +54,7 @@ class MainWindow(arcade.Window):
 
     def on_close(self):
         if isinstance(self.current_view, GameView): self.current_view.save_map()
+        return super().on_close()
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):
