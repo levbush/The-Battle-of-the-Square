@@ -1,12 +1,12 @@
 import arcade
+import sqlite3
+import random
 from classes import AnimatedButton
 from arcade.gui import UIManager
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
-import sqlite3
 from database import DB_PATH, SPARK_TEX
 from views.create_game_view import CreateGameView, GameView
 from arcade.particles import EmitMaintainCount, Emitter, FadeParticle
-import random
 
 
 class StartView(arcade.View):

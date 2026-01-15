@@ -1,6 +1,6 @@
 from arcade.gui import UIFlatButton, UIBoxLayout
-from arcade.types import AnchorPoint
 import arcade
+from arcade.types import AnchorPoint
 from dataclasses import dataclass, field
 from views.discovery_view import TechTree
 

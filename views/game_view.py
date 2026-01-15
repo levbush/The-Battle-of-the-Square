@@ -1,5 +1,5 @@
 import arcade
-import arcade.color
+import sqlite3
 from arcade.gui import UIManager, UITextureButton
 from views.next_turn_view import NextTurnView
 from terrain.create_map import create_map
@@ -7,7 +7,6 @@ from classes import Player, TechTree, City
 from random import shuffle
 from terrain.terrain_classes import *
 from pyglet.graphics import Batch
-import sqlite3
 from database import DB_PATH, init_db, SETTINGS
 from views.settings_view import SettingsView
 from views.discovery_view import DiscoveryView

@@ -1,8 +1,8 @@
 import arcade
+import random
 from views.start_view import StartView
 from views.game_view import GameView
 from database import init_db
-import random
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
