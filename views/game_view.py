@@ -670,7 +670,7 @@ class GameView(arcade.View):
         if key == arcade.key.H:
             arcade.get_window().show_view(DiscoveryView(parent=self))
 
-    def check_win(self) -> bool:
+    def check_win(self) -> bool:  # TODO: здесь что-то не так
         if all(player.is_bot or not player.is_alive for player in self.players): self.end_game(); return True
         p = None
         c = 0
