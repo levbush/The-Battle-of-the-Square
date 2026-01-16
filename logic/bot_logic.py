@@ -120,4 +120,5 @@ class BotLogic:
                     if mod and mod.cost and not mod.is_collected:
                         if choices([0, 1], [20, 10 + 15 * self.game.bot_difficulty], k=1)[0]:
                             mod.collect()
+                            # self.game.movement_system.random_move(tile)
                             tile.add_population_to_city(mod.population)

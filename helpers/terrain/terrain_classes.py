@@ -1,9 +1,9 @@
 if __name__ == '__main__':
     from helpers.classes import City
-from helpers.unit_classes import UnitBase, Unit, UnitType
-from arcade import load_texture
+from helpers.unit_classes import UnitBase
 from dataclasses import dataclass, field
 from enum import IntEnum
+from helpers.custom_texture import CustomTexture
 
 
 class ModifierType(IntEnum):
@@ -23,17 +23,6 @@ class TerrainType(IntEnum):
 
     LAND = 0
     WATER = 1
-
-
-class CustomTexture:
-    'Class for storing textures and simultaneously having the property eval(repr(self)) == self for storing'
-
-    def __init__(self, path):
-        self.path = path
-        self.texture = load_texture(path)
-
-    def __repr__(self):
-        return f'CustomTexture("{self.path}")'
 
 
 class ModifierBase:
@@ -217,11 +206,7 @@ class TileBase:
         self.owner.population += n
         if self.owner.population >= self.owner.level + 2:
             self.owner.population -= self.owner.level + 2
-            self.owner.level += 1
-            if self.owner.level > 1:
-                # self.unit.random_move()
-                self.owner.tile.unit = Unit(UnitType.GIANT, self.owner.owner, self.row, self.col)
-                self.owner.tile.unit.move_remains = False
+            self.owner.level_up()
 
     def __post_init__(self):
         if self.modifier:

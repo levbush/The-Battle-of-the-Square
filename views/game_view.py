@@ -15,6 +15,7 @@ from helpers.unit_classes import *
 from logic.bot_logic import BotLogic
 from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
+from math import ceil
 
 
 class GameView(arcade.View):
@@ -90,14 +91,14 @@ class GameView(arcade.View):
         self.health_tooltips = []
 
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
-        self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
-        self.player_city_textures = [arcade.load_texture(f'assets/cities/player/House_{i}.png') for i in range(6)]
-        self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
-        self.city_textures = {
-            'bot': self.bot_city_textures,
-            'ally': self.player_city_textures,
-            'enemy': self.enemy_city_textures,
-        }
+        # self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
+        # self.player_city_textures = [arcade.load_texture(f'assets/cities/player/House_{i}.png') for i in range(6)]
+        # self.enemy_city_textures = [arcade.load_texture(f'assets/cities/enemy/House_{i}.png') for i in range(6)]
+        # self.city_textures = {
+        #     'bot': self.bot_city_textures,
+        #     'ally': self.player_city_textures,
+        #     'enemy': self.enemy_city_textures,
+        # }
         self.resource = arcade.load_texture('assets/misc/resource.png')
         self.science = arcade.load_texture("assets/misc/science.png")
         self.move_tooltip = arcade.load_texture('assets/misc/moveTarget.png')
@@ -232,8 +233,8 @@ class GameView(arcade.View):
             self.dragging = True
 
         if self.dragging:
-            dx = x - self.move_start[0]
-            dy = y - self.move_start[1]
+            dx = (x - self.move_start[0]) * 2
+            dy = (y - self.move_start[1]) * 2
             self.world_camera.position = (self.camera_start[0] - dx, self.camera_start[1] - dy)
 
     def on_mouse_release(self, x, y, button, modifiers):
@@ -250,7 +251,7 @@ class GameView(arcade.View):
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         zoom_speed = 0.1
         min_zoom = 0.2
-        max_zoom = 3.0
+        max_zoom = 1.5
 
         current_zoom = self.world_camera.zoom
 
@@ -340,7 +341,7 @@ class GameView(arcade.View):
 
     def screen_to_tile(self, x, y) -> TileBase | None:
         world_x, world_y = self.screen_to_world(x, y)
-        world_x -= self.width // 2
+        world_x -= self.width / 2
         world_y -= 150
 
         col = round((world_x / 150 + world_y / 90) / 2)
@@ -448,9 +449,9 @@ class GameView(arcade.View):
                 screen_x = (col_idx - row_idx) * 150 + self.width // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
 
-                # if not tile.visible_mapping[self.current_player.id]:
-                #     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-                #     continue
+                if not tile.visible_mapping[self.current_player.id]:
+                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+                    continue
 
                 self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
 
@@ -465,14 +466,8 @@ class GameView(arcade.View):
                             )
                         )
                 elif tile.city:
-                    if tile.city.owner.is_bot:
-                        texture = 'bot'
-                    elif tile.city.owner == self.current_player:
-                        texture = 'ally'
-                    else:
-                        texture = 'enemy'
                     self.cities.append(
-                        arcade.Sprite(self.city_textures[texture][tile.city.level], 0.5, screen_x, screen_y + 150)
+                        arcade.Sprite(tile.city.texture.texture, 0.5, screen_x, screen_y + 150)
                     )
                     self.city_tooltips.append(
                         arcade.Text(
@@ -488,13 +483,7 @@ class GameView(arcade.View):
                     )
 
                 if tile.unit:
-                    if tile.unit.owner == self.current_player:
-                        texture = tile.unit.textures.ally
-                    elif tile.unit.owner.is_bot:
-                        texture = tile.unit.textures.bot
-                    else:
-                        texture = tile.unit.textures.enemy
-                    self.units.append(arcade.Sprite(texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
+                    self.units.append(arcade.Sprite(tile.unit.texture.texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
 
                     self.health_tooltips.append(
                         arcade.Text(
@@ -601,6 +590,7 @@ class GameView(arcade.View):
         if self.current_player.stars < self.selected_modifier.cost:
             return
         
+        # self.movement_system.random_move(tile)
         tile.add_population_to_city(self.selected_modifier.population)
         tile.modifier.collect()
         self.current_player.stars -= self.selected_modifier.cost

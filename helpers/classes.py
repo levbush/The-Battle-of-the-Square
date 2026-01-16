@@ -1,8 +1,10 @@
-from arcade.gui import UIFlatButton, UIBoxLayout
 import arcade
+from arcade.gui import UIFlatButton, UIBoxLayout
 from arcade.types import AnchorPoint
 from dataclasses import dataclass, field
 from views.discovery_view import TechTree
+from helpers.unit_classes import Unit, UnitType
+from helpers.custom_texture import CustomTexture
 
 if __name__ == '__main__':
     from terrain.terrain_classes import TileBase
@@ -201,7 +203,16 @@ class City:
     level: int = 0
     population: int = 0
     tile: 'TileBase' = field(init=False, repr=False)
+    texture: CustomTexture = field(init=False, repr=False)
 
     def __post_init__(self):
         if self not in self.owner.cities:
             self.owner.cities.append(self)
+        self.texture = CustomTexture(f'assets/cities/{self.owner.id + 1}/House_{self.owner.id + 1}_{self.level + 1}.png')
+
+    def level_up(self):
+        self.level += 1
+        if self.level > 1:
+            self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
+            self.tile.unit.move_remains = False
+        self.texture = CustomTexture(f'assets/cities/{self.owner.id}/House_{self.level}.png')

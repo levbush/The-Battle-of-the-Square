@@ -3,6 +3,7 @@ if __name__ == '__main__':
 from dataclasses import dataclass, field
 from arcade import load_texture
 from enum import IntEnum
+from helpers.custom_texture import CustomTexture
 
 
 class UnitType(IntEnum):
@@ -30,12 +31,13 @@ class UnitBase:
 
     type: UnitType = field(init=False, repr=False)
     name: str = field(init=False, repr=False)
-    textures: 'UnitTexture' = field(init=False, repr=False)
+    texture: CustomTexture = field(init=False, repr=False)
     is_alive: bool = field(init=False, default=True, repr=False)
 
     def __post_init__(self):
         if self.health is None:
             self.health = self.max_health
+        self.texture = CustomTexture(f'assets/units/{self.owner.id + 1}/{self.name}.png')
 
     # @staticmethod
     # def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
@@ -145,18 +147,18 @@ class Unit:
         return UNIT_TYPES[unit_type](owner, (x, y))
 
 
-class UnitTexture:
-    'Fancy and repr-able texture for a unit'
+# class UnitTexture:
+#     'Fancy and repr-able texture for a unit'
 
-    def __init__(self, name):
-        self.name = name
-        self.ally, self.enemy, self.bot = (
-            load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/')
-        )
+#     def __init__(self, name):
+#         self.name = name
+#         self.ally, self.enemy, self.bot = (
+#             load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/')
+#         )
 
-    def __repr__(self):
-        return f'UnitTexture("{self.name}")'
+#     def __repr__(self):
+#         return f'UnitTexture("{self.name}")'
 
 
-for cls in UNIT_TYPES.values():
-    cls.textures = UnitTexture(cls.name)
+# for cls in UNIT_TYPES.values():
+#     cls.textures = UnitTexture(cls.name)

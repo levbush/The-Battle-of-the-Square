@@ -1,7 +1,7 @@
 from random import choices, randint
 from helpers.terrain.terrain_classes import *
 from helpers.classes import Player, City
-from helpers.unit_classes import Unit
+from helpers.unit_classes import Unit, UnitType
 
 
 def create_map(side: int, players: list[Player]):
@@ -54,7 +54,7 @@ def create_map(side: int, players: list[Player]):
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
             city = City(player)
-            map[x][y] = Tile(x, y, TerrainType.LAND, vm, city=city, unit=Unit(UnitType.WARRIOR, player, x, y))
+            map[x][y] = Tile(x, y, TerrainType.LAND, vm, city=city, unit=Unit(UnitType.ARCHER, player, x, y))
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     map[x + dx][y + dy].owner = city
