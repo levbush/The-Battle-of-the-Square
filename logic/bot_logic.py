@@ -92,7 +92,7 @@ class BotLogic:
         def reachable(target: TileBase) -> bool:
             return any(dist(m, target) < dist(start, target) for m in valid_moves)
 
-        for group in (enemy_units, enemy_cities, fog):
+        for group in (enemy_units + enemy_cities, fog):
             candidates = [t for t in group if reachable(t)]
             if candidates:
                 return min(candidates, key=lambda t: dist(start, t))
@@ -106,7 +106,7 @@ class BotLogic:
             if not tile.unit:
                 if choices([0, 1], [50, 50 + 30 * self.game.bot_difficulty], k=1)[0]:
                     tile.unit = Unit(
-                        randint(0, len(UNIT_TYPES) - 1),
+                        randint(0, len(UNIT_TYPES) - 2),
                         self.game.current_player,
                         tile.row,
                         tile.col

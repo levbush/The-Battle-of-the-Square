@@ -138,7 +138,6 @@ class GameView(arcade.View):
         
         if self.check_win():
             return
-            
 
         if self.current_player is None or self.first_move_in_session:
             if self.current_player is None:
@@ -152,6 +151,8 @@ class GameView(arcade.View):
             while self.current_player.is_bot or not self.current_player.is_alive:
                 if self.current_player.is_bot and self.current_player.is_alive:
                     self.make_bot_move()
+                    if self.check_win():
+                        return
                     self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
                     continue
             if self.current_player.id <= prev:
@@ -670,7 +671,7 @@ class GameView(arcade.View):
         if key == arcade.key.H:
             arcade.get_window().show_view(DiscoveryView(parent=self))
 
-    def check_win(self) -> bool:  # TODO: здесь что-то не так
+    def check_win(self) -> bool:
         if all(player.is_bot or not player.is_alive for player in self.players): self.end_game(); return True
         p = None
         c = 0
@@ -777,13 +778,14 @@ class GameView(arcade.View):
 
     def capture(self, tile: TileBase):
         player = self.current_player
+        city_owner = tile.city.owner
         if not tile.unit or tile.unit.owner != player:
             return
-        self.players[tile.city.owner.id].cities.remove(tile.city)
+        self.players[city_owner.id].cities.remove(tile.city)
         tile.city = City(player, tile.city.level, tile.city.population)
         tile.city.tile = tile
 
-        self.check_defeat_of_player(tile.city.owner)
+        self.check_defeat_of_player(city_owner)
         self.update_sprites()
 
     def check_defeat_of_player(self, player: Player):
@@ -795,3 +797,5 @@ class GameView(arcade.View):
             for tile in row:
                 if tile.unit and tile.unit.owner == player:
                     tile.unit = None
+
+        self.check_win()
