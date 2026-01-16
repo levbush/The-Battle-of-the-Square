@@ -1,7 +1,7 @@
 from random import choices, randint
-from terrain.terrain_classes import *
-from classes import Player, City
-from unitclasses import Unit
+from helpers.terrain.terrain_classes import *
+from helpers.classes import Player, City
+from helpers.unit_classes import Unit
 
 
 def create_map(side: int, players: list[Player]):
@@ -13,22 +13,25 @@ def create_map(side: int, players: list[Player]):
         map.append([])
         for y in range(side):
             if x == 0 or y == 0:
-                map[x].append(Tile(x, y, Land, [False] * len(players)))
+                map[x].append(Tile(x, y, TerrainType.LAND, [False] * len(players)))
                 continue
-            terrain_type = choices(TERRAIN_TYPES, terrain_types_weights(), k=1)[0]
+            terrain_type = choices(list(TERRAIN_TYPES.keys()), terrain_types_weights(), k=1)[0]
 
-            if terrain_type == Land:
+            if terrain_type == TerrainType.LAND:
                 modifier_type = choices(LAND_MODIFIERS, land_modifiers_weights(), k=1)[0]()
-                map[x].append(Tile(x, y, Land, [False] * len(players), modifier=modifier_type))
-                if modifier_type.__class__ == Village:  # We need to take into account that villages and towns can't intersect with each other.
+                map[x].append(Tile(x, y, TerrainType.LAND, [False] * len(players), modifier=modifier_type))
+                if modifier_type and modifier_type.type == ModifierType.VILLAGE:  # We need to take into account that villages and towns can't intersect with each other.
                     villages.append((x, y))
             
-            elif terrain_type == Water:
+            elif terrain_type == TerrainType.WATER:
                 modifier_type = choices(WATER_MODIFIERS, water_modifiers_weights(), k=1)[0]()
-                map[x].append(Tile(x, y, Water, [False] * len(players), modifier=modifier_type))
+                map[x].append(Tile(x, y, TerrainType.WATER, [False] * len(players), modifier=modifier_type))
+
+            else:
+                raise ValueError(f'Invalid terrain type: {terrain_type}')
 
     for player in players:
-        visible_tiles: list[tuple[int]] = []
+        visible_tiles: list[tuple[int, ...]] = []
         while True:  # Creating a capital for each player
             flag = True
             x, y = randint(2, side - 3), randint(2, side - 3)
@@ -40,8 +43,8 @@ def create_map(side: int, players: list[Player]):
                         flag = False
                         visible_tiles.clear()
                         break
-                    if map[i][j].modifier.__class__ == Village:
-                        map[i][j] = Tile(i, j, Land, [False] * len(players))
+                    if map[i][j].modifier and map[i][j].modifier.type == ModifierType.VILLAGE:
+                        map[i][j] = Tile(i, j, TerrainType.LAND, [False] * len(players))
                 if not flag:
                     break
             if not flag:
@@ -51,14 +54,14 @@ def create_map(side: int, players: list[Player]):
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
             city = City(player)
-            map[x][y] = Tile(x, y, Land, vm, city=city, unit=Unit(0, player, x, y))
+            map[x][y] = Tile(x, y, TerrainType.LAND, vm, city=city, unit=Unit(UnitType.WARRIOR, player, x, y))
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     map[x + dx][y + dy].owner = city
             break
 
     for x, y in villages:  # Deleting overlapping villages
-        if map[x][y].modifier.__class__ != Village or not (1 <= x <= side - 2 and 1 <= y <= side - 2):
+        if map[x][y].modifier and map[x][y].modifier.type != ModifierType.VILLAGE or not (1 <= x <= side - 2 and 1 <= y <= side - 2):
             map[x][y].modifier = None
             continue
         flag = True
@@ -69,7 +72,7 @@ def create_map(side: int, players: list[Player]):
                 if map[i][j].city:
                     flag = False
                     break
-                if map[i][j].modifier.__class__ == Village:
+                if map[i][j].modifier and map[i][j].modifier.type == ModifierType.VILLAGE:
                     map[i][j].modifier = None
             if not flag:
                 break

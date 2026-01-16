@@ -2,22 +2,24 @@ import arcade
 import sqlite3
 from arcade.gui import UIManager, UITextureButton
 from views.next_turn_view import NextTurnView
-from terrain.create_map import create_map
-from classes import Player, TechTree, City
+from helpers.terrain.create_map import create_map
+from helpers.classes import Player, TechTree, City
 from random import shuffle
-from terrain.terrain_classes import *
+from helpers.terrain.terrain_classes import *
 from pyglet.graphics import Batch
 from database import DB_PATH, init_db, SETTINGS
 from views.settings_view import SettingsView
 from views.discovery_view import DiscoveryView
 from views.winner_view import WinnerView
-from unitclasses import *
+from helpers.unit_classes import *
+from logic.bot_logic import BotLogic
+from typing import Literal
 
 
 class GameView(arcade.View):
     'The view for the gameplay'
 
-    def __init__(self, size_map, bot_amount, player_amount, bot_difficulty, new_game=True):
+    def __init__(self, size_map: int, bot_amount: int, player_amount: int, bot_difficulty: Literal[0, 1] | None, new_game=True):
         super().__init__(background_color=arcade.color.SKY_BLUE)
         self.size_map = size_map
         self.player_amount = player_amount
@@ -447,8 +449,6 @@ class GameView(arcade.View):
             return False
         if self.selected_tile.owner is None or self.selected_tile.owner.owner != self.current_player:
             return False
-        if self.current_player.stars < self.selected_modifier.cost:
-            False
         
         return self.current_player.open_tech.tech_map.get(tile.modifier.__class__, True)
     
@@ -645,8 +645,7 @@ class GameView(arcade.View):
         
         if not self.current_player.is_bot or not self.current_player.is_alive:
             return
-        # TODO: Реализовать логику хода бота
-        pass
+        BotLogic(self.map, self.current_player, self.bot_difficulty).move()
 
     def get_stars_for_player(self) -> int:
         'Get stars bonus for a player'
@@ -738,6 +737,9 @@ class GameView(arcade.View):
             return
         if not self.is_collectible(tile):
             return
+        if self.current_player.stars < self.selected_modifier.cost:
+            return
+        
         tile.add_population_to_city(self.selected_modifier.population)
         tile.modifier.collect()
         self.current_player.stars -= self.selected_modifier.cost

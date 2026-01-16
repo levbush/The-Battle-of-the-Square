@@ -1,7 +1,7 @@
 import arcade
 from arcade.gui import UIManager, UIFlatButton, UILabel
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
-from classes import Player
+from helpers.classes import Player
 
 
 class NextTurnView(arcade.View):

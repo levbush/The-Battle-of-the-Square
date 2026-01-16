@@ -1,8 +1,8 @@
 import arcade
 import math
 from arcade.gui import UIManager, UITextureButton
-from unitclasses import Rider, Archer, Defender, UnitBase
-from terrain.terrain_classes import Mountain, GoldMountain, Animal, Forest, Fish, Fruits, ModifierBase
+from helpers.unit_classes import Rider, Archer, Defender, UnitBase
+from helpers.terrain.terrain_classes import Mountain, GoldMountain, Animal, Forest, Fish, Fruits, ModifierBase
 from pyglet.graphics import Batch
 from collections import namedtuple
 

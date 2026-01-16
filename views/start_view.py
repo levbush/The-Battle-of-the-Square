@@ -1,7 +1,7 @@
 import arcade
 import sqlite3
 import random
-from classes import AnimatedButton
+from helpers.classes import AnimatedButton
 from arcade.gui import UIManager
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from database import DB_PATH, SPARK_TEX
@@ -14,7 +14,7 @@ class StartView(arcade.View):
 
     def __init__(self):
         super().__init__()
-        self.back_img = arcade.load_texture(r'assets/misc/menu_background.jpg')
+        self.back_img = arcade.load_texture('assets/misc/menu_background.jpg')
 
         self.manager = UIManager()
         self.manager.enable()

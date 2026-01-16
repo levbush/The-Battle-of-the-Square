@@ -1,6 +1,6 @@
 if __name__ == '__main__':
-    from classes import City
-from unitclasses import UnitBase, Unit, UnitType
+    from helpers.classes import City
+from helpers.unit_classes import UnitBase, Unit, UnitType
 from arcade import load_texture
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -175,9 +175,9 @@ class Fish(ModifierBase):
         self.tile.modifier = None
 
 
-MODIFIER_TYPES: list[type] = [Fruits, Animal, Mountain, GoldMountain, Forest, Village, Fish]
-LAND_MODIFIERS: list[type] = [lambda: None, Fruits, Animal, Mountain, GoldMountain, Forest, Village]
-WATER_MODIFIERS: list[type] = [lambda: None, Fish]
+MODIFIER_TYPES: list[type[ModifierBase]] = [Fruits, Animal, Mountain, GoldMountain, Forest, Village, Fish]
+LAND_MODIFIERS: list[type[ModifierBase]] = [lambda: None, Fruits, Animal, Mountain, GoldMountain, Forest, Village]
+WATER_MODIFIERS: list[type[ModifierBase]] = [lambda: None, Fish]
 
 
 def land_modifiers_weights() -> list[int]:
@@ -252,12 +252,12 @@ class Water(TileBase):
         return "~"
 
 
-TERRAIN_TYPES: list[TileBase] = [Land, Water]
+TERRAIN_TYPES: dict[TerrainType, type[TileBase]] = {TerrainType.LAND: Land, TerrainType.WATER: Water}
 
 
 def terrain_types_weights() -> list[int]:
     'Gives a list of weights using `TERRAIN_TYPES`'
-    return [t.weight for t in TERRAIN_TYPES]
+    return [t.weight for t in TERRAIN_TYPES.values()]
 
 
 class Tile:
@@ -267,13 +267,13 @@ class Tile:
         cls,
         row,
         col,
-        terrain_type: type,
+        terrain_type: TerrainType,
         visible_mapping: list[bool],
         modifier: ModifierBase | None = None,
         city: 'City' = None,
         unit: UnitBase | None = None,
     ) -> TileBase:
-        tile: TileBase = terrain_type(visible_mapping, city, unit, modifier)
+        tile = TERRAIN_TYPES[terrain_type](visible_mapping, city, unit, modifier)
         tile.row = row
         tile.col = col
         return tile

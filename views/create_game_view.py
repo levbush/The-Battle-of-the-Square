@@ -2,7 +2,7 @@ import arcade
 import random
 from arcade.gui import UIManager, UILabel, UIFlatButton
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
-from classes import HorizontalRadioButtonGroup
+from helpers.classes import HorizontalRadioButtonGroup
 from views.game_view import GameView
 from arcade.particles import Emitter, EmitMaintainCount, FadeParticle
 from database import SPARK_TEX

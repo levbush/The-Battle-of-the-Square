@@ -1,5 +1,5 @@
 if __name__ == '__main__':
-    from classes import Player
+    from helpers.classes import Player
 from dataclasses import dataclass, field
 from arcade import load_texture
 from enum import IntEnum
