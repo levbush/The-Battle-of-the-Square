@@ -1,86 +1,130 @@
-from helpers.classes import Player
 from helpers.terrain.terrain_classes import TileBase
 from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
-from typing import Literal
 from random import choices, randint
-from math import dist
+
+if __name__ == '__main__':
+    from views.game_view import GameView
+
+
+def dist(a: TileBase, b: TileBase) -> int:
+    return abs(a.row - b.row) + abs(a.col - b.col)
 
 
 class BotLogic:
-    def __init__(self, map: list[list[TileBase]], current_player: Player, difficulty: Literal[0, 1]):
-        self.map = map
-        self.current_player = current_player
-        self.difficulty = difficulty
-    
-    def move(self):
-        visible_cities: list[TileBase] = []
-        visible_units: list[TileBase] = []
-        subordinate_units: list[TileBase] = []
-        fog: list[TileBase] = []
+    def __init__(self, game: 'GameView'):
+        '''AI controller for a non-human player'''
+        self.game = game
 
-        for row in self.map:
+    def move(self) -> None:
+        '''Perform one AI turn'''
+        visible_enemy_cities: list[TileBase] = []
+        visible_enemy_units: list[TileBase] = []
+        fog: list[TileBase] = []
+        own_units: list[UnitBase] = []
+
+        for row in self.game.map:
             for tile in row:
-                if not tile.visible_mapping[self.current_player.id]:
+                if not tile.visible_mapping[self.game.current_player.id]:
                     fog.append(tile)
                     continue
-                if tile.city and tile.city.owner != self.current_player:
-                    visible_cities.append(tile)
+
+                if tile.city and tile.city.owner != self.game.current_player:
+                    visible_enemy_cities.append(tile)
+
                 if tile.unit:
-                    if tile.unit.owner != self.current_player:
-                        visible_units.append(tile)
+                    if tile.unit.owner == self.game.current_player:
+                        own_units.append(tile.unit)
                     else:
-                        subordinate_units.append(tile)
-        
-        for tile in subordinate_units:
-            unit = tile.unit
-            target = self.get_priority_target(unit, visible_cities, visible_units, fog)
-            if (target.row, target.col) == unit.pos:
-                # capture
+                        visible_enemy_units.append(tile)
+
+        for unit in list(own_units):
+            if not unit.move_remains:
                 continue
-            if target.unit and target.unit.owner != self.current_player:
-                if self.is_in_unit_range(unit, target):
-                    # attack
-                    print('attack', target.unit)
-                    continue
-            self.move_towards(unit, target)
 
-        for city in self.current_player.cities:
-            if choices([0, 1], [50, 50 + 30 * self.difficulty], k=1)[0]:
-                if not city.tile.unit:
-                    city.tile.unit = Unit(randint(0, len(UNIT_TYPES) - 1), self.current_player, city.tile.row, city.tile.col)
+            target: TileBase | None = self.get_priority_target(
+                unit,
+                visible_enemy_units,
+                visible_enemy_cities,
+                fog
+            )
+            print(repr(target))
 
+            if target:
+                self.move_towards(unit, target)
+
+        for city in self.game.current_player.cities:
+            if not city.tile.unit:
+                if choices([0, 1], [50, 50 + 30 * self.game.bot_difficulty], k=1)[0]:
+                    city.tile.unit = Unit(
+                        randint(0, len(UNIT_TYPES) - 1),
+                        self.game.current_player,
+                        city.tile.row,
+                        city.tile.col
+                    )
+
+            cx, cy = city.tile.row, city.tile.col
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
-                    if (modifier := self.map[city.tile.row + dx][city.tile.col + dy].modifier) and modifier.cost and not modifier.is_collected:
-                        if choices([0, 1], [20, 10 + 15 * self.difficulty], k=1)[0]:
+                    tile = self.game.map[cx + dx][cy + dy]
+                    modifier = tile.modifier
+                    if modifier and modifier.cost and not modifier.is_collected:
+                        if choices([0, 1], [20, 10 + 15 * self.game.bot_difficulty], k=1)[0]:
                             modifier.collect()
                             city.tile.add_population_to_city(modifier.population)
 
-    def move_towards(self, unit: UnitBase, target: TileBase):
-        x1, y1, x2, y2 = *unit.pos, target.row, target.col
-        dx, dy = (x2 - x1) / abs(x2 - x1) if x2 != x1 else 0, (y2 - y1) / abs(y2 - y1) if y2 != y1 else 0
-        dx, dy = int(dx), int(dy)
-        # TODO: implement correct movement
-        if choices([0, 1], [50 - 50 * self.difficulty, 100], k=1)[0]:
-            unit.move((x1 + dx, y1 + dy))
-            self.map[x1][y1].unit = None
-            self.map[x1 + dx][y1 + dy].unit = unit
+    def move_towards(self, unit: UnitBase, target: TileBase) -> bool:
+        '''Move unit toward target or attack if possible'''
+        if not unit.move_remains:
+            return False
 
-    def get_priority_target(self, unit: UnitBase, visible_cities: list[TileBase], visible_units: list[TileBase], fog: list[TileBase]):
-        for city in self.current_player.cities:
-            if city.tile in visible_units:
-                if self.is_in_unit_range(unit, city.tile):
-                    return city.tile
-                
-        if visible_cities or visible_units:
-            return min(visible_cities + visible_units, key=lambda x: dist(unit.pos, (x.row, x.col)))
-        fog_target =  min(fog, key=lambda x: dist(unit.pos, (x.row, x.col)))
-        # visible_neighbors: list[TileBase] = []
-        # for dx in (-1, 0, 1):
-        #     for dy in (-1, 0, 1):
-        #         if (tile := self.map[fog_target.row + dx][fog_target.col + dy]).visible_mapping[self.current_player.id]: visible_neighbors.append(tile)
-        # return min(visible_neighbors, key=lambda x: dist(unit.pos, (x.row, x.col)))
-        return fog_target
+        movement = self.game.movement_system
+        attack = self.game.attack_system
 
-    def is_in_unit_range(self, unit: UnitBase, tile: TileBase):
-        return abs(tile.row - unit.pos[0]) <= unit.range and abs(tile.row - unit.pos[1]) <= unit.range
+        start_tile: TileBase = self.game.map[unit.pos[0]][unit.pos[1]]
+
+        if target.unit and attack.can_attack_from_position(start_tile, target):
+            return movement.move_unit(start_tile, target)
+
+        valid_moves: list[TileBase] = movement.get_valid_moves(start_tile)
+        if not valid_moves:
+            return False
+
+        best_tile: TileBase = min(
+            valid_moves,
+            key=lambda x: dist(x, target)
+        )
+
+        if target.unit:
+            return movement.move_unit(start_tile, best_tile)
+
+        if choices([0, 1], [50 - 50 * self.game.bot_difficulty, 100], k=1)[0]:
+            return movement.move_unit(start_tile, best_tile)
+
+        return False
+
+    def get_priority_target(
+        self,
+        unit: UnitBase,
+        enemy_units: list[TileBase],
+        enemy_cities: list[TileBase],
+        fog: list[TileBase]
+    ) -> TileBase | None:
+        print(enemy_units)
+        '''Select best target tile for unit'''
+        start_tile: TileBase = self.game.map[unit.pos[0]][unit.pos[1]]
+        attack = self.game.attack_system
+
+        for tile in enemy_units:
+            if tile.unit and attack.can_attack_from_position(start_tile, tile):
+                return tile
+
+        if enemy_units:
+            return min(enemy_units, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+
+        if enemy_cities:
+            return min(enemy_cities, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+
+        if fog:
+            return min(fog, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+
+        return None

@@ -13,177 +13,12 @@ from views.discovery_view import DiscoveryView
 from views.winner_view import WinnerView
 from helpers.unit_classes import *
 from logic.bot_logic import BotLogic
+from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
 
 
-class MovementSystem:
-    def __init__(self, game_view):
-        self.game = game_view
-        
-    def get_valid_moves(self, start_tile: TileBase):
-        valid_moves = []
-        
-        if not start_tile or not start_tile.unit:
-            return valid_moves
-            
-        movement_range = start_tile.unit.movement
-        visited = []
-        queue = [(start_tile, 0)]
-        
-        while queue:
-            current_tile, distance = queue.pop(0)
-            
-            if current_tile in visited:
-                continue
-                
-            visited.append(current_tile)
-            
-            if current_tile != start_tile:
-                if self._can_move_to_tile(start_tile.unit, current_tile) and distance <= movement_range:
-                    valid_moves.append(current_tile)
-                    
-            if distance >= movement_range:
-                continue
-                
-            for neighbor in self.game.get_neighbors(current_tile):
-                if neighbor not in visited and self._is_passable_for_movement(neighbor):
-                    queue.append((neighbor, distance + 1))
-                    
-        return valid_moves
-    
-    def _can_move_to_tile(self, unit, target_tile):
-        if not self._is_passable_for_movement(target_tile):
-            return False
-            
-        if target_tile.unit is None:
-            return True
-        elif target_tile.unit.owner != unit.owner:
-            return True
-            
-        return False
-    
-    def _is_passable_for_movement(self, tile: TileBase) -> bool:
-        if not isinstance(tile, Land):
-            return False
-            
-        if tile.modifier and tile.modifier.type in (ModifierType.MOUNTAIN, ModifierType.GOLD_MOUNTAIN):
-            if not self.game.current_player.open_tech.tech_map.get('Mountain', False):
-                return False
-                
-        return True
-    
-    def move_unit(self, from_tile: TileBase, to_tile: TileBase):
-        if not from_tile.unit or from_tile.unit.owner != self.game.current_player:
-            return False
-            
-        if not from_tile.unit.move_remains:
-            return False
-            
-        if to_tile.unit:
-            if to_tile.unit.owner == self.game.current_player:
-                return False
-            attack_system = AttackSystem(self.game)
-            return attack_system.attack_unit(from_tile, to_tile)
-            
-        return self._perform_movement(from_tile, to_tile)
-    
-    def _perform_movement(self, from_tile: TileBase, to_tile: TileBase):
-        try:
-            from_tile.unit.move((to_tile.row, to_tile.col))
-            from_tile.unit.move_remains = False
-            
-            self.game.update_visibility_around_unit(to_tile)
-            
-            to_tile.unit = from_tile.unit
-            from_tile.unit = None
-            
-            self.game.update_sprites()
-            return True
-            
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return False
-
-
-class AttackSystem:
-    def __init__(self, game_view):
-        self.game = game_view
-        
-    def get_attack_range(self, unit):
-        return getattr(unit, 'attack_range', 1)
-    
-    def get_attack_power(self, unit):
-        return getattr(unit, 'attack', 10)
-    
-    def get_defense_bonus(self, tile: TileBase, defender):
-        if tile.modifier:
-            if tile.modifier.type in (ModifierType.MOUNTAIN, ModifierType.GOLD_MOUNTAIN):
-                return 2
-            elif tile.modifier.type == ModifierType.WOODS:
-                return 1
-        return 0
-    
-    def attack_unit(self, attacker_tile: TileBase, defender_tile: TileBase):
-        attacker = attacker_tile.unit
-        defender = defender_tile.unit
-        
-        if not attacker or not defender:
-            return False
-            
-        if attacker.owner == defender.owner:
-            return False
-            
-        if not attacker.move_remains:
-            return False
-            
-        distance = max(abs(defender_tile.row - attacker_tile.row), 
-                      abs(defender_tile.col - attacker_tile.col))
-        
-        if distance > self.get_attack_range(attacker):
-            return False
-            
-        try:
-            self._perform_attack(attacker, defender, attacker_tile, defender_tile)
-            return True
-            
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return False
-    
-    def _perform_attack(self, attacker, defender, attacker_tile, defender_tile):
-        attack_power = self.get_attack_power(attacker)
-        defense_bonus = self.get_defense_bonus(defender_tile, defender)
-        
-        damage = max(1, attack_power - defense_bonus)
-        
-        defender.health -= damage
-        
-        if not defender.is_alive:
-            attacker.move((defender_tile.row, defender_tile.col))
-            defender_tile.unit = attacker
-            attacker_tile.unit = None
-            
-            self.game.update_visibility_around_unit(defender_tile)
-            
-        attacker.move_remains = False
-        
-        self.game.update_sprites()
-    
-    def can_attack_from_position(self, attacker_tile, target_tile):
-        attacker = attacker_tile.unit
-        if not attacker:
-            return False
-            
-        distance = max(abs(target_tile.row - attacker_tile.row), 
-                      abs(target_tile.col - attacker_tile.col))
-        
-        return distance <= self.get_attack_range(attacker)
-
-
 class GameView(arcade.View):
-    def __init__(self, size_map, bot_amount, player_amount, bot_difficulty, new_game=True):
+    def __init__(self, size_map: int, bot_amount: int, player_amount: int, bot_difficulty: Literal[0, 1] | None, new_game: bool=True):
         super().__init__(background_color=arcade.color.SKY_BLUE)
         self.size_map = size_map
         self.player_amount = player_amount
@@ -290,6 +125,7 @@ class GameView(arcade.View):
 
         self.movement_system = MovementSystem(self)
         self.attack_system = AttackSystem(self)
+        self.bot_logic = BotLogic(self)
 
     def on_show_view(self):
         self.manager.enable()
@@ -611,9 +447,9 @@ class GameView(arcade.View):
                 screen_x = (col_idx - row_idx) * 150 + self.width // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
 
-                if not tile.visible_mapping[self.current_player.id]:
-                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-                    continue
+                # if not tile.visible_mapping[self.current_player.id]:
+                #     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+                #     continue
 
                 self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
 
@@ -681,7 +517,7 @@ class GameView(arcade.View):
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
             return
-        pass
+        self.bot_logic.move()
 
     def get_stars_for_player(self) -> int:
         return sum((city.level + 1) for city in self.current_player.cities) + 1

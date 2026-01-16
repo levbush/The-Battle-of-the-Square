@@ -37,51 +37,46 @@ class UnitBase:
         if self.health is None:
             self.health = self.max_health
 
-    @staticmethod
-    def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
-        '''Attack unit'''
-        if attacker.owner == defender.owner:
-            return
+    # @staticmethod
+    # def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
+    #     '''Attack unit'''
+    #     if attacker.owner == defender.owner:
+    #         return
 
-        if (
-            abs(attacker.pos[0] - defender.pos[0]) > attacker.range
-            or abs(attacker.pos[1] - defender.pos[1]) > attacker.range
-        ):
-            return
+    #     if (
+    #         abs(attacker.pos[0] - defender.pos[0]) > attacker.range
+    #         or abs(attacker.pos[1] - defender.pos[1]) > attacker.range
+    #     ):
+    #         return
 
-        attack_force = attacker.attack * (attacker.health / attacker.max_health)
-        defense_force = defender.defense * (defender.health / defender.max_health)
-        total = attack_force + defense_force
-        print(attack_force, defense_force)
-        print(total)
-        # TODO: add particles
-        attack_damage = round((attack_force / total) * attacker.attack * 4.5)
-        defense_damage = round((defense_force / total) * defender.defense * 4.5)
+    #     attackForce = attacker.attack * (attacker.health / attacker.maxHealth)
+    #     defenseForce = defender.defense * (defender.health / defender.maxHealth) * defenseBonus 
+    #     totalDamage = attackForce + defenseForce 
+    #     attackResult = round((attackForce / totalDamage) * attacker.attack * 4.5) 
+    #     defenseResult = round((defenseForce / totalDamage) * defender.defense * 4.5)
 
-        defender.health -= attack_damage
-        if defender.health <= 0 and abs(attacker.pos[0] - defender.pos[0]) <= 1 and abs(attacker.pos[1] - defender.pos[1]) <= 1:
-            attacker.move(defender.pos)
-            defender.die()
-            return
+    #     defender.health -= attack_damage
+    #     if defender.health <= 0 and abs(attacker.pos[0] - defender.pos[0]) <= 1 and abs(attacker.pos[1] - defender.pos[1]) <= 1:
+    #         attacker.move(defender.pos)
+    #         defender.die()
+    #         return
 
-        if (
-            abs(attacker.pos[0] - defender.pos[0]) <= defender.range
-            and abs(attacker.pos[1] - defender.pos[1]) <= defender.range
-        ):
-            attacker.health -= defense_damage
-            if attacker.health <= 0:
-                attacker.die()
+    #     if (
+    #         abs(attacker.pos[0] - defender.pos[0]) <= defender.range
+    #         and abs(attacker.pos[1] - defender.pos[1]) <= defender.range
+    #     ):
+    #         attacker.health -= defense_damage
+    #         if attacker.health <= 0:
+    #             attacker.die()
 
     def move(self, pos: tuple[int, int]):
-        '''Well it should move, but it's implemented in the `GameView`. To be reworked'''
-        # TODO: add animation and logic
         self.pos = pos
 
-    def die(self):
-        """Mark the unit as dead"""
-        self.is_alive = False
-        self.health = 0
-        print(f"Unit died: {self}")
+    # def die(self):
+    #     """Mark the unit as dead"""
+    #     self.is_alive = False
+    #     self.health = 0
+    #     print(f"Unit died: {self}")
 
 
 class Warrior(UnitBase):
