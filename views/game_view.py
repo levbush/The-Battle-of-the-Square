@@ -745,7 +745,6 @@ class GameView(arcade.View):
 
         c.execute('SELECT x, y, value FROM map')
         for x, y, value in c.fetchall():
-            print(value)
             tile: TileBase = eval(value)
             tile.row = x
             tile.col = y

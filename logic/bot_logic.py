@@ -1,6 +1,7 @@
 from helpers.terrain.terrain_classes import TileBase
 from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
 from random import choices, randint
+from pprint import pprint
 
 if __name__ == '__main__':
     from views.game_view import GameView
@@ -17,8 +18,8 @@ class BotLogic:
 
     def move(self) -> None:
         '''Perform one AI turn'''
-        visible_enemy_cities: list[TileBase] = []
         visible_enemy_units: list[TileBase] = []
+        visible_enemy_cities: list[TileBase] = []
         fog: list[TileBase] = []
         own_units: list[UnitBase] = []
 
@@ -27,104 +28,91 @@ class BotLogic:
                 if not tile.visible_mapping[self.game.current_player.id]:
                     fog.append(tile)
                     continue
-
-                if tile.city and tile.city.owner != self.game.current_player:
-                    visible_enemy_cities.append(tile)
-
                 if tile.unit:
                     if tile.unit.owner == self.game.current_player:
                         own_units.append(tile.unit)
                     else:
                         visible_enemy_units.append(tile)
 
+                if tile.city and tile.city.owner != self.game.current_player:
+                    visible_enemy_cities.append(tile)
         for unit in list(own_units):
-            if not unit.move_remains:
+            unit.move_remains = True
+                
+        for unit in list(own_units):
+            if not unit.move_remains or not unit.is_alive:
                 continue
 
-            target: TileBase | None = self.get_priority_target(
-                unit,
-                visible_enemy_units,
-                visible_enemy_cities,
-                fog
-            )
-            print(repr(target))
+            self.act_unit(unit, visible_enemy_units, visible_enemy_cities, fog)
 
-            if target:
-                self.move_towards(unit, target)
+        self.handle_city_actions()
 
-        for city in self.game.current_player.cities:
-            if not city.tile.unit:
-                if choices([0, 1], [50, 50 + 30 * self.game.bot_difficulty], k=1)[0]:
-                    city.tile.unit = Unit(
-                        randint(0, len(UNIT_TYPES) - 1),
-                        self.game.current_player,
-                        city.tile.row,
-                        city.tile.col
-                    )
-
-            cx, cy = city.tile.row, city.tile.col
-            for dx in (-1, 0, 1):
-                for dy in (-1, 0, 1):
-                    tile = self.game.map[cx + dx][cy + dy]
-                    modifier = tile.modifier
-                    if modifier and modifier.cost and not modifier.is_collected:
-                        if choices([0, 1], [20, 10 + 15 * self.game.bot_difficulty], k=1)[0]:
-                            modifier.collect()
-                            city.tile.add_population_to_city(modifier.population)
-
-    def move_towards(self, unit: UnitBase, target: TileBase) -> bool:
-        '''Move unit toward target or attack if possible'''
-        if not unit.move_remains:
-            return False
-
-        movement = self.game.movement_system
-        attack = self.game.attack_system
-
-        start_tile: TileBase = self.game.map[unit.pos[0]][unit.pos[1]]
-
-        if target.unit and attack.can_attack_from_position(start_tile, target):
-            return movement.move_unit(start_tile, target)
-
-        valid_moves: list[TileBase] = movement.get_valid_moves(start_tile)
-        if not valid_moves:
-            return False
-
-        best_tile: TileBase = min(
-            valid_moves,
-            key=lambda x: dist(x, target)
-        )
-
-        if target.unit:
-            return movement.move_unit(start_tile, best_tile)
-
-        if choices([0, 1], [50 - 50 * self.game.bot_difficulty, 100], k=1)[0]:
-            return movement.move_unit(start_tile, best_tile)
-
-        return False
-
-    def get_priority_target(
+    def act_unit(
         self,
         unit: UnitBase,
         enemy_units: list[TileBase],
         enemy_cities: list[TileBase],
         fog: list[TileBase]
-    ) -> TileBase | None:
-        print(enemy_units)
-        '''Select best target tile for unit'''
-        start_tile: TileBase = self.game.map[unit.pos[0]][unit.pos[1]]
+    ) -> None:
+        '''Resolve a single unit action'''
+        start_tile = self.game.map[unit.pos[0]][unit.pos[1]]
+        movement = self.game.movement_system
         attack = self.game.attack_system
 
+        valid_moves = movement.get_valid_moves(start_tile)
+        if not valid_moves:
+            return
         for tile in enemy_units:
             if tile.unit and attack.can_attack_from_position(start_tile, tile):
-                return tile
+                movement.move_unit(start_tile, tile)
+                return
 
-        if enemy_units:
-            return min(enemy_units, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+        target = self.select_reachable_target(start_tile, valid_moves, enemy_units, enemy_cities, fog)
+        if not target:
+            return
 
-        if enemy_cities:
-            return min(enemy_cities, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+        best_tile = min(valid_moves, key=lambda t: dist(t, target))
+        movement.move_unit(start_tile, best_tile)
 
-        if fog:
-            return min(fog, key=lambda t: dist(self.game.map[unit.pos[0]][unit.pos[1]], t))
+    def select_reachable_target(
+        self,
+        start: TileBase,
+        valid_moves: list[TileBase],
+        enemy_units: list[TileBase],
+        enemy_cities: list[TileBase],
+        fog: list[TileBase]
+    ) -> TileBase | None:
+        '''Pick nearest target that can be approached'''
+
+        def reachable(target: TileBase) -> bool:
+            return any(dist(m, target) < dist(start, target) for m in valid_moves)
+
+        for group in (enemy_units, enemy_cities, fog):
+            candidates = [t for t in group if reachable(t)]
+            if candidates:
+                return min(candidates, key=lambda t: dist(start, t))
 
         return None
+
+    def handle_city_actions(self) -> None:
+        '''Produce units and collect modifiers'''
+        for city in self.game.current_player.cities:
+            tile = city.tile
+            if not tile.unit:
+                if choices([0, 1], [50, 50 + 30 * self.game.bot_difficulty], k=1)[0]:
+                    tile.unit = Unit(
+                        randint(0, len(UNIT_TYPES) - 1),
+                        self.game.current_player,
+                        tile.row,
+                        tile.col
+                    )
+
+            cx, cy = tile.row, tile.col
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    t = self.game.map[cx + dx][cy + dy]
+                    mod = t.modifier
+                    if mod and mod.cost and not mod.is_collected:
+                        if choices([0, 1], [20, 10 + 15 * self.game.bot_difficulty], k=1)[0]:
+                            mod.collect()
+                            tile.add_population_to_city(mod.population)

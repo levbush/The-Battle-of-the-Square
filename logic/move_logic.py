@@ -1,6 +1,5 @@
 from helpers.terrain.terrain_classes import TileBase, ModifierType, TerrainType, Mountain
 from helpers.unit_classes import UnitBase
-from typing import Literal
 if __name__ == '__main__':
     from views.game_view import GameView
 
@@ -142,36 +141,46 @@ class AttackSystem:
             traceback.print_exc()
             return False
     
-    def _perform_attack(self, attacker: UnitBase, defender: UnitBase, attacker_tile: TileBase, defender_tile: TileBase):
-        defenseBonus = self.get_defense_bonus(defender_tile)
-        
-        attackForce = attacker.attack * (attacker.health / attacker.max_health)
-        defenseForce = defender.defense * (defender.health / defender.max_health) * defenseBonus 
-        totalDamage = attackForce + defenseForce 
-        attackResult = round((attackForce / totalDamage) * attacker.attack * 4.5) 
-        defenseResult = round((defenseForce / totalDamage) * defender.defense * 4.5)
-        
-        defender.health -= attackResult
+    def _perform_attack(
+    self,
+    attacker: UnitBase,
+    defender: UnitBase,
+    attacker_tile: TileBase,
+    defender_tile: TileBase
+    ) -> None:
+        defense_bonus = self.get_defense_bonus(defender_tile)
+
+        atk = attacker.attack * (attacker.health / attacker.max_health)
+        dfs = defender.defense * (defender.health / defender.max_health) * defense_bonus
+
+        total = atk + dfs
+        dmg_def = round((atk / total) * attacker.attack * 4.5)
+        dmg_atk = round((dfs / total) * defender.defense * 4.5)
+
+        defender.health -= dmg_def
         if defender.health <= 0:
             defender.is_alive = False
-        
+            defender_tile.unit = None
+
         if defender.is_alive:
-            attacker.health -= defenseResult
+            attacker.health -= dmg_atk
             if attacker.health <= 0:
                 attacker.is_alive = False
-        
+
         if not defender.is_alive:
             attacker.move((defender_tile.row, defender_tile.col))
             defender_tile.unit = attacker
             attacker_tile.unit = None
-            
+
+            if defender_tile.city:
+                defender_tile.city.owner = attacker.owner
+
             self.game.update_visibility_around_unit(defender_tile)
-        
+
         if not attacker.is_alive:
-            attacker_tile.unit = None            
+            attacker_tile.unit = None
 
         attacker.move_remains = False
-        
         self.game.update_sprites()
     
     def can_attack_from_position(self, attacker_tile: TileBase, target_tile: TileBase):

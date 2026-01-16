@@ -25,7 +25,7 @@ LineElement = namedtuple('LineElement', ['x1', 'y1', 'x2', 'y2'])
 class TechTree:
     '''Defines the discoveries and stores the progress'''
 
-    tech_tree_map: tuple[tuple[type, ...], ...] = (
+    tech_tree_map: tuple[tuple[type[ModifierBase | UnitBase], ...], ...] = (
         (Mountain, GoldMountain),
         (Rider, Archer),
         (Fruits, Defender),
@@ -33,7 +33,7 @@ class TechTree:
         (Fish,),
     )
 
-    techs: tuple[type, ...] = (Mountain, GoldMountain, Rider, Archer, Fruits, Defender, Animal, Forest, Fish)
+    techs: tuple[type[ModifierBase | UnitBase], ...] = (Mountain, GoldMountain, Rider, Archer, Fruits, Defender, Animal, Forest, Fish)
 
     def __init__(self, tech_map: list[bool] | None = None) -> None:
         self.__tech_map: list[bool] = tech_map or [False] * len(self.techs)

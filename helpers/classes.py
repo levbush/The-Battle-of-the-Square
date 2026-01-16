@@ -185,6 +185,8 @@ class Player:
         for city in self.cities:
             if city.owner != self:
                 city.owner = self
+        if self.is_bot:
+            self.open_tech = TechTree([True] * len(self.open_tech.techs))
 
     def __eq__(self, value):
         if isinstance(value, Player):
