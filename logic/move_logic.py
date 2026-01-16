@@ -172,9 +172,6 @@ class AttackSystem:
             defender_tile.unit = attacker
             attacker_tile.unit = None
 
-            if defender_tile.city:
-                defender_tile.city.owner = attacker.owner
-
             self.game.update_visibility_around_unit(defender_tile)
 
         if not attacker.is_alive:

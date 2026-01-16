@@ -774,3 +774,24 @@ class GameView(arcade.View):
             self.move_n = game_state["move_n"]
 
         conn.close()
+
+    def capture(self, tile: TileBase):
+        player = self.current_player
+        if not tile.unit or tile.unit.owner != player:
+            return
+        self.players[tile.city.owner.id].cities.remove(tile.city)
+        tile.city = City(player, tile.city.level, tile.city.population)
+        tile.city.tile = tile
+
+        self.check_defeat_of_player(tile.city.owner)
+        self.update_sprites()
+
+    def check_defeat_of_player(self, player: Player):
+        if player.cities:
+            return False
+        
+        player.is_alive = False
+        for row in self.map:
+            for tile in row:
+                if tile.unit and tile.unit.owner == player:
+                    tile.unit = None

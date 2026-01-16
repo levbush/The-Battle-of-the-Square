@@ -59,9 +59,14 @@ class BotLogic:
         movement = self.game.movement_system
         attack = self.game.attack_system
 
+        for tile in enemy_cities:
+            if tile == start_tile:
+                self.game.capture(tile)
+
         valid_moves = movement.get_valid_moves(start_tile)
         if not valid_moves:
             return
+
         for tile in enemy_units:
             if tile.unit and attack.can_attack_from_position(start_tile, tile):
                 movement.move_unit(start_tile, tile)
