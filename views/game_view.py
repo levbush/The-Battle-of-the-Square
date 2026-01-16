@@ -787,7 +787,6 @@ class GameView(arcade.View):
         self.update_sprites()
 
     def check_defeat_of_player(self, player: Player):
-        print(player, player.cities)
         if player.cities:
             return False
         
