@@ -92,7 +92,7 @@ class BotLogic:
         def reachable(target: TileBase) -> bool:
             return any(dist(m, target) < dist(start, target) for m in valid_moves)
 
-        for group in (enemy_units, enemy_cities, fog):
+        for group in (enemy_units + enemy_cities, fog):
             candidates = [t for t in group if reachable(t)]
             if candidates:
                 return min(candidates, key=lambda t: dist(start, t))
