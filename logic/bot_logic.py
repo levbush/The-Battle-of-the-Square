@@ -1,7 +1,6 @@
 from helpers.terrain.terrain_classes import TileBase
 from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
 from random import choices, randint
-from pprint import pprint
 
 if __name__ == '__main__':
     from views.game_view import GameView

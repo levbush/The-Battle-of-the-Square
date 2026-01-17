@@ -1,8 +1,9 @@
 import arcade
 import random
+import sqlite3
 from views.start_view import StartView
 from views.game_view import GameView
-from database import init_db
+from database import init_db, DB_PATH
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
@@ -18,10 +19,12 @@ class MainWindow(arcade.Window):
         self.music_volume = 0.6
         self.sfx_volume = 1
         self.is_fullscreen = True
+        self.music = None
         self.reset()
 
     def reset(self):
         'Reset self'
+        if self.music: arcade.stop_sound(self.music)
         self.music = arcade.play_sound(
             arcade.load_sound(f"assets/music/sound{random.randint(1, COUNT_MUSIC)}.mp3"), self.music_volume, loop=True
         )
@@ -45,8 +48,19 @@ class MainWindow(arcade.Window):
 
     def set_settings(self, **kwargs):
         'Set settings'
-        self.music_volume = kwargs.get('music_volume') / 100 or self.music_volume
-        self.sfx_volume = kwargs.get('sfx_volume') / 100 or self.sfx_volume
+        settings = ('music_volume', 'sfx_volume')
+        for setting in settings:
+            setattr(self, setting, kwargs.get(setting) / 100 if kwargs.get(setting) is not None else getattr(self, setting))
+            print(setting, kwargs.get(setting))
+
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        c.executemany('INSERT OR REPLACE INTO settings VALUES(?, ?)', ((setting, getattr(self, setting) * 100) for setting in settings))
+        self.reset()
+
+        conn.commit()
+        conn.close()
 
     def to_menu(self):
         'Return to the very first view (`StartView()`)'

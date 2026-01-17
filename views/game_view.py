@@ -15,7 +15,6 @@ from helpers.unit_classes import *
 from logic.bot_logic import BotLogic
 from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
-from math import ceil
 
 
 class GameView(arcade.View):
@@ -143,8 +142,8 @@ class GameView(arcade.View):
         if self.current_player is None or self.first_move_in_session:
             if self.current_player is None:
                 self.current_player = self.players[0]
-            self.first_move_in_session = False
             self.make_player_move()
+            self.first_move_in_session = False
         else:
             prev = self.current_player.id
             self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
@@ -513,16 +512,17 @@ class GameView(arcade.View):
         return sum((city.level + 1) for city in self.current_player.cities) + 1
 
     def make_player_move(self):
-        stars = self.get_stars_for_player()
-        self.current_player.stars += stars
-        self.star_label.text = f'{self.current_player.stars} (+ {stars})'
-        self.move_label.text = f'Ход {self.move_n}'
+        if self.new_game or not self.first_move_in_session:
+            stars = self.get_stars_for_player()
+            self.current_player.stars += stars
+            self.star_label.text = f'{self.current_player.stars} (+ {stars})'
+            self.move_label.text = f'Ход {self.move_n}'
 
-        for row in self.map:
-            for tile in row:
-                if tile.unit and tile.unit.owner == self.current_player:
-                    tile.unit.move_remains = True
-                    self.update_visibility_around_unit(tile)
+            for row in self.map:
+                for tile in row:
+                    if tile.unit and tile.unit.owner == self.current_player:
+                        tile.unit.move_remains = True
+                        self.update_visibility_around_unit(tile)
 
         self.update_sprites()
 
@@ -669,7 +669,7 @@ class GameView(arcade.View):
             if player.is_alive:
                 c += 1
                 p = player
-        if c > 1 or (len(self.players) == 1 and c == 1):
+        if c > 1 or (self.player_amount + self.bot_amount == 1 and c == 1):
             return False
         self.end_game(p)
         return True
@@ -729,11 +729,12 @@ class GameView(arcade.View):
     def load_game(self):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        self.map = [[0 for _ in range(self.size_map)] for _ in range(self.size_map)]
+        self.map = [[TileBase([]) for _ in range(self.size_map)] for _ in range(self.size_map)]
         c.execute('SELECT value FROM players')
         self.players = [eval(v) for (v,) in c.fetchall()]
         players_by_id = {p.id: p for p in self.players}
 
+        city_tiles = []
         c.execute('SELECT x, y, value FROM map')
         for x, y, value in c.fetchall():
             tile: TileBase = eval(value)
@@ -742,18 +743,23 @@ class GameView(arcade.View):
 
             if tile.unit:
                 tile.unit.owner = players_by_id[tile.unit.owner.id]
+                tile.unit.__post_init__()
 
             if tile.city:
                 tile.city.owner = players_by_id[tile.city.owner.id]
+                tile.city.__post_init__()
+                city_tiles.append(tile)
 
             if tile.owner:
                 tile.owner.owner = players_by_id[tile.owner.owner.id]
+                tile.owner.owner.__post_init__()
 
             self.map[x][y] = tile
-
-        c.execute('SELECT key, value FROM settings')
-        for key, value in c.fetchall():
-            setattr(self.window, key, value / 100)
+        
+        for tile in city_tiles:
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                        self.map[tile.row + dx][tile.col + dy].owner = tile.city
 
         c.execute('SELECT key, value FROM game_state')
         game_state = {k: eval(v) for k, v in c.fetchall()}

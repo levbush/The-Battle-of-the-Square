@@ -86,6 +86,7 @@ class Warrior(UnitBase):
 
     type = UnitType.WARRIOR
     name = 'warrior'
+    texture = CustomTexture(f'assets/units/{2}/{name}.png')
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, health)
@@ -96,6 +97,7 @@ class Defender(UnitBase):
 
     type = UnitType.DEFENDER
     name = 'defender'
+    texture = CustomTexture(f'assets/units/{2}/{name}.png')
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, health)
@@ -106,6 +108,7 @@ class Rider(UnitBase):
 
     type = UnitType.RIDER
     name = 'rider'
+    texture = CustomTexture(f'assets/units/{2}/{name}.png')
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, health)
@@ -116,6 +119,7 @@ class Archer(UnitBase):
 
     type = UnitType.ARCHER
     name = 'archer'
+    texture = CustomTexture(f'assets/units/{2}/{name}.png')
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)
@@ -126,6 +130,7 @@ class Giant(UnitBase):
 
     type = UnitType.GIANT
     name = 'giant'
+    texture = CustomTexture(f'assets/units/{2}/{name}.png')
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, health)

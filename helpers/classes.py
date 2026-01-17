@@ -215,4 +215,4 @@ class City:
         if self.level > 1:
             self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
             self.tile.unit.move_remains = False
-        self.texture = CustomTexture(f'assets/cities/{self.owner.id}/House_{self.level}.png')
+        self.texture = CustomTexture(f'assets/cities/{self.owner.id + 1}/House_{self.owner.id + 1}_{self.level + 1}.png')

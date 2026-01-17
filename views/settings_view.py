@@ -1,11 +1,14 @@
 import arcade
 import arcade.gui
 
+if __name__ == '__main__':
+    from views.game_view import GameView
+
 
 class SettingsView(arcade.View):
     'Settings'
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'GameView'=None):
         super().__init__()
 
         self.parent = parent
@@ -136,8 +139,8 @@ class SettingsView(arcade.View):
 
     def resign(self, _):
         self.on_key_press(arcade.key.ESCAPE, 0)
-        self.parent.current_player.is_bot = True
-        # self.parent.current_player.is_alive = False
+        # self.parent.current_player.is_bot = True
+        self.parent.current_player.is_alive = False
         self.parent.change_POV()
 
     def on_show_view(self):

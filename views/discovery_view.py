@@ -6,6 +6,8 @@ from helpers.terrain.terrain_classes import Mountain, GoldMountain, Animal, Fore
 from pyglet.graphics import Batch
 from collections import namedtuple
 
+if __name__ == '__main__':
+    from views.game_view import GameView
 
 CENTER_RADIUS = 90
 TECH_SPACING = 120
@@ -50,10 +52,10 @@ class TechTree:
 class DiscoveryView(arcade.View):
     '''View for accessing the discoveries'''
 
-    def __init__(self, parent: arcade.View) -> None:
+    def __init__(self, parent: 'GameView') -> None:
         super().__init__(background_color=parent.background_color)
 
-        self.parent: arcade.View = parent
+        self.parent = parent
 
         self.completed = arcade.load_texture('assets/misc/bgComplete.png')
         self.open = arcade.load_texture('assets/misc/techbg.png')
@@ -255,13 +257,16 @@ def draw_tech_textures(cls: type, x: float, y: float, size: float) -> None:
         count = len(cls.textures)
         offset = size * 0.15
 
-        for i, tex_wrapper in enumerate(cls.textures):
+        for i, tex_wrapper in enumerate(cls.textures[::-1]):
             ox = (i - (count - 1) / 2) * offset
+            if cls == GoldMountain and i == 1:
+                draw_centered_texture(tex_wrapper.texture, x + ox - size / 7.5, y, size / 2.5, size / 2.5)
+                continue
             draw_centered_texture(tex_wrapper.texture, x + ox, y, size, size)
         return
 
     if issubclass(cls, UnitBase):
-        draw_centered_texture(cls.textures.ally, x, y, size, size)
+        draw_centered_texture(cls.texture.texture, x, y, size * 2, size * 2)
         return
 
     raise TypeError(f'Accepts only ModifierBase and UnitBase subclasses, given: {cls}')

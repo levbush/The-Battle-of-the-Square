@@ -39,6 +39,7 @@ class ModifierBase:
 
     def __init__(self, is_collected=False):
         self.is_collected = is_collected
+        if self.is_collected: self.collect()
 
     def __eq__(self, value):
         return self.__class__ == value.__class__

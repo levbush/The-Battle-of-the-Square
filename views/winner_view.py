@@ -1,9 +1,13 @@
 import arcade
 from pyglet.graphics import Batch
+from helpers.classes import Player
+
+if __name__ == '__main__':
+    from views.game_view import GameView
 
 
 class WinnerView(arcade.View):
-    def __init__(self, winner=None, parent=None):
+    def __init__(self, winner: Player=None, parent: 'GameView'=None):
         super().__init__()
         self.winner = winner
         self.parent = parent
@@ -13,7 +17,7 @@ class WinnerView(arcade.View):
         if self.winner is None:
             text = "Вы проиграли!"
         else:
-            text = f"Победил игрок {self.winner}!"
+            text = f"Победил игрок {self.winner.id}!"
         
         self.texts = [arcade.Text(
             text,
