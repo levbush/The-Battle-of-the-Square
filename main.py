@@ -49,10 +49,15 @@ class MainWindow(arcade.Window):
     def set_settings(self, **kwargs):
         'Set settings'
         settings = ('music_volume', 'sfx_volume')
+        flag = True
         for setting in settings:
+            if kwargs.get(setting) is not None and kwargs.get(setting) / 100 != getattr(self, setting):
+                flag = False
             setattr(self, setting, kwargs.get(setting) / 100 if kwargs.get(setting) is not None else getattr(self, setting))
-            print(setting, kwargs.get(setting))
-
+        
+        if flag:
+            return
+        
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         
@@ -74,8 +79,7 @@ class MainWindow(arcade.Window):
 def setup_game(width=800, height=600, title="Battle of the Square"):
     '''Setup the game'''
     window = MainWindow(width, height, title)
-    start_view = StartView()
-    window.show_view(start_view)
+    window.to_menu()
     return window
 
 

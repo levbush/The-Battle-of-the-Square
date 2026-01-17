@@ -124,7 +124,7 @@ class SettingsView(arcade.View):
 
     def on_key_press(self, key, _mod):
         if key == arcade.key.ESCAPE:
-            self.save()
+            self.window.set_settings(music_volume=self.music_volume, sfx_volume=self.sfx_volume)
             if self.parent:
                 self.window.show_view(self.parent)
 
