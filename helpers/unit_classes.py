@@ -33,6 +33,7 @@ class UnitBase:
     name: str = field(init=False, repr=False)
     texture: CustomTexture = field(init=False, repr=False)
     is_alive: bool = field(init=False, default=True, repr=False)
+    cost: int | None = field(init=False, repr=False)
 
     def __post_init__(self):
         if self.health is None:
@@ -87,6 +88,7 @@ class Warrior(UnitBase):
     type = UnitType.WARRIOR
     name = 'warrior'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
+    cost = 2
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, health)
@@ -98,6 +100,7 @@ class Defender(UnitBase):
     type = UnitType.DEFENDER
     name = 'defender'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
+    cost = 3
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, health)
@@ -109,6 +112,7 @@ class Rider(UnitBase):
     type = UnitType.RIDER
     name = 'rider'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
+    cost = 2
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, health)
@@ -120,6 +124,7 @@ class Archer(UnitBase):
     type = UnitType.ARCHER
     name = 'archer'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
+    cost = 3
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)
@@ -131,6 +136,7 @@ class Giant(UnitBase):
     type = UnitType.GIANT
     name = 'giant'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
+    cost = None
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, health)
@@ -148,7 +154,7 @@ UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
 class Unit:
     'Builder class for units, uses `UNIT_TYPES`'
 
-    def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int):
+    def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int) -> UnitBase:
         return UNIT_TYPES[unit_type](owner, (x, y))
 
 

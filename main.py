@@ -2,7 +2,7 @@ import arcade
 import random
 import sqlite3
 from views.start_view import StartView
-from views.game_view import GameView
+from views.game_view import GameView, SettingsView
 from database import init_db, DB_PATH
 
 
@@ -20,6 +20,7 @@ class MainWindow(arcade.Window):
         self.sfx_volume = 1
         self.is_fullscreen = True
         self.music = None
+        self.load_settings()
         self.reset()
 
     def reset(self):
@@ -34,6 +35,7 @@ class MainWindow(arcade.Window):
         if arcade.key.F11 == key:
             self.is_fullscreen = not self.is_fullscreen
             self.set_fullscreen(self.is_fullscreen)
+        elif arcade.key.ESCAPE == key and not isinstance(self.current_view, (GameView, SettingsView)): self.on_key_press(arcade.key.F11, 0)
 
     def on_update(self, delta_time):
         self.music_counter += delta_time
@@ -74,6 +76,15 @@ class MainWindow(arcade.Window):
     def on_close(self):
         if isinstance(self.current_view, GameView): self.current_view.save_map()
         return super().on_close()
+    
+    def load_settings(self):
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT key, value FROM settings')
+        for key, value in c.fetchall():
+            setattr(self, key, value / 100)
+        conn.close()
+        self.reset()
 
 
 def setup_game(width=800, height=600, title="Battle of the Square"):

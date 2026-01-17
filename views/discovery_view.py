@@ -8,6 +8,7 @@ from collections import namedtuple
 
 if __name__ == '__main__':
     from views.game_view import GameView
+    from helpers.classes import Player
 
 CENTER_RADIUS = 90
 TECH_SPACING = 120
@@ -207,7 +208,8 @@ class DiscoveryView(arcade.View):
                     element.cls,
                     x,
                     y,
-                    size * ICON_SCALE
+                    size * ICON_SCALE,
+                    self.parent.current_player
                 )
 
                 cost = 4 if element.depth == 0 else 5
@@ -251,7 +253,7 @@ def draw_centered_texture(texture: arcade.Texture, x: float, y: float, max_w: fl
     arcade.draw_texture_rect(texture, rect)
 
 
-def draw_tech_textures(cls: type, x: float, y: float, size: float) -> None:
+def draw_tech_textures(cls: type, x: float, y: float, size: float, player: 'Player') -> None:
     '''Draw tech icon depending on class type'''
     if issubclass(cls, ModifierBase):
         count = len(cls.textures)
@@ -266,7 +268,7 @@ def draw_tech_textures(cls: type, x: float, y: float, size: float) -> None:
         return
 
     if issubclass(cls, UnitBase):
-        draw_centered_texture(cls.texture.texture, x, y, size * 2, size * 2)
+        draw_centered_texture(cls(player, (-1, -1)).texture.texture, x, y, size * 2, size * 2)
         return
 
     raise TypeError(f'Accepts only ModifierBase and UnitBase subclasses, given: {cls}')

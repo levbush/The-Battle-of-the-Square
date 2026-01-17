@@ -58,7 +58,8 @@ class MovementSystem:
         if tile.modifier and tile.modifier.type in (ModifierType.MOUNTAIN, ModifierType.GOLD_MOUNTAIN):
             if not self.game.current_player.open_tech.tech_map.get(Mountain, False):
                 return False
-                
+        if tile.unit and tile.unit.owner != self.game.current_player:
+            return False
         return True
     
     def move_unit(self, from_tile: TileBase, to_tile: TileBase) -> bool:

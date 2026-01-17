@@ -40,8 +40,6 @@ class StartView(arcade.View):
             ),
         )
 
-        self.load_settings()
-
     def setup_widgets(self):
         'Setup buttons'
         conn = sqlite3.connect(DB_PATH)
@@ -121,12 +119,3 @@ class StartView(arcade.View):
 
         self.manager.disable()
         self.window.show_view(view)
-
-    def load_settings(self):
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('SELECT key, value FROM settings')
-        for key, value in c.fetchall():
-            setattr(self.window, key, value / 100)
-        conn.close()
-        self.window.reset()

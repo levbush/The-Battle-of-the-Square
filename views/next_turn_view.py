@@ -75,6 +75,6 @@ class NextTurnView(arcade.View):
         self.parent.manager.disable()
 
     def on_key_press(self, key, modifiers):
-        if arcade.key.ENTER == key:
+        if key in (arcade.key.ENTER, arcade.key.SPACE):
             self.fade_out = True
             self.fade_in = False

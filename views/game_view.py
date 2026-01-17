@@ -38,6 +38,8 @@ class GameView(arcade.View):
         self.valid_move_tiles = []
         self.path = []
         self.cost_tooltip = None
+        self.unit_btns = []
+        self.unit_cost_tooltips = []
         self.first_move_in_session = True
 
         self.world_camera = arcade.camera.Camera2D()
@@ -549,6 +551,7 @@ class GameView(arcade.View):
         self.selected_city = tile.city
         self.valid_move_tiles = []
         self.path = []
+        self.handle_selected_city()
 
     def handle_click(self, x: float, y: float):
         self.cost_tooltip = None
@@ -653,6 +656,10 @@ class GameView(arcade.View):
         self.path = []
         self.move_popups.clear()
         self.cost_tooltip = None
+        for btn in self.unit_btns:
+            self.manager.remove(btn)
+        self.unit_btns = []
+        self.unit_cost_tooltips = []
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
@@ -795,3 +802,32 @@ class GameView(arcade.View):
                     tile.unit = None
 
         self.check_win()
+
+    def handle_selected_city(self):
+        if self.selected_city is None or self.selected_city.owner != self.current_player or self.selected_tile.unit is not None:
+            return
+
+        for btn in self.unit_btns:
+            self.manager.remove(btn)
+        self.unit_btns = []
+        classes = []
+        for unit in UNIT_TYPES.values():
+            if unit.cost is None or not self.current_player.open_tech.tech_map.get(unit, True): continue
+            classes.append(unit)
+        for i, unit in enumerate(classes):
+            btn = UITextureButton(texture=unit(self.current_player, (-1, -1)).texture.texture, scale=0.3, y=100, x=self.width / 2 - len(classes) / 2 * 100 + i * 100)
+            self.unit_cost_tooltips.append(arcade.Text(str(unit.cost),y=230, x=self.width / 2 - len(classes) / 2 * 100 + i * 100 + 130, font_size=20, batch=self.batch, anchor_x='center', anchor_y='center'))
+            def make_handler(unit: type[UnitBase]):
+                return lambda _: self.create_unit(unit.cost, unit.type)
+            btn.on_click = make_handler(unit)
+            self.manager.add(btn)
+            self.unit_btns.append(btn)
+    
+    def create_unit(self, cost: int, type: UnitType):
+        if not cost or self.current_player.stars < cost:
+            return
+        self.selected_tile.unit = Unit(type, self.current_player, self.selected_tile.row, self.selected_tile.col)
+        self.selected_tile.unit.move_remains = False
+        self.current_player.stars -= cost
+        self.deselect_all()
+        self.update_sprites()
