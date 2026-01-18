@@ -8,7 +8,6 @@ from random import shuffle
 
 SKIN = [i for i in range(1, 15)]
 shuffle(SKIN)
-print(SKIN)
 
 
 class UnitType(IntEnum):
