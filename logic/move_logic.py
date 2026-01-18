@@ -57,8 +57,7 @@ class MovementSystem:
             return False
 
         if to_tile.unit and to_tile.unit.owner != from_tile.unit.owner:
-            attack_system = AttackSystem(self.game)
-            return attack_system.attack_unit(from_tile, to_tile)
+            return self.game.attack_system.attack_unit(from_tile, to_tile)
 
         return self._perform_movement(from_tile, to_tile)
 
@@ -180,7 +179,7 @@ class AttackSystem:
 
     def can_attack_from_position(self, attacker_tile: TileBase, target_tile: TileBase):
         attacker = attacker_tile.unit
-        if not attacker or not self.game.is_tile_visible(target_tile):
+        if not attacker or not target_tile.visible_mapping[self.game.current_player.id]:
             return False
 
         distance = max(abs(target_tile.row - attacker_tile.row),

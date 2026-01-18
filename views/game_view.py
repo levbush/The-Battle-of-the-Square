@@ -1,5 +1,6 @@
 import arcade
 import sqlite3
+import time
 from arcade.gui import UIManager, UITextureButton
 from views.next_turn_view import NextTurnView
 from helpers.terrain.create_map import create_map
@@ -136,6 +137,14 @@ class GameView(arcade.View):
             self.change_POV()
 
     def change_POV(self):
+        now = time.time()
+        if now - getattr(self, "_last_turn_time", 0) < 0.2:
+            return
+        self._last_turn_time = now
+        self._change_POV_internal()
+
+
+    def _change_POV_internal(self):
         if self.next_turn_btn.disabled:
             return
         self.next_turn_btn.disabled = True
@@ -167,9 +176,6 @@ class GameView(arcade.View):
             self.make_player_move()
 
         self.deselect_all()
-        self.valid_move_tiles = []
-        self.path = []
-
         self.update_sprites()
 
         view = NextTurnView(self.current_player, parent=self)
