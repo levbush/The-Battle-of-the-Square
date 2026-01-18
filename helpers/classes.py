@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from views.discovery_view import TechTree
 from helpers.unit_classes import Unit, UnitType
 from helpers.custom_texture import CustomTexture
+from helpers.unit_classes import SKIN
 
 if __name__ == '__main__':
     from terrain.terrain_classes import TileBase
@@ -209,7 +210,7 @@ class City:
     def __post_init__(self):
         if self not in self.owner.cities:
             self.owner.cities.append(self)
-        self.texture = CustomTexture(f'assets/cities/{self.owner.id + 1}/House_{self.owner.id + 1}_{self.level + 1}.png')
+        self.texture = CustomTexture(f'assets/cities/{SKIN[self.owner.id]}/House_{SKIN[self.owner.id]}_{self.level + 1}.png')
 
     def level_up(self):
         self.level += 1
@@ -217,4 +218,4 @@ class City:
             self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
             self.tile.unit.move_remains = False
             self.tile.unit.attack_remains = False
-        self.texture = CustomTexture(f'assets/cities/{self.owner.id + 1}/House_{self.owner.id + 1}_{self.level + 1}.png')
+        self.texture = CustomTexture(f'assets/cities/{SKIN[self.owner.id]}/House_{SKIN[self.owner.id]}_{self.level + 1}.png')
