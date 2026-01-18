@@ -182,6 +182,7 @@ class Player:
     cities: list["City"] = field(default_factory=list, repr=False)
     stars: int = 3
     open_tech: TechTree = field(default_factory=TechTree)
+    kills: int = 0
 
     def __post_init__(self):
         for city in self.cities:

@@ -157,6 +157,7 @@ class AttackSystem:
         if defender.health <= 0:
             defender.is_alive = False
             def_tile.unit = None
+            attacker.owner.kills += 1
 
         if defender.is_alive and max(abs(def_tile.row - atk_tile.row), abs(def_tile.col - atk_tile.col)) <= defender.range:
             attacker.health -= round((dfs / total) * defender.defense * 4.5)
