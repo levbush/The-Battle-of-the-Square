@@ -168,8 +168,7 @@ class GameView(arcade.View):
                     self.make_bot_move()
                     if self.check_win():
                         return
-                    self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
-                    continue
+                self.current_player = self.players[(self.current_player.id + 1) % len(self.players)]
             if self.current_player.id <= prev:
                 self.move_n += 1
             self.make_player_move()
@@ -595,25 +594,40 @@ class GameView(arcade.View):
 
 
     def handle_right_click(self, x, y):
-        if (
-            not self.selected_tile
-            or self.selected_tile.owner is None
-            or self.selected_tile.owner.owner != self.current_player
-            or not self.selected_modifier
-        ):
+        if not self.selected_tile:
             return
-        tile = self.screen_to_tile(x, y)
-        if tile != self.selected_tile:
-            return
-        if not self.is_collectible(tile):
-            return
-        if self.current_player.stars < self.selected_modifier.cost:
-            return
-        
-        # self.movement_system.random_move(tile)
-        tile.add_population_to_city(self.selected_modifier.population)
-        tile.modifier.collect()
-        self.current_player.stars -= self.selected_modifier.cost
+        if self.selected_modifier and self.selected_modifier.type != ModifierType.VILLAGE:
+            if (
+                self.selected_tile.owner is None
+                or self.selected_tile.owner.owner != self.current_player
+            ):
+                return
+            tile = self.screen_to_tile(x, y)
+            if tile != self.selected_tile:
+                return
+            if not self.is_collectible(tile):
+                return
+            if self.current_player.stars < self.selected_modifier.cost:
+                return
+            
+            # self.movement_system.random_move(tile)
+            tile.add_population_to_city(self.selected_modifier.population)
+            tile.modifier.collect()
+            self.current_player.stars -= self.selected_modifier.cost
+        elif self.selected_unit or self.selected_city or self.selected_modifier.type == ModifierType.VILLAGE:
+            tile = self.screen_to_tile(x, y)
+            if tile != self.selected_tile:
+                return
+            if not tile.unit or tile.unit.owner != self.current_player:
+                return
+            if not tile.city and not tile.modifier:
+                return
+            if tile.city and tile.city.owner == self.current_player:
+                return
+            if tile.modifier and tile.modifier.type != ModifierType.VILLAGE:
+                return
+            self.capture(tile)
+
         self.update_sprites()
 
     def switch_selection_on_tile(self, tile: TileBase):
@@ -796,6 +810,10 @@ class GameView(arcade.View):
             self.move_n = game_state["move_n"]
 
         conn.close()
+
+        with open(DB_PATH, 'w'):
+            pass
+        init_db()
 
     def capture(self, tile: TileBase):
         player = self.current_player
