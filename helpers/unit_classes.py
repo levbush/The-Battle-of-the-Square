@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     from helpers.classes import Player
 from dataclasses import dataclass, field
-from arcade import load_texture
+from helpers.traits import TraitType
 from enum import IntEnum
 from helpers.custom_texture import CustomTexture
 
@@ -12,7 +12,8 @@ class UnitType(IntEnum):
     DEFENDER = 1
     RIDER = 2
     ARCHER = 3
-    GIANT = 4
+    SWORDSMAN = 4
+    GIANT = 5
 
 
 @dataclass
@@ -27,6 +28,7 @@ class UnitBase:
     movement: int = field(repr=False)
     range: int = field(repr=False)
     move_remains: bool = True
+    attack_remains: bool = True
     health: int = None
 
     type: UnitType = field(init=False, repr=False)
@@ -34,7 +36,7 @@ class UnitBase:
     texture: CustomTexture = field(init=False, repr=False)
     is_alive: bool = field(init=False, default=True, repr=False)
     cost: int | None = field(init=False, repr=False)
-    is_ranged: bool = field(init=False, repr=False, default=False)
+    traits: list[TraitType] = field(init=False, repr=False)
 
     def __post_init__(self):
         if self.health is None:
@@ -88,11 +90,11 @@ class Warrior(UnitBase):
 
     type = UnitType.WARRIOR
     name = 'warrior'
-    texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = 2
+    traits = [TraitType.MOBILE]
 
-    def __init__(self, owner, pos, move_remains=True, health=None):
-        super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, health)
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, attack_remains, health)
 
 
 class Defender(UnitBase):
@@ -100,11 +102,11 @@ class Defender(UnitBase):
 
     type = UnitType.DEFENDER
     name = 'defender'
-    texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = 3
+    traits = []
 
-    def __init__(self, owner, pos, move_remains=True, health=None):
-        super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, health)
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, attack_remains, health)
 
 
 class Rider(UnitBase):
@@ -112,11 +114,11 @@ class Rider(UnitBase):
 
     type = UnitType.RIDER
     name = 'rider'
-    texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = 2
+    traits = [TraitType.MOBILE]
 
-    def __init__(self, owner, pos, move_remains=True, health=None):
-        super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, health)
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, attack_remains, health)
 
 
 class Archer(UnitBase):
@@ -124,24 +126,33 @@ class Archer(UnitBase):
 
     type = UnitType.ARCHER
     name = 'archer'
-    texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = 3
-    is_ranged = True
+    traits = [TraitType.RANGED, TraitType.MOBILE]
 
-    def __init__(self, owner, pos, move_remains=True, health=None):
-        super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, attack_remains, health)
 
+
+class Swordsman(UnitBase):
+    'The swordman unit class'
+    type = UnitType.SWORDSMAN
+    name = 'swordsman'
+    cost = 4
+    traits = [TraitType.MOBILE]
+
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 15, 3, 3, 1, 1, move_remains, attack_remains, health)
 
 class Giant(UnitBase):
     'The giant unit class'
 
     type = UnitType.GIANT
     name = 'giant'
-    texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = None
+    traits = []
 
-    def __init__(self, owner, pos, move_remains=True, health=None):
-        super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, health)
+    def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
+        super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, attack_remains, health)
 
 
 UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
@@ -149,6 +160,7 @@ UNIT_TYPES: dict[UnitType, type[UnitBase]] = {
     UnitType.DEFENDER: Defender,
     UnitType.RIDER: Rider,
     UnitType.ARCHER: Archer,
+    UnitType.SWORDSMAN: Swordsman,
     UnitType.GIANT: Giant,
 }
 

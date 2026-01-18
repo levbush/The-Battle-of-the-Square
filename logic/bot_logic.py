@@ -42,9 +42,10 @@ class BotLogic:
             
         for unit in list(own_units):
             unit.move_remains = True
+            unit.attack_remains = True
                 
         for unit in list(own_units):
-            if not unit.move_remains or not unit.is_alive:
+            if not unit.move_remains and not unit.attack_remains or not unit.is_alive:
                 continue
 
             self.act_unit(unit, visible_enemy_units, visible_enemy_cities, fog, villages)

@@ -4,7 +4,7 @@ from pyglet.graphics import Batch
 
 class StatisticsView(arcade.View):
     """View для отображения статистики игры"""
-    def __init__(self, parent, player_name="Игрок", turn=1, units_killed=0, custom_value="X"):
+    def __init__(self, parent, player_name="Игрок", turn=0, units_killed=0, custom_value="X"):
         super().__init__()
         
         self.parent = parent

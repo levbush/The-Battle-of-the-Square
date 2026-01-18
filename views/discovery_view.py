@@ -1,7 +1,7 @@
 import arcade
 import math
 from arcade.gui import UIManager, UITextureButton
-from helpers.unit_classes import Rider, Archer, Defender, UnitBase
+from helpers.unit_classes import Rider, Archer, Defender, UnitBase, Swordsman
 from helpers.terrain.terrain_classes import Mountain, GoldMountain, Animal, Forest, Fish, Fruits, ModifierBase
 from pyglet.graphics import Batch
 from collections import namedtuple
@@ -29,14 +29,14 @@ class TechTree:
     '''Defines the discoveries and stores the progress'''
 
     tech_tree_map: tuple[tuple[type[ModifierBase | UnitBase], ...], ...] = (
-        (Mountain, GoldMountain),
+        (Mountain, GoldMountain, Swordsman),
         (Rider, Archer),
         (Fruits, Defender),
         (Animal, Forest),
         (Fish,),
     )
 
-    techs: tuple[type[ModifierBase | UnitBase], ...] = (Mountain, GoldMountain, Rider, Archer, Fruits, Defender, Animal, Forest, Fish)
+    techs: tuple[type[ModifierBase | UnitBase], ...] = (Mountain, GoldMountain, Swordsman, Rider, Archer, Fruits, Defender, Animal, Forest, Fish)
 
     def __init__(self, tech_map: list[bool] | None = None) -> None:
         self.__tech_map: list[bool] = tech_map or [False] * len(self.techs)
@@ -135,7 +135,7 @@ class DiscoveryView(arcade.View):
 
             def make_handler(tech_cls: type = element.cls, tech_depth: int = element.depth):
                 def on_click(event) -> None:
-                    cost = 4 if tech_depth == 0 else 5
+                    cost = 4 + tech_depth
                     player = self.parent.current_player
 
                     if player.stars < cost:
@@ -212,7 +212,7 @@ class DiscoveryView(arcade.View):
                     self.parent.current_player
                 )
 
-                cost = 4 if element.depth == 0 else 5
+                cost = 4 + element.depth
                 label = arcade.Text(
                     text=str(cost),
                     font_size=14,
