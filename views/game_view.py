@@ -15,6 +15,7 @@ from helpers.unit_classes import *
 from logic.bot_logic import BotLogic
 from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
+from views.statistics import StatisticsView
 
 
 class GameView(arcade.View):
@@ -676,6 +677,9 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
             arcade.get_window().show_view(SettingsView(parent=self))
+
+        if key == arcade.key.L:
+            arcade.get_window().show_view(StatisticsView(parent=self))
 
         if key == arcade.key.H:
             arcade.get_window().show_view(DiscoveryView(parent=self))
