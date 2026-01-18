@@ -1,5 +1,6 @@
 from helpers.terrain.terrain_classes import TileBase, ModifierType, TerrainType, Mountain
 from helpers.unit_classes import UnitBase
+from helpers.traits import TraitType
 if __name__ == '__main__':
     from views.game_view import GameView
 
@@ -53,11 +54,10 @@ class MovementSystem:
     def move_unit(self, from_tile: TileBase, to_tile: TileBase) -> bool:
         if not from_tile.unit or from_tile.unit.owner != self.game.current_player:
             return False
+        # if to_tile.unit and to_tile.unit.owner != from_tile.unit.owner:
+        #     return self.game.attack_system.attack_unit(from_tile, to_tile)
         if not from_tile.unit.move_remains:
             return False
-
-        if to_tile.unit and to_tile.unit.owner != from_tile.unit.owner:
-            return self.game.attack_system.attack_unit(from_tile, to_tile)
 
         return self._perform_movement(from_tile, to_tile)
 
@@ -65,6 +65,7 @@ class MovementSystem:
         try:
             from_tile.unit.move((to_tile.row, to_tile.col))
             from_tile.unit.move_remains = False
+            if TraitType.MOBILE not in from_tile.unit.traits: from_tile.unit.attack_remains = False
 
             self.game.update_visibility_around_unit(to_tile)
 
@@ -86,7 +87,7 @@ class AttackSystem:
     def get_defense_bonus(self, tile: TileBase) -> float:
         if tile.modifier:
             if tile.modifier.type in (ModifierType.MOUNTAIN, ModifierType.GOLD_MOUNTAIN, ModifierType.FOREST):
-                return 1.5
+                return 1.25
         return 1
 
     def get_valid_attacks(self, attacker_tile: TileBase) -> list[TileBase]:
@@ -128,7 +129,7 @@ class AttackSystem:
 
         if not attacker or not defender or attacker.owner == defender.owner:
             return False
-        if not attacker.move_remains:
+        if not (attacker.move_remains or attacker.attack_remains and TraitType.MOBILE in attacker.traits):
             return False
         if not defender_tile.visible_mapping[self.game.current_player.id]:
             return False
@@ -165,7 +166,7 @@ class AttackSystem:
 
         if not defender.is_alive:
             mover = MovementSystem(self.game)
-            if mover._is_passable_for_movement(def_tile) and not attacker.is_ranged:
+            if mover._is_passable_for_movement(def_tile) and TraitType.RANGED not in attacker.traits:
                 attacker.move((def_tile.row, def_tile.col))
                 def_tile.unit = attacker
                 atk_tile.unit = None
@@ -175,6 +176,7 @@ class AttackSystem:
             atk_tile.unit = None
 
         attacker.move_remains = False
+        attacker.attack_remains = False
         self.game.update_sprites()
 
     def can_attack_from_position(self, attacker_tile: TileBase, target_tile: TileBase):

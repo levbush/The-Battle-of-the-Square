@@ -95,7 +95,7 @@ class GameView(arcade.View):
         self.manager.add(self.info_btn)
         self.manager.add(self.next_turn_btn)
         self.manager.add(self.tech_btn)
-        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self))
+        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(self, player_name=self.current_player.id + 1, turn=self.move_n))
         self.next_turn_btn.on_click = lambda *_: self.change_POV()
         self.tech_btn.on_click = lambda *_: self.window.show_view(DiscoveryView(self))
         self.city_tooltips = []
@@ -434,7 +434,8 @@ class GameView(arcade.View):
     
     def calculate_valid_moves(self, start_tile: TileBase):
         """Compute and store valid move and attack tiles for the selected unit."""
-        self.valid_move_tiles = self.movement_system.get_valid_moves(start_tile)
+        if start_tile.unit.move_remains:
+            self.valid_move_tiles = self.movement_system.get_valid_moves(start_tile)
         self.valid_attack_tiles = self.attack_system.get_valid_attacks(start_tile)
         self.path = []
 
@@ -547,13 +548,14 @@ class GameView(arcade.View):
                 for tile in row:
                     if tile.unit and tile.unit.owner == self.current_player:
                         tile.unit.move_remains = True
+                        tile.unit.attack_remains = True
                         self.update_visibility_around_unit(tile)
 
         self.update_sprites()
 
     def select_unit(self, tile: TileBase):
         """Select a unit for moving or attacking."""
-        if not tile.unit or not tile.unit.move_remains:
+        if not tile.unit or (not tile.unit.move_remains and not (tile.unit.attack_remains and TraitType.MOBILE in tile.unit.traits)):
             return False
 
         self.selected_unit = tile.unit
@@ -585,6 +587,8 @@ class GameView(arcade.View):
 
         if self.selected_unit and tile in self.valid_move_tiles:
             self.move_unit(self.selected_tile, tile)
+            if tile.unit.attack_remains and TraitType.MOBILE in tile.unit.traits:
+                self.select_unit(tile)
             return
 
         if self.selected_unit and tile in self.valid_attack_tiles:
@@ -595,7 +599,6 @@ class GameView(arcade.View):
             self.switch_selection_on_tile(tile)
             return
 
-        # Clicked elsewhere → deselect
         if self.selected_tile and tile != self.selected_tile:
             self.deselect_all()
 
@@ -830,7 +833,7 @@ class GameView(arcade.View):
 
     def capture(self, tile: TileBase):
         player = self.current_player
-        if not tile.unit or tile.unit.owner != player:
+        if not tile.unit or tile.unit.owner != player or not tile.unit.move_remains:
             return
         if tile.city:
             city_owner = tile.city.owner
@@ -848,6 +851,7 @@ class GameView(arcade.View):
             for dy in (-1, 0, 1):
                 self.map[tile.row + dx][tile.col + dy].owner = tile.city
         tile.unit.move_remains = False
+        tile.unit.attack_remains = False
 
     def check_defeat_of_player(self, player: Player):
         if player.cities:
@@ -886,6 +890,7 @@ class GameView(arcade.View):
             return
         self.selected_tile.unit = Unit(type, self.current_player, self.selected_tile.row, self.selected_tile.col)
         self.selected_tile.unit.move_remains = False
+        self.selected_tile.unit.attack_remains = False
         self.current_player.stars -= cost
         self.deselect_all()
         self.update_sprites()
