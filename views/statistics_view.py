@@ -1,4 +1,6 @@
 import arcade
+from pyglet.graphics import Batch
+
 
 class StatisticsView(arcade.View):
     """View для отображения статистики игры"""
@@ -17,122 +19,135 @@ class StatisticsView(arcade.View):
         self.title_color = arcade.color.GOLD
         self.text_color = arcade.color.WHITE
         self.highlight_color = arcade.color.LIGHT_BLUE
+        self.gray_color = arcade.color.LIGHT_GRAY
 
         arcade.set_background_color(self.background_color)
-
-        # self.center_x = self.window.width // 2
-        # self.center_y = self.window.height // 2
+        self.setup()
     
-    def on_draw(self):
-        self.clear()
+    def setup(self):
+        self.batch = Batch()
+        self.stat_y = self.window.height - 200
+        self.line_height = 50
 
-        arcade.draw_text(
+        self.main_label = arcade.Text(
             "СТАТИСТИКА ИГРЫ",
-            self.center_x,
+            self.window.width // 2,
             self.window.height - 100,
             self.title_color,
             36,
             anchor_x="center",
-            font_name="Gothic"
+            font_name="Gothic",
+            batch=self.batch
         )
-        
+
+        self.player_label = arcade.Text(
+            "Игрок:",
+            self.window.width // 2 - 150,
+            self.stat_y,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.player_value = arcade.Text(
+            str(self.stats["player"]),
+            self.window.width // 2 + 100,
+            self.stat_y,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.turn_label = arcade.Text(
+            "Ход:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.turn_value = arcade.Text(
+            str(self.stats["turn"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.kills_label = arcade.Text(
+            "Юнитов убито:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height * 2,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.kills_value = arcade.Text(
+            str(self.stats["units_killed"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height * 2,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.custom_label = arcade.Text(
+            "X:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height * 3,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.custom_value = arcade.Text(
+            str(self.stats["custom"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height * 3,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.continue_label = arcade.Text(
+            "Нажмите ПРОБЕЛ для продолжения",
+            self.window.width // 2,
+            100,
+            self.gray_color,
+            20,
+            anchor_x="center",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+    def on_draw(self):
+        self.clear()
+
         arcade.draw_line(
-            self.center_x - 200,
+            self.window.width // 2 - 200,
             self.window.height - 130,
-            self.center_x + 200,
+            self.window.width // 2 + 200,
             self.window.height - 130,
             self.title_color,
             3
         )
 
-        stat_y = self.window.height - 200
-        line_height = 50
-
-        arcade.draw_text(
-            "Игрок:",
-            self.center_x - 150,
-            stat_y,
-            self.highlight_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        arcade.draw_text(
-            str(self.stats["player"]),
-            self.center_x + 50,
-            stat_y,
-            self.text_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-
-        arcade.draw_text(
-            "Ход:",
-            self.center_x - 150,
-            stat_y - line_height,
-            self.highlight_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        arcade.draw_text(
-            str(self.stats["turn"]),
-            self.center_x + 50,
-            stat_y - line_height,
-            self.text_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        
-        arcade.draw_text(
-            "Юнитов убито:",
-            self.center_x - 150,
-            stat_y - line_height * 2,
-            self.highlight_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        arcade.draw_text(
-            str(self.stats["units_killed"]),
-            self.center_x + 50,
-            stat_y - line_height * 2,
-            self.text_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        
-        arcade.draw_text(
-            "X:",
-            self.center_x - 150,
-            stat_y - line_height * 3,
-            self.highlight_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        arcade.draw_text(
-            str(self.stats["custom"]),
-            self.center_x + 50,
-            stat_y - line_height * 3,
-            self.text_color,
-            24,
-            anchor_x="left",
-            font_name="Arial"
-        )
-        
-        arcade.draw_text(
-            "Нажмите ПРОБЕЛ для продолжения",
-            self.center_x,
-            100,
-            arcade.color.LIGHT_GRAY,
-            20,
-            anchor_x="center",
-            font_name="Arial"
-        )
+        self.batch.draw()
         
         self._draw_decoration()
     
@@ -150,20 +165,9 @@ class StatisticsView(arcade.View):
     
     def on_key_press(self, key, modifiers):
         """Обработка нажатия клавиш"""
-        if key == arcade.key.SPACE:
-            print("Возврат в игру...")
-            
-        elif key == arcade.key.ESCAPE:
-            arcade.close_window()
-        
-        elif key == arcade.key.R:
-            self.stats["turn"] += 1
-            self.stats["units_killed"] += 5
-    
-    def update_stat(self, stat_name, value):
-        """Обновление статистики"""
-        if stat_name in self.stats:
-            self.stats[stat_name] = value
+        if key == arcade.key.SPACE or key == arcade.key.ESCAPE or key == arcade.key.L:
+            if self.parent:
+                self.window.show_view(self.parent)
 
 
 class GameStatsManager:

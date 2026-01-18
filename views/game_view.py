@@ -16,7 +16,7 @@ from helpers.unit_classes import *
 from logic.bot_logic import BotLogic
 from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
-from views.statistics import StatisticsView
+from views.statistics_view import StatisticsView
 
 
 class GameView(arcade.View):
@@ -685,7 +685,8 @@ class GameView(arcade.View):
             arcade.get_window().show_view(SettingsView(parent=self))
 
         if key == arcade.key.L:
-            arcade.get_window().show_view(StatisticsView(parent=self))
+            arcade.get_window().show_view(StatisticsView(parent=self, player_name=self.current_player.id + 1, turn=self.move_n))
+            print(self.current_player.id)
 
         if key == arcade.key.H:
             arcade.get_window().show_view(DiscoveryView(parent=self))
