@@ -48,8 +48,6 @@ class GameView(arcade.View):
         self.gui_camera = arcade.camera.Camera2D()
         self.manager = UIManager()
         self.manager.enable()
-        self.manager1 = UIManager()
-        self.manager1.enable()
         self.setup()
 
     def setup(self):
@@ -72,6 +70,7 @@ class GameView(arcade.View):
             self.load_game()
 
         self.tiles = arcade.SpriteList(use_spatial_hash=True)
+        self.capture_list = arcade.SpriteList(use_spatial_hash=True)
         self.modifiers = arcade.SpriteList(use_spatial_hash=True)
         self.cities = arcade.SpriteList(use_spatial_hash=True)
         self.units = arcade.SpriteList(use_spatial_hash=True)
@@ -206,18 +205,15 @@ class GameView(arcade.View):
         self.draw_city_borders()
         self.world_batch.draw()
         self.draw_valid_moves()
-        self.on_draw_ui()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
         arcade.draw_texture_rect(
             self.science, arcade.rect.LBWH(self.width // 2 + self.width * 0.035, self.height * 0.05, 60, 60)
         )
+        self.capture_list.draw()
 
         self.batch.draw()
-    
-    def on_draw_ui(self):
-        self.manager1.draw()
 
     def draw_city_borders(self):
         for row_idx, row in enumerate(self.map):
@@ -474,6 +470,7 @@ class GameView(arcade.View):
     def update_sprites(self):
         self.reset_all()
         self.star_label.text = f'{self.current_player.stars} (+ {self.get_stars_for_player()})'
+        self.capture_list.clear()
 
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
@@ -532,25 +529,11 @@ class GameView(arcade.View):
 
                 if tile.unit and tile.city:
                     if tile.unit.owner != tile.city.owner:
-                        self.capture_btn = UITextureButton(
-                            x=tile.row * 120,
-                            y=tile.col * 80,
-                            texture=arcade.load_texture("assets/misc/capture.png"),
-                            scale=0.2,
-                        )
-                        self.manager1.add(self.capture_btn)
-                        self.capture_btn.on_click = lambda *_: self.capture(tile)
+                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, tile.row * 120, tile.col * 80))
                 
                 if tile.unit and tile.modifier:
                     if tile.modifier == ModifierType.VILLAGE:
-                        self.capture_btn = UITextureButton(
-                            x=tile.row * 120,
-                            y=tile.col * 80,
-                            texture=arcade.load_texture("assets/misc/capture.png"),
-                            scale=0.2,
-                        )
-                        self.manager1.add(self.capture_btn)
-                        self.capture_btn.on_click = lambda *_: self.capture(tile)
+                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, tile.row * 120, tile.col * 80))
 
         self.tiles.reverse()
         self.modifiers.reverse()
