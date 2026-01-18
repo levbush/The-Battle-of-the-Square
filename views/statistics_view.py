@@ -168,22 +168,3 @@ class StatisticsView(arcade.View):
         if key == arcade.key.SPACE or key == arcade.key.ESCAPE or key == arcade.key.L:
             if self.parent:
                 self.window.show_view(self.parent)
-
-
-class GameStatsManager:
-    def __init__(self):
-        self.stats = {
-            "player": "Игрок 1",
-            "turn": 1,
-            "units_killed": 0,
-            "custom": "Пусто"
-        }
-    
-    def increment_turn(self):
-        self.stats["turn"] += 1
-    
-    def add_kills(self, amount=1):
-        self.stats["units_killed"] += amount
-    
-    def get_stats(self):
-        return self.stats.copy()
