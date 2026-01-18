@@ -521,7 +521,11 @@ class GameView(arcade.View):
                             bold=True,
                             batch=self.world_batch,
                         )
-                    )
+                    )   
+
+                if tile.unit and tile.city:
+                    if tile.unit.owner != tile.city.owner:
+                        print(1)
 
         self.tiles.reverse()
         self.modifiers.reverse()
