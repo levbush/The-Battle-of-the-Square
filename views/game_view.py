@@ -74,6 +74,12 @@ class GameView(arcade.View):
         self.cities = arcade.SpriteList(use_spatial_hash=True)
         self.units = arcade.SpriteList(use_spatial_hash=True)
         self.move_popups = arcade.SpriteList()
+        self.info_btn = UITextureButton(
+            x=self.width // 2 + self.width * 0.075 + 65,
+            y=self.height * 0.05 + 7,
+            texture=arcade.load_texture("assets/misc/infoSymbol.png"),
+            scale=0.5,
+        )
         self.next_turn_btn = UITextureButton(
             x=self.width // 2 + self.width * 0.075,
             y=self.height * 0.05,
@@ -86,8 +92,10 @@ class GameView(arcade.View):
             texture=arcade.load_texture('assets/misc/techbg.png'),
             scale=0.2098,
         )
+        self.manager.add(self.info_btn)
         self.manager.add(self.next_turn_btn)
         self.manager.add(self.tech_btn)
+        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self))
         self.next_turn_btn.on_click = lambda *_: self.change_POV()
         self.tech_btn.on_click = lambda *_: self.window.show_view(DiscoveryView(self))
         self.city_tooltips = []
