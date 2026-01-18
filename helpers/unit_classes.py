@@ -4,6 +4,11 @@ from dataclasses import dataclass, field
 from helpers.traits import TraitType
 from enum import IntEnum
 from helpers.custom_texture import CustomTexture
+from random import shuffle
+
+SKIN = [i for i in range(1, 15)]
+shuffle(SKIN)
+print(SKIN)
 
 
 class UnitType(IntEnum):
@@ -41,7 +46,7 @@ class UnitBase:
     def __post_init__(self):
         if self.health is None:
             self.health = self.max_health
-        self.texture = CustomTexture(f'assets/units/{self.owner.id + 1}/{self.name}.png')
+        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id]}/{self.name}.png')
 
     # @staticmethod
     # def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
