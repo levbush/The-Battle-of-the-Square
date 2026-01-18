@@ -17,7 +17,7 @@ class WinnerView(arcade.View):
         if self.winner is None:
             text = "Вы проиграли!"
         else:
-            text = f"Победил игрок {self.winner.id}!"
+            text = f"Победил игрок {self.winner.id + 1}!"
         
         self.texts = [arcade.Text(
             text,
