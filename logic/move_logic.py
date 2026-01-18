@@ -180,7 +180,7 @@ class AttackSystem:
 
     def can_attack_from_position(self, attacker_tile: TileBase, target_tile: TileBase):
         attacker = attacker_tile.unit
-        if not attacker or not self.game.is_tile_visible(target_tile):
+        if not attacker or not target_tile.visible_mapping[self.game.current_player.id]:
             return False
 
         distance = max(abs(target_tile.row - attacker_tile.row),
