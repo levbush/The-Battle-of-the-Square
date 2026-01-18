@@ -540,6 +540,17 @@ class GameView(arcade.View):
                         )
                         self.manager1.add(self.capture_btn)
                         self.capture_btn.on_click = lambda *_: self.capture(tile)
+                
+                if tile.unit and tile.modifier:
+                    if tile.modifier == ModifierType.VILLAGE:
+                        self.capture_btn = UITextureButton(
+                            x=tile.row * 120,
+                            y=tile.col * 80,
+                            texture=arcade.load_texture("assets/misc/capture.png"),
+                            scale=0.2,
+                        )
+                        self.manager1.add(self.capture_btn)
+                        self.capture_btn.on_click = lambda *_: self.capture(tile)
 
         self.tiles.reverse()
         self.modifiers.reverse()
