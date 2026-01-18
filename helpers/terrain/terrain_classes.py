@@ -53,7 +53,7 @@ class ModifierBase:
 
 class Fruits(ModifierBase):
     'Fruits modifier class'
-    weight = 18
+    weight = 17
     type = ModifierType.FRUITS
     textures = (CustomTexture("assets/resources/fruits.png"),)
     offsets = (60,)
@@ -71,7 +71,7 @@ class Fruits(ModifierBase):
 class Animal(ModifierBase):
     'Animal modifier class'
 
-    weight = 18
+    weight = 17
     type = ModifierType.ANIMAL
     textures = (CustomTexture("assets/resources/animal.png"),)
     offsets = (80,)
@@ -89,7 +89,7 @@ class Animal(ModifierBase):
 class Mountain(ModifierBase):
     'Mountain modifier class'
 
-    weight = 6
+    weight = 7
     type = ModifierType.MOUNTAIN
     textures = (CustomTexture("assets/terrain/mountain.png"),)
     offsets = (50,)
@@ -104,7 +104,7 @@ class Mountain(ModifierBase):
 class GoldMountain(ModifierBase):
     'Mountain with gold modifier class'
 
-    weight = 3
+    weight = 4
     type = ModifierType.GOLD_MOUNTAIN
     textures = CustomTexture("assets/resources/gold.png"), Mountain.textures[0]  # Multiple as gold isn't a mountain by itself
     offsets = 75, Mountain.offsets[0]
