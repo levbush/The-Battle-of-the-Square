@@ -196,7 +196,7 @@ class Player:
         return NotImplemented
 
 
-@dataclass
+@dataclass(eq=False)
 class City:
     'Class defining a city'
     owner: Player | int

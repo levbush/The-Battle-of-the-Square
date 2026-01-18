@@ -135,6 +135,10 @@ class GameView(arcade.View):
             self.change_POV()
 
     def change_POV(self):
+        if self.next_turn_btn.disabled:
+            return
+        self.next_turn_btn.disabled = True
+    
         self.world_camera.position = self.camera_start
         self.world_camera.zoom = 0.5 ** (((121, 196, 256, 324, 400, 900).index(self.size_map**2) + 1) / 2)
         
@@ -173,6 +177,7 @@ class GameView(arcade.View):
     def next_turn(self):
         self.window.show_view(self)
         self.manager.enable()
+        self.next_turn_btn.disabled = False
 
     def on_draw(self):
         self.clear()
@@ -317,21 +322,17 @@ class GameView(arcade.View):
                 )
 
     def draw_valid_moves(self):
+        """Draw move and attack highlights on tiles."""
         self.move_popups.clear()
+
         for tile in self.valid_move_tiles:
             x, y = self.tile_to_world(tile)
+            self.move_popups.append(arcade.Sprite(self.move_tooltip, 0.5, x, y + 60))
 
-            if tile.unit and tile.unit.owner != self.current_player:
-                if self.attack_system.can_attack_from_position(self.selected_tile, tile):
-                    texture = self.attack_tooltip
-                else:
-                    continue
-            else:
-                texture = self.move_tooltip
-                
-            self.move_popups.append(
-                arcade.Sprite(texture, 0.5, x, y + 60)
-            )
+        for tile in self.valid_attack_tiles:
+            x, y = self.tile_to_world(tile)
+            self.move_popups.append(arcade.Sprite(self.attack_tooltip, 0.5, x, y + 60))
+
         self.move_popups.draw()
 
     def screen_to_world(self, x, y):
@@ -418,17 +419,25 @@ class GameView(arcade.View):
         return self.current_player.open_tech.tech_map.get(tile.modifier.__class__, True)
     
     def calculate_valid_moves(self, start_tile: TileBase):
+        """Compute and store valid move and attack tiles for the selected unit."""
         self.valid_move_tiles = self.movement_system.get_valid_moves(start_tile)
+        self.valid_attack_tiles = self.attack_system.get_valid_attacks(start_tile)
         self.path = []
+
 
     def move_unit(self, from_tile: TileBase, to_tile: TileBase):
         success = self.movement_system.move_unit(from_tile, to_tile)
         
         if success:
-            self.selected_unit = None
-            self.selected_tile = None
-            self.valid_move_tiles = []
-            self.path = []
+            self.deselect_all()
+            
+        return success
+    
+    def attack_unit(self, from_tile: TileBase, to_tile: TileBase):
+        success = self.attack_system.attack_unit(from_tile, to_tile)
+        
+        if success:
+            self.deselect_all()
             
         return success
 
@@ -529,38 +538,34 @@ class GameView(arcade.View):
         self.update_sprites()
 
     def select_unit(self, tile: TileBase):
-        if tile.unit and not tile.unit.move_remains:
+        """Select a unit for moving or attacking."""
+        if not tile.unit or not tile.unit.move_remains:
             return False
 
         self.selected_unit = tile.unit
         self.selected_tile = tile
         self.valid_move_tiles = []
+        self.valid_attack_tiles = []
         self.path = []
 
         self.calculate_valid_moves(tile)
         return True
 
     def select_modifier(self, tile: TileBase):
+        self.deselect_all()
         self.selected_tile = tile
         self.selected_modifier = tile.modifier
-        self.valid_move_tiles = []
-        self.path = []
 
     def select_city(self, tile: TileBase):
+        self.deselect_all()
         self.selected_tile = tile
         self.selected_city = tile.city
-        self.valid_move_tiles = []
-        self.path = []
         self.handle_selected_city()
 
     def handle_click(self, x: float, y: float):
         self.cost_tooltip = None
         tile = self.screen_to_tile(x, y)
-        if not tile:
-            self.deselect_all()
-            return
-
-        if not tile.visible_mapping[self.current_player.id]:
+        if not tile or not tile.visible_mapping[self.current_player.id]:
             self.deselect_all()
             return
 
@@ -568,14 +573,20 @@ class GameView(arcade.View):
             self.move_unit(self.selected_tile, tile)
             return
 
+        if self.selected_unit and tile in self.valid_attack_tiles:
+            self.attack_unit(self.selected_tile, tile)
+            return
+
         if tile == self.selected_tile:
             self.switch_selection_on_tile(tile)
             return
 
+        # Clicked elsewhere → deselect
         if self.selected_tile and tile != self.selected_tile:
             self.deselect_all()
 
         self.primary_selection(tile)
+
 
     def handle_right_click(self, x, y):
         if (
@@ -654,6 +665,7 @@ class GameView(arcade.View):
         self.selected_tile = None
         self.valid_move_tiles = []
         self.path = []
+        self.valid_attack_tiles = []
         self.move_popups.clear()
         self.cost_tooltip = None
         for btn in self.unit_btns:
@@ -766,7 +778,7 @@ class GameView(arcade.View):
         for tile in city_tiles:
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
-                        self.map[tile.row + dx][tile.col + dy].owner = tile.city
+                    self.map[tile.row + dx][tile.col + dy].owner = tile.city
 
         c.execute('SELECT key, value FROM game_state')
         game_state = {k: eval(v) for k, v in c.fetchall()}
@@ -781,15 +793,24 @@ class GameView(arcade.View):
 
     def capture(self, tile: TileBase):
         player = self.current_player
-        city_owner = tile.city.owner
         if not tile.unit or tile.unit.owner != player:
             return
-        self.players[city_owner.id].cities.remove(tile.city)
-        tile.city = City(player, tile.city.level, tile.city.population)
-        tile.city.tile = tile
+        if tile.city:
+            city_owner = tile.city.owner
+            self.players[city_owner.id].cities.remove(tile.city)
+            tile.city = City(player, tile.city.level, tile.city.population)
+            tile.city.tile = tile
 
-        self.check_defeat_of_player(city_owner)
-        self.update_sprites()
+            self.check_defeat_of_player(city_owner)
+        elif tile.modifier and tile.modifier.type == ModifierType.VILLAGE:
+            tile.modifier = None
+            tile.city = City(player)
+            tile.city.tile = tile
+
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                self.map[tile.row + dx][tile.col + dy].owner = tile.city
+        tile.unit.move_remains = False
 
     def check_defeat_of_player(self, player: Player):
         if player.cities:

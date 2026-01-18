@@ -34,6 +34,7 @@ class UnitBase:
     texture: CustomTexture = field(init=False, repr=False)
     is_alive: bool = field(init=False, default=True, repr=False)
     cost: int | None = field(init=False, repr=False)
+    is_ranged: bool = field(init=False, repr=False, default=False)
 
     def __post_init__(self):
         if self.health is None:
@@ -125,6 +126,7 @@ class Archer(UnitBase):
     name = 'archer'
     texture = CustomTexture(f'assets/units/{2}/{name}.png')
     cost = 3
+    is_ranged = True
 
     def __init__(self, owner, pos, move_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, health)

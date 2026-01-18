@@ -1,4 +1,4 @@
-from helpers.terrain.terrain_classes import TileBase
+from helpers.terrain.terrain_classes import TileBase, ModifierType
 from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
 from random import choices, randint
 
@@ -21,6 +21,7 @@ class BotLogic:
         visible_enemy_cities: list[TileBase] = []
         fog: list[TileBase] = []
         own_units: list[UnitBase] = []
+        villages: list[TileBase] = []
 
         for row in self.game.map:
             for tile in row:
@@ -35,6 +36,10 @@ class BotLogic:
 
                 if tile.city and tile.city.owner != self.game.current_player:
                     visible_enemy_cities.append(tile)
+
+                if tile.modifier and tile.modifier.type == ModifierType.VILLAGE:
+                    villages.append(tile)
+            
         for unit in list(own_units):
             unit.move_remains = True
                 
@@ -42,7 +47,7 @@ class BotLogic:
             if not unit.move_remains or not unit.is_alive:
                 continue
 
-            self.act_unit(unit, visible_enemy_units, visible_enemy_cities, fog)
+            self.act_unit(unit, visible_enemy_units, visible_enemy_cities, fog, villages)
 
         self.handle_city_actions()
 
@@ -51,16 +56,18 @@ class BotLogic:
         unit: UnitBase,
         enemy_units: list[TileBase],
         enemy_cities: list[TileBase],
-        fog: list[TileBase]
+        fog: list[TileBase],
+        villages: list[TileBase],
     ) -> None:
         '''Resolve a single unit action'''
         start_tile = self.game.map[unit.pos[0]][unit.pos[1]]
         movement = self.game.movement_system
         attack = self.game.attack_system
 
-        for tile in enemy_cities:
+        for tile in enemy_cities + villages:
             if tile == start_tile:
                 self.game.capture(tile)
+                return
 
         valid_moves = movement.get_valid_moves(start_tile)
         if not valid_moves:
@@ -71,7 +78,7 @@ class BotLogic:
                 movement.move_unit(start_tile, tile)
                 return
 
-        target = self.select_reachable_target(start_tile, valid_moves, enemy_units, enemy_cities, fog)
+        target = self.select_reachable_target(start_tile, valid_moves, enemy_units, enemy_cities, fog, villages)
         if not target:
             return
 
@@ -84,14 +91,15 @@ class BotLogic:
         valid_moves: list[TileBase],
         enemy_units: list[TileBase],
         enemy_cities: list[TileBase],
-        fog: list[TileBase]
+        fog: list[TileBase],
+        villages: list[TileBase]
     ) -> TileBase | None:
         '''Pick nearest target that can be approached'''
 
         def reachable(target: TileBase) -> bool:
             return any(dist(m, target) < dist(start, target) for m in valid_moves)
 
-        for group in (enemy_units + enemy_cities, fog):
+        for group in (enemy_units + enemy_cities, villages, fog):
             candidates = [t for t in group if reachable(t)]
             if candidates:
                 return min(candidates, key=lambda t: dist(start, t))

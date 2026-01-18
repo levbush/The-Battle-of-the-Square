@@ -138,7 +138,7 @@ class Forest(ModifierBase):
 class Village(ModifierBase):
     'Village modifier class'
 
-    weight = 5
+    weight = 10
     type = ModifierType.VILLAGE
     textures = (CustomTexture("assets/misc/village.png"),)
     offsets = (80,)
@@ -185,7 +185,7 @@ def water_modifiers_weights() -> list[int]:
     ]
 
 
-@dataclass
+@dataclass(eq=False)
 class TileBase:
     'Base class for tiles'
 
@@ -214,6 +214,12 @@ class TileBase:
             self.modifier.tile = self
         if self.city:
             self.city.tile = self
+
+    def __hash__(self):
+        return hash((self.row, self.col))
+
+    def __eq__(self, other):
+        return isinstance(other, TileBase) and self.row == other.row and self.col == other.col
 
 
 class Land(TileBase):

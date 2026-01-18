@@ -2,7 +2,7 @@ import arcade
 import random
 import sqlite3
 from views.start_view import StartView
-from views.game_view import GameView, SettingsView
+from views.game_view import GameView, SettingsView, WinnerView, NextTurnView
 from database import init_db, DB_PATH
 
 
@@ -35,7 +35,7 @@ class MainWindow(arcade.Window):
         if arcade.key.F11 == key:
             self.is_fullscreen = not self.is_fullscreen
             self.set_fullscreen(self.is_fullscreen)
-        elif arcade.key.ESCAPE == key and not isinstance(self.current_view, (GameView, SettingsView)): self.on_key_press(arcade.key.F11, 0)
+        elif arcade.key.ESCAPE == key and not isinstance(self.current_view, (GameView, SettingsView, WinnerView, NextTurnView)): self.on_key_press(arcade.key.F11, 0)
 
     def on_update(self, delta_time):
         self.music_counter += delta_time
