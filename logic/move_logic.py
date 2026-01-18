@@ -57,8 +57,7 @@ class MovementSystem:
             return False
 
         if to_tile.unit and to_tile.unit.owner != from_tile.unit.owner:
-            attack_system = AttackSystem(self.game)
-            return attack_system.attack_unit(from_tile, to_tile)
+            return self.game.attack_system.attack_unit(from_tile, to_tile)
 
         return self._perform_movement(from_tile, to_tile)
 

@@ -75,7 +75,7 @@ class BotLogic:
 
         for tile in enemy_units:
             if tile.unit and attack.can_attack_from_position(start_tile, tile):
-                movement.move_unit(start_tile, tile)
+                attack.attack_unit(start_tile, tile)
                 return
 
         target = self.select_reachable_target(start_tile, valid_moves, enemy_units, enemy_cities, fog, villages)
