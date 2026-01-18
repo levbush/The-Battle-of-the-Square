@@ -9,7 +9,7 @@ from database import init_db, DB_PATH
 SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
 SCREEN_TITLE = "Battle of the Square"
 COUNT_MUSIC = 6
-
+SKIN = random.shuffle([i for i in range(1, 15)])
 
 class MainWindow(arcade.Window):
     'The window of the game.'

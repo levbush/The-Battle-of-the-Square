@@ -4,7 +4,7 @@ from pyglet.graphics import Batch
 
 class StatisticsView(arcade.View):
     """View для отображения статистики игры"""
-    def __init__(self, parent, player_name="Игрок", turn=0, units_killed=0, custom_value="X"):
+    def __init__(self, parent, player_name="Игрок", turn=0, units_killed=0, size_map="121", bot_amount="0", player_amount="0", bot_difficulty=None):
         super().__init__()
         
         self.parent = parent
@@ -12,7 +12,10 @@ class StatisticsView(arcade.View):
             "player": player_name,
             "turn": turn,
             "units_killed": units_killed,
-            "custom": custom_value
+            "size_map": str(int(size_map) ** 2),
+            "bot_amount": bot_amount,
+            "player_amount": player_amount,
+            "bot_difficulty": bot_difficulty
         }
         
         self.background_color = arcade.color.DARK_SLATE_GRAY
@@ -103,8 +106,8 @@ class StatisticsView(arcade.View):
             batch=self.batch
         )
 
-        self.custom_label = arcade.Text(
-            "X:",
+        self.size_label = arcade.Text(
+            "размер карты:",
             self.window.width // 2 - 150,
             self.stat_y - self.line_height * 3,
             self.highlight_color,
@@ -113,10 +116,73 @@ class StatisticsView(arcade.View):
             font_name="Arial",
             batch=self.batch
         )
-        self.custom_value = arcade.Text(
-            str(self.stats["custom"]),
+        self.size_label1 = arcade.Text(
+            str(self.stats["size_map"]),
             self.window.width // 2 + 100,
             self.stat_y - self.line_height * 3,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.bot_amount_label = arcade.Text(
+            "кол-во ботов:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height * 4,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.bot_amount_label1 = arcade.Text(
+            str(self.stats["bot_amount"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height * 4,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.player_amount_label = arcade.Text(
+            "кол-во игроков:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height * 5,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.player_amount_label1 = arcade.Text(
+            str(self.stats["player_amount"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height * 5,
+            self.text_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+
+        self.bot_difficulty_label = arcade.Text(
+            "сложность ботов:",
+            self.window.width // 2 - 150,
+            self.stat_y - self.line_height * 6,
+            self.highlight_color,
+            24,
+            anchor_x="left",
+            font_name="Arial",
+            batch=self.batch
+        )
+        self.bot_difficulty_label1 = arcade.Text(
+            str(self.stats["bot_difficulty"]),
+            self.window.width // 2 + 100,
+            self.stat_y - self.line_height * 6,
             self.text_color,
             24,
             anchor_x="left",

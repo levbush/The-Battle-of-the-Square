@@ -96,7 +96,8 @@ class GameView(arcade.View):
         self.manager.add(self.info_btn)
         self.manager.add(self.next_turn_btn)
         self.manager.add(self.tech_btn)
-        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self, player_name=self.current_player.id + 1, turn=self.move_n, units_killed=self.current_player.kills))
+        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self, player_name=self.current_player.id + 1, turn=self.move_n, units_killed=self.current_player.kills,
+                                                                                 size_map=self.size_map, bot_amount=self.bot_amount, player_amount=self.player_amount, bot_difficulty=self.bot_difficulty))
         self.next_turn_btn.on_click = lambda *_: self.change_POV()
         self.tech_btn.on_click = lambda *_: self.window.show_view(DiscoveryView(self))
         self.city_tooltips = []
@@ -782,7 +783,7 @@ class GameView(arcade.View):
             "player_amount": self.player_amount,
             "bot_difficulty": self.bot_difficulty,
         }
-
+        
         c.executemany(
             'INSERT OR REPLACE INTO game_state (key, value) VALUES (?, ?)',
             [(k, str(v)) for k, v in game_state.items()]
