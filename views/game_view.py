@@ -206,13 +206,13 @@ class GameView(arcade.View):
         self.draw_city_borders()
         self.world_batch.draw()
         self.draw_valid_moves()
+        self.capture_list.draw()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
         arcade.draw_texture_rect(
             self.science, arcade.rect.LBWH(self.width // 2 + self.width * 0.035, self.height * 0.05, 60, 60)
         )
-        self.capture_list.draw()
 
         self.batch.draw()
 
@@ -530,11 +530,15 @@ class GameView(arcade.View):
 
                 if tile.unit and tile.city:
                     if tile.unit.owner != tile.city.owner:
-                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, tile.row * 120, tile.col * 80))
+                        screen_x = (tile.col - tile.row) * 150 + self.width // 2
+                        screen_y = (tile.col + tile.row) * 90 + 300
+                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
                 
                 if tile.unit and tile.modifier:
                     if tile.modifier == ModifierType.VILLAGE:
-                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, tile.row * 120, tile.col * 80))
+                        screen_x = (tile.col - tile.row) * 150 + self.width // 2
+                        screen_y = (tile.col + tile.row) * 90 + 300
+                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
 
         self.tiles.reverse()
         self.modifiers.reverse()
