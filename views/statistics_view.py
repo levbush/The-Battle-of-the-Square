@@ -4,7 +4,7 @@ from pyglet.graphics import Batch
 
 class StatisticsView(arcade.View):
     """View для отображения статистики игры"""
-    def __init__(self, parent, player_name="Игрок", turn=0, units_killed=0, size_map="121", bot_amount="0", player_amount="0", bot_difficulty=None):
+    def __init__(self, parent, player_name="Игрок", turn=0, units_killed=0, size_map="11", bot_amount="0", player_amount="0", bot_difficulty=None):
         super().__init__()
         
         self.parent = parent
@@ -17,6 +17,10 @@ class StatisticsView(arcade.View):
             "player_amount": player_amount,
             "bot_difficulty": bot_difficulty
         }
+        if bot_difficulty == 0:
+            self.stats["bot_difficulty"] = "easy"
+        elif bot_difficulty is not None:
+            self.stats["bot_difficulty"] = "hard"
         
         self.background_color = arcade.color.DARK_SLATE_GRAY
         self.title_color = arcade.color.GOLD
@@ -181,7 +185,7 @@ class StatisticsView(arcade.View):
         )
         self.bot_difficulty_label1 = arcade.Text(
             str(self.stats["bot_difficulty"]),
-            self.window.width // 2 + 100,
+            self.window.width // 2 + 120,
             self.stat_y - self.line_height * 6,
             self.text_color,
             24,
