@@ -18,6 +18,7 @@ ICON_SCALE = 0.7
 ZOOM_SPEED = 0.1
 MIN_ZOOM = 0.3
 MAX_ZOOM = 3.0
+START_PRICE = 4
 
 
 TechElement = namedtuple('TechElement', ['x', 'y', 'cls', 'depth', 'state', 'texture'])
@@ -135,7 +136,10 @@ class DiscoveryView(arcade.View):
 
             def make_handler(tech_cls: type = element.cls, tech_depth: int = element.depth):
                 def on_click(event) -> None:
-                    cost = 4 + tech_depth
+                    global START_PRICE
+
+                    
+                    cost = START_PRICE + tech_depth
                     player = self.parent.current_player
 
                     if player.stars < cost:
@@ -147,6 +151,7 @@ class DiscoveryView(arcade.View):
                     player.open_tech.set_tech_map(tech_cls)
                     self.rebuild()
                     self.parent.update_sprites()
+                    START_PRICE += 1
 
                 return on_click
 
@@ -212,7 +217,7 @@ class DiscoveryView(arcade.View):
                     self.parent.current_player
                 )
 
-                cost = 4 + element.depth
+                cost = START_PRICE + element.depth
                 label = arcade.Text(
                     text=str(cost),
                     font_size=14,

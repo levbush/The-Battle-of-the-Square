@@ -45,6 +45,10 @@ def create_map(side: int, players: list[Player]):
                         break
                     if map[i][j].modifier and map[i][j].modifier.type == ModifierType.VILLAGE:
                         map[i][j] = Tile(i, j, TerrainType.LAND, [False] * len(players))
+                        modifier_type = None
+                        while not modifier_type or modifier_type.type == ModifierType.VILLAGE:
+                            modifier_type = choices(LAND_MODIFIERS, land_modifiers_weights(), k=1)[0]()
+                            map[i][j].modifier = modifier_type
                 if not flag:
                     break
             if not flag:
@@ -74,6 +78,10 @@ def create_map(side: int, players: list[Player]):
                     break
                 if map[i][j].modifier and map[i][j].modifier.type == ModifierType.VILLAGE:
                     map[i][j].modifier = None
+                    modifier_type = None
+                    while not modifier_type or modifier_type.type == ModifierType.VILLAGE:
+                        modifier_type = choices(LAND_MODIFIERS, land_modifiers_weights(), k=1)[0]()
+                        map[i][j].modifier = modifier_type
             if not flag:
                 break
 
