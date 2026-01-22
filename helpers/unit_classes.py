@@ -8,7 +8,7 @@ from helpers.custom_texture import CustomTexture
 from random import shuffle
 from arcade import Sprite, get_window
 
-SKIN = [i for i in range(1, 15)]
+SKIN = list(range(15))
 shuffle(SKIN)
 
 
@@ -45,10 +45,10 @@ class UnitBase:
     traits: list[TraitType] = field(init=False, repr=False)
     sprite: 'AnimatedUnitSprite' = field(init=False, repr=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self, skins_map=None):
         if self.health is None:
             self.health = self.max_health
-        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id]}/{self.name}.png')
+        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id] if skins_map is None else skins_map[self.owner.id]}/{self.name}.png')
         self.is_moving = False
         self.is_attacking = False
         self.frm = None

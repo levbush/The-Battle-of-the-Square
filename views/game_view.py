@@ -796,6 +796,7 @@ class GameView(arcade.View):
             "bot_amount": self.bot_amount,
             "player_amount": self.player_amount,
             "bot_difficulty": self.bot_difficulty,
+            'SKIN': ', '.join(list(map(str, SKIN)))
         }
 
         c.executemany(
@@ -810,10 +811,23 @@ class GameView(arcade.View):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         self.map = [[TileBase([]) for _ in range(self.size_map)] for _ in range(self.size_map)]
+        
         c.execute('SELECT value FROM players')
         self.players = [eval(v) for (v,) in c.fetchall()]
         players_by_id = {p.id: p for p in self.players}
 
+        c.execute('SELECT key, value FROM game_state')
+        game_state = {k: eval(v) for k, v in c.fetchall()}
+
+        if "current_player" in game_state:
+            self.current_player = players_by_id[game_state["current_player"]]
+
+        if "move_n" in game_state:
+            self.move_n = game_state["move_n"]
+
+        if 'SKIN' in game_state:
+            global SKIN
+            SKIN = game_state['SKIN']
         city_tiles = []
         c.execute('SELECT x, y, value FROM map')
         for x, y, value in c.fetchall():
@@ -823,11 +837,11 @@ class GameView(arcade.View):
 
             if tile.unit:
                 tile.unit.owner = players_by_id[tile.unit.owner.id]
-                tile.unit.__post_init__()
+                tile.unit.__post_init__(SKIN)
 
             if tile.city:
                 tile.city.owner = players_by_id[tile.city.owner.id]
-                tile.city.__post_init__()
+                tile.city.__post_init__(SKIN)
                 city_tiles.append(tile)
 
             if tile.owner:
@@ -840,15 +854,6 @@ class GameView(arcade.View):
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     self.map[tile.row + dx][tile.col + dy].owner = tile.city
-
-        c.execute('SELECT key, value FROM game_state')
-        game_state = {k: eval(v) for k, v in c.fetchall()}
-
-        if "current_player" in game_state:
-            self.current_player = players_by_id[game_state["current_player"]]
-
-        if "move_n" in game_state:
-            self.move_n = game_state["move_n"]
 
         conn.close()
 
