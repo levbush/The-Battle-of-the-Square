@@ -48,6 +48,8 @@ class GameView(arcade.View):
         self.gui_camera = arcade.camera.Camera2D()
         self.manager = UIManager()
         self.manager.enable()
+        self.manager1 = UIManager()
+        self.manager1.enable()
         self.setup()
 
     def setup(self):
@@ -70,7 +72,6 @@ class GameView(arcade.View):
             self.load_game()
 
         self.tiles = arcade.SpriteList(use_spatial_hash=True)
-        self.capture_list = arcade.SpriteList(use_spatial_hash=True)
         self.modifiers = arcade.SpriteList(use_spatial_hash=True)
         self.cities = arcade.SpriteList(use_spatial_hash=True)
         self.units = arcade.SpriteList(use_spatial_hash=True)
@@ -96,8 +97,7 @@ class GameView(arcade.View):
         self.manager.add(self.info_btn)
         self.manager.add(self.next_turn_btn)
         self.manager.add(self.tech_btn)
-        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self, player_name=self.current_player.id + 1, turn=self.move_n, units_killed=self.current_player.kills,
-                                                                                 size_map=self.size_map, bot_amount=self.bot_amount, player_amount=self.player_amount, bot_difficulty=self.bot_difficulty))
+        self.info_btn.on_click = lambda *_: self.window.show_view(StatisticsView(parent=self, player_name=self.current_player.id + 1, turn=self.move_n, units_killed=self.current_player.kills))
         self.next_turn_btn.on_click = lambda *_: self.change_POV()
         self.tech_btn.on_click = lambda *_: self.window.show_view(DiscoveryView(self))
         self.city_tooltips = []
@@ -206,7 +206,7 @@ class GameView(arcade.View):
         self.draw_city_borders()
         self.world_batch.draw()
         self.draw_valid_moves()
-        self.capture_list.draw()
+        self.on_draw_ui()
         self.gui_camera.use()
         self.manager.draw()
         arcade.draw_texture_rect(self.resource, arcade.rect.LBWH(self.width / 2 - 120, self.height - 50, 40, 40))
@@ -215,6 +215,9 @@ class GameView(arcade.View):
         )
 
         self.batch.draw()
+    
+    def on_draw_ui(self):
+        self.manager1.draw()
 
     def draw_city_borders(self):
         for row_idx, row in enumerate(self.map):
@@ -471,7 +474,6 @@ class GameView(arcade.View):
     def update_sprites(self):
         self.reset_all()
         self.star_label.text = f'{self.current_player.stars} (+ {self.get_stars_for_player()})'
-        self.capture_list.clear()
 
         for row_idx, row in enumerate(self.map):
             for col_idx, tile in enumerate(row):
@@ -512,7 +514,13 @@ class GameView(arcade.View):
                     )
 
                 if tile.unit:
-                    self.units.append(arcade.Sprite(tile.unit.texture.texture, 0.5, center_x=screen_x + 10, center_y=screen_y + 90))
+                    if not tile.unit.sprite:
+                        sprite = AnimatedUnitSprite(tile.unit.texture.texture, 0.5)
+                        sprite.center_x = screen_x + 10
+                        sprite.center_y = screen_y + 90
+                        tile.unit.sprite = sprite
+
+                    self.units.append(tile.unit.sprite)
 
                     self.health_tooltips.append(
                         arcade.Text(
@@ -530,20 +538,22 @@ class GameView(arcade.View):
 
                 if tile.unit and tile.city:
                     if tile.unit.owner != tile.city.owner:
-                        screen_x = (tile.col - tile.row) * 150 + self.width // 2
-                        screen_y = (tile.col + tile.row) * 90 + 300
-                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
-                
-                if tile.unit and tile.modifier:
-                    if tile.modifier == ModifierType.VILLAGE:
-                        screen_x = (tile.col - tile.row) * 150 + self.width // 2
-                        screen_y = (tile.col + tile.row) * 90 + 300
-                        self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
+                        self.capture_btn = UITextureButton(
+                            x=tile.row * 120,
+                            y=tile.col * 80,
+                            texture=arcade.load_texture("assets/misc/capture.png"),
+                            scale=0.2,
+                        )
+                        self.manager1.add(self.capture_btn)
+                        self.capture_btn.on_click = lambda *_: self.capture(tile)
 
         self.tiles.reverse()
         self.modifiers.reverse()
         self.cities.reverse()
         self.units.reverse()
+
+    def on_update(self, dt):
+        self.units.update(dt)
 
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
@@ -787,7 +797,7 @@ class GameView(arcade.View):
             "player_amount": self.player_amount,
             "bot_difficulty": self.bot_difficulty,
         }
-        
+
         c.executemany(
             'INSERT OR REPLACE INTO game_state (key, value) VALUES (?, ?)',
             [(k, str(v)) for k, v in game_state.items()]

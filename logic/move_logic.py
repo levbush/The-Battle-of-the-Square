@@ -63,7 +63,7 @@ class MovementSystem:
 
     def _perform_movement(self, from_tile: TileBase, to_tile: TileBase) -> bool:
         try:
-            from_tile.unit.move((to_tile.row, to_tile.col))
+            # from_tile.unit.move((to_tile.row, to_tile.col))
             from_tile.unit.move_remains = False
             if TraitType.MOBILE not in from_tile.unit.traits: from_tile.unit.attack_remains = False
 
@@ -71,7 +71,9 @@ class MovementSystem:
 
             to_tile.unit = from_tile.unit
             from_tile.unit = None
-
+            x = (to_tile.col - to_tile.row) * 150 + self.game.width // 2
+            y = (to_tile.col + to_tile.row) * 90 + 150
+            to_tile.unit.sprite.start_move(x + 10, y + 90)
             self.game.update_sprites()
             return True
         except Exception:
@@ -168,10 +170,18 @@ class AttackSystem:
         if not defender.is_alive:
             mover = MovementSystem(self.game)
             if mover._is_passable_for_movement(def_tile) and TraitType.RANGED not in attacker.traits:
-                attacker.move((def_tile.row, def_tile.col))
-                def_tile.unit = attacker
-                atk_tile.unit = None
-                self.game.update_visibility_around_unit(def_tile)
+                mover._perform_movement(atk_tile, def_tile)
+                # attacker.move((def_tile.row, def_tile.col))
+                # def_tile.unit = attacker
+                # atk_tile.unit = None
+                # self.game.update_visibility_around_unit(def_tile)
+        else:
+            x1 = (atk_tile.col - atk_tile.row) * 150 + self.game.width // 2
+            y1 = (atk_tile.col + atk_tile.row) * 90 + 150
+            x2 = (def_tile.col - def_tile.row) * 150 + self.game.width // 2
+            y2 = (def_tile.col + def_tile.row) * 90 + 150
+            attacker.sprite.start_attack(x1, y1, x2, y2)
+            
 
         if not attacker.is_alive:
             atk_tile.unit = None
