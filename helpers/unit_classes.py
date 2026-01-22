@@ -11,6 +11,8 @@ from enum import Enum, auto
 
 
 class Weapon(Sprite):
+    BASE_ANGLE = 0
+
     def __init__(self, *args, **kwargs):
         super().__init__(scale=0.5, *args, **kwargs)
         self.anim_time = 0.0
@@ -24,7 +26,7 @@ class Weapon(Sprite):
         self._rotated = 0.0
 
         self._target_rotation = 90.0 * direction
-        self.angle = 270 if direction == 1 else 180
+        self.angle = self.BASE_ANGLE + (270 if direction == 1 else 180)
 
     def update(self, dt):
         if not self.animating:
@@ -39,16 +41,19 @@ class Weapon(Sprite):
 
 
 class Club(Weapon):
+    BASE_ANGLE = 0  # points right
     def __init__(self, **kwargs):
         super().__init__(load_texture('assets/animation/club.png'), **kwargs)
 
 
 class Sword(Weapon):
+    BASE_ANGLE = 90
     def __init__(self, **kwargs):
         super().__init__(load_texture('assets/animation/sword.png'), **kwargs)
 
 
 class Arrow(Weapon):
+    BASE_ANGLE = 0
     def __init__(self, **kwargs):
         super().__init__(load_texture('assets/animation/arrow.png'), **kwargs)
 
@@ -191,7 +196,7 @@ class Warrior(UnitBase):
     name = 'warrior'
     cost = 2
     traits = [TraitType.MOBILE]
-    weapon = Club
+    weapon = 'Sword'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, attack_remains, health)
@@ -204,7 +209,7 @@ class Defender(UnitBase):
     name = 'defender'
     cost = 3
     traits = []
-    weapon = Sword
+    weapon = 'Sword'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, attack_remains, health)
@@ -217,7 +222,7 @@ class Rider(UnitBase):
     name = 'rider'
     cost = 2
     traits = [TraitType.MOBILE]
-    weapon = Club
+    weapon = 'Club'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, attack_remains, health)
@@ -230,7 +235,7 @@ class Archer(UnitBase):
     name = 'archer'
     cost = 3
     traits = [TraitType.RANGED, TraitType.MOBILE]
-    weapon = Arrow
+    weapon = 'Arrow'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, attack_remains, health)
@@ -242,7 +247,7 @@ class Swordsman(UnitBase):
     name = 'swordsman'
     cost = 4
     traits = [TraitType.MOBILE]
-    weapon = Sword
+    weapon = 'Sword'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 15, 3, 3, 1, 1, move_remains, attack_remains, health)
@@ -254,7 +259,7 @@ class Giant(UnitBase):
     name = 'giant'
     cost = None
     traits = []
-    weapon = Sword
+    weapon = 'Sword'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, attack_remains, health)

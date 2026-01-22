@@ -109,8 +109,10 @@ class GameView(arcade.View):
         self.club = Club(visible=False)
         self.sword = Sword(visible=False)
         self.arrow = Arrow(visible=False)
-        self.weapon_map: dict[type[Weapon], Weapon] = {Club: self.club, Sword: self.sword, Arrow: self.arrow}
+        self.weapon_map: dict[type[Weapon], Weapon] = {'Club': self.club, 'Sword': self.sword, 'Arrow': self.arrow}
         self.attack_sprites.append(self.club)
+        self.attack_sprites.append(self.sword)
+        self.attack_sprites.append(self.arrow)
 
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
         # self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
