@@ -180,7 +180,7 @@ class AttackSystem:
             y1 = (atk_tile.col + atk_tile.row) * 90 + 150
             x2 = (def_tile.col - def_tile.row) * 150 + self.game.width // 2
             y2 = (def_tile.col + def_tile.row) * 90 + 150
-            attacker.sprite.start_attack(x1, y1, x2, y2)
+            attacker.sprite.start_attack(x1 + 10, y1 + 90, x2 + 10, y2 + 90, defender.sprite)
             
 
         if not attacker.is_alive:

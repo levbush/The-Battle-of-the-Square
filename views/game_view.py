@@ -104,6 +104,13 @@ class GameView(arcade.View):
         self.city_tooltips = []
         self.health_tooltips = []
 
+        self.attack_sprites = arcade.SpriteList()
+        self.club = Club(visible=False)
+        self.sword = Sword(visible=False)
+        self.arrow = Arrow(visible=False)
+        self.weapon_map: dict[type[Weapon], Weapon] = {Club: self.club, Sword: self.sword, Arrow: self.arrow}
+        self.attack_sprites.append(self.club)
+
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
         # self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
         # self.player_city_textures = [arcade.load_texture(f'assets/cities/player/House_{i}.png') for i in range(6)]
@@ -203,6 +210,7 @@ class GameView(arcade.View):
         self.modifiers.draw()
         self.cities.draw()
         self.units.draw()
+        self.attack_sprites.draw()
         self.draw_selection_highlight()
         self.draw_city_borders()
         self.world_batch.draw()
@@ -515,11 +523,15 @@ class GameView(arcade.View):
                     )
 
                 if tile.unit:
+                    if not tile.unit.attack_sprite:
+                        tile.unit.attack_sprite = self.weapon_map[tile.unit.weapon]
                     if not tile.unit.sprite:
-                        sprite = AnimatedUnitSprite(tile.unit.texture.texture, 0.5)
+                        sprite = AnimatedUnitSprite(tile.unit.texture.texture, tile.unit.attack_sprite, 0.5)
                         sprite.center_x = screen_x + 10
                         sprite.center_y = screen_y + 90
                         tile.unit.sprite = sprite
+                        tile.unit.sprite.unit = tile.unit
+
 
                     self.units.append(tile.unit.sprite)
 
@@ -555,6 +567,7 @@ class GameView(arcade.View):
 
     def on_update(self, dt):
         self.units.update(dt)
+        self.attack_sprites.update(dt)
 
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:

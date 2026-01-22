@@ -1,4 +1,4 @@
-from math import sin, cos, atan2, hypot
+from math import hypot
 if __name__ == '__main__':
     from helpers.classes import Player
 from dataclasses import dataclass, field
@@ -6,10 +6,55 @@ from helpers.traits import TraitType
 from enum import IntEnum
 from helpers.custom_texture import CustomTexture
 from random import shuffle
-from arcade import Sprite, get_window
+from arcade import Sprite, get_window, Texture, load_texture, check_for_collision
+from enum import Enum, auto
+
 
 SKIN = list(range(1, 15))
 shuffle(SKIN)
+
+
+class Weapon(Sprite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(scale=0.5, *args, **kwargs)
+        self.anim_time = 0.0
+        self.animating = False
+        self._rotated = 0.0
+        self._target_rotation = 0.0
+
+    def animate(self, direction: int, time: float):
+        self.anim_time = time
+        self.animating = True
+        self._rotated = 0.0
+
+        self._target_rotation = 90.0 * direction
+        self.angle = 270 if direction == 1 else 180
+
+    def update(self, dt):
+        if not self.animating:
+            return
+
+        delta = self._target_rotation / self.anim_time * dt
+        self.angle += delta
+        self._rotated += delta
+
+        if abs(self._rotated) >= abs(self._target_rotation):
+            self.animating = False
+
+
+class Club(Weapon):
+    def __init__(self, **kwargs):
+        super().__init__(load_texture('assets/animation/club.png'), **kwargs)
+
+
+class Sword(Weapon):
+    def __init__(self, **kwargs):
+        super().__init__(load_texture('assets/animation/sword.png'), **kwargs)
+
+
+class Arrow(Weapon):
+    def __init__(self, **kwargs):
+        super().__init__(load_texture('assets/animation/arrow.png'), **kwargs)
 
 
 class UnitType(IntEnum):
@@ -37,6 +82,7 @@ class UnitBase:
     attack_remains: bool = True
     health: int = None
 
+    weapon: type[Club | Sword | Arrow] = field(init=False, repr=False)
     type: UnitType = field(init=False, repr=False)
     name: str = field(init=False, repr=False)
     texture: CustomTexture = field(init=False, repr=False)
@@ -44,6 +90,7 @@ class UnitBase:
     cost: int | None = field(init=False, repr=False)
     traits: list[TraitType] = field(init=False, repr=False)
     sprite: 'AnimatedUnitSprite' = field(init=False, repr=False, default=None)
+    attack_sprite: Sprite = field(init=False, repr=False, default=None)
 
     def __post_init__(self, skins_map=None):
         if self.health is None:
@@ -148,6 +195,7 @@ class Warrior(UnitBase):
     name = 'warrior'
     cost = 2
     traits = [TraitType.MOBILE]
+    weapon = Club
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, attack_remains, health)
@@ -160,6 +208,7 @@ class Defender(UnitBase):
     name = 'defender'
     cost = 3
     traits = []
+    weapon = Sword
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 15, 1, 3, 1, 1, move_remains, attack_remains, health)
@@ -172,6 +221,7 @@ class Rider(UnitBase):
     name = 'rider'
     cost = 2
     traits = [TraitType.MOBILE]
+    weapon = Club
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 2, 1, move_remains, attack_remains, health)
@@ -184,6 +234,7 @@ class Archer(UnitBase):
     name = 'archer'
     cost = 3
     traits = [TraitType.RANGED, TraitType.MOBILE]
+    weapon = Arrow
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 1, 1, 2, move_remains, attack_remains, health)
@@ -195,6 +246,7 @@ class Swordsman(UnitBase):
     name = 'swordsman'
     cost = 4
     traits = [TraitType.MOBILE]
+    weapon = Sword
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 15, 3, 3, 1, 1, move_remains, attack_remains, health)
@@ -206,6 +258,7 @@ class Giant(UnitBase):
     name = 'giant'
     cost = None
     traits = []
+    weapon = Sword
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 40, 5, 4, 1, 1, move_remains, attack_remains, health)
@@ -244,9 +297,14 @@ class Unit:
 # for cls in UNIT_TYPES.values():
 #     cls.textures = UnitTexture(cls.name)
 
+class AttackPhase(Enum):
+    APPROACH = auto()
+    ATTACK = auto()
+    RETURN = auto()
+
 
 class AnimatedUnitSprite(Sprite):
-    def __init__(self, texture, scale=1.0):
+    def __init__(self, texture: Texture, attack_sprite: Unit | Sword | Arrow, scale=1.0):
         super().__init__(texture, scale)
 
         self._moving = False
@@ -254,7 +312,17 @@ class AnimatedUnitSprite(Sprite):
         self._speed = 0.0
 
         self._attacking = False
-        self._attack_timer = 0.0
+        self._attack_phase = None
+        self._attack_duration = 0.0
+        self._attack_elapsed = 0.0
+        self._approach_time = 0.0
+        self._attack_time = 0.0
+
+
+        self.attack_sprite = attack_sprite
+        self._to_return = None
+        self._target_unit = None
+        self.unit: UnitBase = None
 
     def start_move(self, target_x: float, target_y: float, duration: float = 0.15):
         if self.center_x > target_x:
@@ -299,17 +367,106 @@ class AnimatedUnitSprite(Sprite):
         self.center_x += nx * self._speed * dt
         self.center_y += ny * self._speed * dt
 
-    def start_attack(self, x1, y1, x2, y2, duration=0.5):
+    def start_attack(
+        self,
+        x1: float, y1: float,
+        x2: float, y2: float,
+        target_unit: Sprite,
+        duration: float = 0.6
+    ):
+        
+        if self.center_x > x2:
+            self.scale_x = -0.5
+        elif self.center_x < x2:
+            self.scale_x = 0.5
         self._attacking = True
-        self._attack_timer = duration
+        self._attack_elapsed = 0.0
+        self._attack_duration = duration
+
+        self._approach_time = duration * 0.4
+        self._attack_time = duration * 0.2
+        
+        dx = x2 - self.center_x
+        dy = y2 - self.center_y
+        self._approach_speed = hypot(dx, dy) / self._approach_time
+        
+        self._to_return = (x1, y1)
+        self._target = (x2, y2)
+        self._target_unit = target_unit
+
+        self._attack_phase = AttackPhase.APPROACH
+
 
     def _update_attack(self, dt: float):
-        if not self._attacking:
+        if not self._attacking or TraitType.RANGED in self.unit.traits:
             return
 
-        self._attack_timer -= dt
-        if self._attack_timer <= 0:
+        self._attack_elapsed += dt
+
+        if self._attack_phase == AttackPhase.APPROACH:
+            self._update_attack_move(dt)
+
+            if self._attack_elapsed >= self._approach_time:
+                self._attack_phase = AttackPhase.ATTACK
+                self._attack_elapsed = 0.0
+                self._start_attack_animation()
+
+        elif self._attack_phase == AttackPhase.ATTACK:
+            if self._attack_elapsed >= self._attack_time:
+                self._attack_phase = AttackPhase.RETURN
+                self._attack_elapsed = 0.0
+                self._start_return()
+
+        elif self._attack_phase == AttackPhase.RETURN:
+            self._update_return(dt)
+
+    def _update_attack_move(self, dt: float):
+        tx, ty = self._target
+        dx = tx - self.center_x
+        dy = ty - self.center_y
+        dist = hypot(dx, dy)
+
+        if check_for_collision(self, self._target_unit):
+            return
+
+        speed = self._approach_speed
+        nx, ny = dx / dist, dy / dist
+        self.center_x += nx * speed * dt
+        self.center_y += ny * speed * dt
+
+    def _start_attack_animation(self):
+        self.attack_sprite.center_x = self.center_x
+        self.attack_sprite.center_y = self.center_y
+        self.attack_sprite.visible = True
+        self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
+
+    def _start_return(self):
+        self.attack_sprite.visible = False
+
+    def _update_return(self, dt: float):
+        tx, ty = self._to_return
+        dx = tx - self.center_x
+        dy = ty - self.center_y
+        dist = hypot(dx, dy)
+
+        if dist == 0:
             self._attacking = False
+            self._attack_phase = None
+            return
+
+        speed = 600
+        step = speed * dt
+
+        if step >= dist:
+            self.center_x, self.center_y = tx, ty
+            self._attacking = False
+            self._attack_phase = None
+            return
+
+        nx, ny = dx / dist, dy / dist
+        self.center_x += nx * step
+        self.center_y += ny * step
+
 
     def update(self, dt: float = 1 / 60):
         self._update_move(dt)
