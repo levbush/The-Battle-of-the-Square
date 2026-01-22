@@ -102,91 +102,11 @@ class UnitBase:
         self.frm = None
         self.to = None
 
-    # @staticmethod
-    # def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
-    #     '''Attack unit'''
-    #     if attacker.owner == defender.owner:
-    #         return
-
-    #     if (
-    #         abs(attacker.pos[0] - defender.pos[0]) > attacker.range
-    #         or abs(attacker.pos[1] - defender.pos[1]) > attacker.range
-    #     ):
-    #         return
-
-    #     attackForce = attacker.attack * (attacker.health / attacker.maxHealth)
-    #     defenseForce = defender.defense * (defender.health / defender.maxHealth) * defenseBonus 
-    #     totalDamage = attackForce + defenseForce 
-    #     attackResult = round((attackForce / totalDamage) * attacker.attack * 4.5) 
-    #     defenseResult = round((defenseForce / totalDamage) * defender.defense * 4.5)
-
-    #     defender.health -= attack_damage
-    #     if defender.health <= 0 and abs(attacker.pos[0] - defender.pos[0]) <= 1 and abs(attacker.pos[1] - defender.pos[1]) <= 1:
-    #         attacker.move(defender.pos)
-    #         defender.die()
-    #         return
-
-    #     if (
-    #         abs(attacker.pos[0] - defender.pos[0]) <= defender.range
-    #         and abs(attacker.pos[1] - defender.pos[1]) <= defender.range
-    #     ):
-    #         attacker.health -= defense_damage
-    #         if attacker.health <= 0:
-    #             attacker.die()
-
     def move(self, pos: list[int, int]):
         self.pos = list(pos)
         screen_x = (pos[1] - pos[0]) * 150 + get_window().width // 2 + 10
         screen_y = (pos[1] + pos[0]) * 90 + 240
         self.sprite.position = (screen_x, screen_y)
-
-    # def die(self):
-    #     """Mark the unit as dead"""
-    #     self.is_alive = False
-    #     self.health = 0
-    #     print(f"Unit died: {self}")
-
-    # def move_animation(self, frm, to):
-    #     self.is_moving = True
-    #     self.frm = frm
-    #     self.to = to
-    #     self.move(frm)
-    #     # if frm[1] > to[1]:
-    #     #     self.sprite.scale_x = -0.5
-    #     # elif frm[1] < to[1]:
-    #     #     self.sprite.scale_x = 0.5
-    #     while self.is_moving:
-    #         self.update()
-
-    # def attack_animation(self, frm, to):
-    #     self.is_attacking = True
-    #     self.frm = frm
-    #     self.to = to
-    #     self.move(self.frm)
-    #     # if frm[1] > to[1]:
-    #     #     self.sprite.scale_x = -0.5
-    #     # elif frm[1] < to[1]:
-    #     #     self.sprite.scale_x = 0.5
-    #     while self.is_attacking:
-    #         self.update()
-    
-    # def update(self):
-    #     get_window().current_view.on_draw()
-    #     if self.is_moving:
-    #         remains = dist(self.to, self.pos)
-    #         angle = atan2(self.to[0] - self.frm[0], self.to[1] - self.frm[1])
-    #         dx = cos(angle) * SPEED
-    #         dy = sin(angle) * SPEED
-    #         self.pos[0] += dx
-    #         self.pos[1] += dy
-    #         self.sprite.center_x += dx
-    #         self.sprite.center_y += dy
-    #         if dist(self.pos, self.to) >= remains:
-    #             self.move(self.to)
-    #             self.is_moving = False
-    #     elif self.is_attacking:
-    #         self.is_attacking = False
-        
 
 
 class Warrior(UnitBase):
@@ -281,22 +201,6 @@ class Unit:
     def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int) -> UnitBase:
         return UNIT_TYPES[unit_type](owner, [x, y])
 
-
-# class UnitTexture:
-#     'Fancy and repr-able texture for a unit'
-
-#     def __init__(self, name):
-#         self.name = name
-#         self.ally, self.enemy, self.bot = (
-#             load_texture(f'assets/units/{skin}{name}.png') for skin in ('ally/', 'enemy/', 'bot/')
-#         )
-
-#     def __repr__(self):
-#         return f'UnitTexture("{self.name}")'
-
-
-# for cls in UNIT_TYPES.values():
-#     cls.textures = UnitTexture(cls.name)
 
 class AttackPhase(Enum):
     APPROACH = auto()
@@ -399,9 +303,11 @@ class AnimatedUnitSprite(Sprite):
 
 
     def _update_attack(self, dt: float):
-        if not self._attacking or TraitType.RANGED in self.unit.traits:
-            return
-
+        # if not self._attacking or TraitType.RANGED in self.unit.traits:
+        #     return
+        if self.unit.type == 3:
+            self._start_attack_animation(dt)
+            
         self._attack_elapsed += dt
 
         if self._attack_phase == AttackPhase.APPROACH:
@@ -410,7 +316,7 @@ class AnimatedUnitSprite(Sprite):
             if self._attack_elapsed >= self._approach_time:
                 self._attack_phase = AttackPhase.ATTACK
                 self._attack_elapsed = 0.0
-                self._start_attack_animation()
+                self._start_attack_animation(dt)
 
         elif self._attack_phase == AttackPhase.ATTACK:
             if self._attack_elapsed >= self._attack_time:
@@ -422,51 +328,57 @@ class AnimatedUnitSprite(Sprite):
             self._update_return(dt)
 
     def _update_attack_move(self, dt: float):
-        tx, ty = self._target
-        dx = tx - self.center_x
-        dy = ty - self.center_y
-        dist = hypot(dx, dy)
+        if self.unit.type != 3:
+            tx, ty = self._target
+            dx = tx - self.center_x
+            dy = ty - self.center_y
+            dist = hypot(dx, dy)
 
-        if check_for_collision(self, self._target_unit):
-            return
+            if check_for_collision(self, self._target_unit):
+                return
 
-        speed = self._approach_speed
-        nx, ny = dx / dist, dy / dist
-        self.center_x += nx * speed * dt
-        self.center_y += ny * speed * dt
+            speed = self._approach_speed
+            nx, ny = dx / dist, dy / dist
+            self.center_x += nx * speed * dt
+            self.center_y += ny * speed * dt
 
-    def _start_attack_animation(self):
-        self.attack_sprite.center_x = self.center_x
-        self.attack_sprite.center_y = self.center_y
-        self.attack_sprite.visible = True
-        self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
+    def _start_attack_animation(self, dt):
+        if self.unit.type != 3:
+            self.attack_sprite.center_x = self.center_x 
+            self.attack_sprite.center_y = self.center_y
+            self.attack_sprite.visible = True
+            self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
+        else:
+            self.attack_sprite.center_x += dt
+            self.attack_sprite.center_y += dt
 
     def _start_return(self):
         self.attack_sprite.visible = False
 
     def _update_return(self, dt: float):
-        tx, ty = self._to_return
-        dx = tx - self.center_x
-        dy = ty - self.center_y
-        dist = hypot(dx, dy)
+        if self.unit.type != 3:
+            tx, ty = self._to_return
+            dx = tx - self.center_x
+            dy = ty - self.center_y
+            dist = hypot(dx, dy)
 
-        if dist == 0:
-            self._attacking = False
-            self._attack_phase = None
-            return
+            if dist == 0:
+                self._attacking = False
+                self._attack_phase = None
+                return
 
-        speed = 600
-        step = speed * dt
+            speed = 600
+            step = speed * dt
 
-        if step >= dist:
-            self.center_x, self.center_y = tx, ty
-            self._attacking = False
-            self._attack_phase = None
-            return
+            if step >= dist:
+                self.center_x, self.center_y = tx, ty
+                self._attacking = False
+                self._attack_phase = None
+                return
 
-        nx, ny = dx / dist, dy / dist
-        self.center_x += nx * step
-        self.center_y += ny * step
+            nx, ny = dx / dist, dy / dist
+            self.center_x += nx * step
+            self.center_y += ny * step
 
 
     def update(self, dt: float = 1 / 60):
