@@ -557,7 +557,8 @@ class GameView(arcade.View):
                         self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
 
                 if tile.unit and tile.modifier:
-                    if tile.modifier == ModifierType.VILLAGE:
+                    if tile.modifier.type == 5:
+                        print(1)
                         screen_x = (tile.col - tile.row) * 150 + self.width // 2
                         screen_y = (tile.col + tile.row) * 90 + 300
                         self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y))
