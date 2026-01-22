@@ -53,6 +53,7 @@ class GameView(arcade.View):
         self.setup()
 
     def setup(self):
+        shuffle(SKIN)
         if self.new_game:
             self.players: list[Player] = []
             for i in range(self.player_amount - 1):

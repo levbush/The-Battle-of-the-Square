@@ -206,14 +206,14 @@ class City:
     population: int = 0
     tile: 'TileBase' = field(init=False, repr=False)
     texture: CustomTexture = field(init=False, repr=False)
-    skins_map: tuple[int] | list[int] = tuple(SKIN)
+    skins_map: tuple[int] | list[int] = field(init=False, repr=False, default=None)
 
     def __post_init__(self, skins_map=None):
         if skins_map is not None:
             self.skins_map = skins_map
         if self not in self.owner.cities:
             self.owner.cities.append(self)
-        self.texture = CustomTexture(f'assets/cities/{self.skins_map[self.owner.id]}/House_{self.skins_map[self.owner.id]}_{self.level + 1}.png')
+        self.texture = CustomTexture(f'assets/cities/{self.skins_map[self.owner.id]}/House_{self.skins_map[self.owner.id]}_{self.level + 1}.png' if self.skins_map else f'assets/cities/{SKIN[self  .owner.id]}/House_{SKIN[self.owner.id]}_{self.level + 1}.png')
 
     def level_up(self):
         self.level += 1

@@ -8,7 +8,7 @@ from helpers.custom_texture import CustomTexture
 from random import shuffle
 from arcade import Sprite, get_window
 
-SKIN = list(range(15))
+SKIN = list(range(1, 15))
 shuffle(SKIN)
 
 
