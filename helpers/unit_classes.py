@@ -5,13 +5,9 @@ from dataclasses import dataclass, field
 from helpers.traits import TraitType
 from enum import IntEnum
 from helpers.custom_texture import CustomTexture
-from random import shuffle
+from helpers.skin import get_skin
 from arcade import Sprite, get_window, Texture, load_texture, check_for_collision
 from enum import Enum, auto
-
-
-SKIN = list(range(1, 15))
-shuffle(SKIN)
 
 
 class Weapon(Sprite):
@@ -95,7 +91,7 @@ class UnitBase:
     def __post_init__(self, skins_map=None):
         if self.health is None:
             self.health = self.max_health
-        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id] if skins_map is None else skins_map[self.owner.id]}/{self.name}.png')
+        self.texture = CustomTexture(f'assets/units/{get_skin()[self.owner.id] if skins_map is None else skins_map[self.owner.id]}/{self.name}.png')
         self.is_moving = False
         self.is_attacking = False
         self.frm = None

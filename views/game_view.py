@@ -17,6 +17,7 @@ from logic.bot_logic import BotLogic
 from logic.move_logic import MovementSystem, AttackSystem
 from typing import Literal
 from views.statistics_view import StatisticsView
+from helpers.skin import reset_skin, set_skin
 
 
 class GameView(arcade.View):
@@ -53,8 +54,8 @@ class GameView(arcade.View):
         self.setup()
 
     def setup(self):
-        shuffle(SKIN)
         if self.new_game:
+            reset_skin()
             self.players: list[Player] = []
             for i in range(self.player_amount - 1):
                 self.players.append(Player(None, False))
@@ -810,7 +811,7 @@ class GameView(arcade.View):
             "bot_amount": self.bot_amount,
             "player_amount": self.player_amount,
             "bot_difficulty": self.bot_difficulty,
-            'SKIN': ', '.join(list(map(str, SKIN)))
+            'SKIN': ', '.join(list(map(str, get_skin())))
         }
 
         c.executemany(
@@ -840,8 +841,7 @@ class GameView(arcade.View):
             self.move_n = game_state["move_n"]
 
         if 'SKIN' in game_state:
-            global SKIN
-            SKIN = game_state['SKIN']
+            set_skin(game_state['SKIN'])
         city_tiles = []
         c.execute('SELECT x, y, value FROM map')
         for x, y, value in c.fetchall():
@@ -851,11 +851,11 @@ class GameView(arcade.View):
 
             if tile.unit:
                 tile.unit.owner = players_by_id[tile.unit.owner.id]
-                tile.unit.__post_init__(SKIN)
+                tile.unit.__post_init__(get_skin())
 
             if tile.city:
                 tile.city.owner = players_by_id[tile.city.owner.id]
-                tile.city.__post_init__(SKIN)
+                tile.city.__post_init__(get_skin())
                 city_tiles.append(tile)
 
             if tile.owner:
