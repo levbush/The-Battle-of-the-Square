@@ -221,4 +221,4 @@ class City:
             self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
             self.tile.unit.move_remains = False
             self.tile.unit.attack_remains = False
-        self.texture = CustomTexture(f'assets/cities/{self.skins_map[self.owner.id]}/House_{self.skins_map[self.owner.id]}_{self.level + 1}.png')
+        self.texture = CustomTexture(f'assets/cities/{self.skins_map[self.owner.id]}/House_{self.skins_map[self.owner.id]}_{self.level + 1}.png' if self.skins_map else f'assets/cities/{get_skin()[self  .owner.id]}/House_{get_skin()[self.owner.id]}_{self.level + 1}.png')
