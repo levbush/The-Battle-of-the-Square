@@ -1,3 +1,4 @@
+from math import sin, cos, atan2, hypot
 if __name__ == '__main__':
     from helpers.classes import Player
 from dataclasses import dataclass, field
@@ -5,8 +6,9 @@ from helpers.traits import TraitType
 from enum import IntEnum
 from helpers.custom_texture import CustomTexture
 from random import shuffle
+from arcade import Sprite, get_window
 
-SKIN = [i for i in range(1, 15)]
+SKIN = list(range(15))
 shuffle(SKIN)
 
 
@@ -25,7 +27,7 @@ class UnitBase:
     'The base class for units'
 
     owner: 'Player'
-    pos: tuple[int, int]
+    pos: list[int, int]
     max_health: int = field(repr=False)
     attack: int = field(repr=False)
     defense: int = field(repr=False)
@@ -41,11 +43,16 @@ class UnitBase:
     is_alive: bool = field(init=False, default=True, repr=False)
     cost: int | None = field(init=False, repr=False)
     traits: list[TraitType] = field(init=False, repr=False)
+    sprite: 'AnimatedUnitSprite' = field(init=False, repr=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self, skins_map=None):
         if self.health is None:
             self.health = self.max_health
-        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id]}/{self.name}.png')
+        self.texture = CustomTexture(f'assets/units/{SKIN[self.owner.id] if skins_map is None else skins_map[self.owner.id]}/{self.name}.png')
+        self.is_moving = False
+        self.is_attacking = False
+        self.frm = None
+        self.to = None
 
     # @staticmethod
     # def attack_unit(attacker: "UnitBase", defender: "UnitBase"):
@@ -79,14 +86,59 @@ class UnitBase:
     #         if attacker.health <= 0:
     #             attacker.die()
 
-    def move(self, pos: tuple[int, int]):
-        self.pos = pos
+    def move(self, pos: list[int, int]):
+        self.pos = list(pos)
+        screen_x = (pos[1] - pos[0]) * 150 + get_window().width // 2 + 10
+        screen_y = (pos[1] + pos[0]) * 90 + 240
+        self.sprite.position = (screen_x, screen_y)
 
     # def die(self):
     #     """Mark the unit as dead"""
     #     self.is_alive = False
     #     self.health = 0
     #     print(f"Unit died: {self}")
+
+    # def move_animation(self, frm, to):
+    #     self.is_moving = True
+    #     self.frm = frm
+    #     self.to = to
+    #     self.move(frm)
+    #     # if frm[1] > to[1]:
+    #     #     self.sprite.scale_x = -0.5
+    #     # elif frm[1] < to[1]:
+    #     #     self.sprite.scale_x = 0.5
+    #     while self.is_moving:
+    #         self.update()
+
+    # def attack_animation(self, frm, to):
+    #     self.is_attacking = True
+    #     self.frm = frm
+    #     self.to = to
+    #     self.move(self.frm)
+    #     # if frm[1] > to[1]:
+    #     #     self.sprite.scale_x = -0.5
+    #     # elif frm[1] < to[1]:
+    #     #     self.sprite.scale_x = 0.5
+    #     while self.is_attacking:
+    #         self.update()
+    
+    # def update(self):
+    #     get_window().current_view.on_draw()
+    #     if self.is_moving:
+    #         remains = dist(self.to, self.pos)
+    #         angle = atan2(self.to[0] - self.frm[0], self.to[1] - self.frm[1])
+    #         dx = cos(angle) * SPEED
+    #         dy = sin(angle) * SPEED
+    #         self.pos[0] += dx
+    #         self.pos[1] += dy
+    #         self.sprite.center_x += dx
+    #         self.sprite.center_y += dy
+    #         if dist(self.pos, self.to) >= remains:
+    #             self.move(self.to)
+    #             self.is_moving = False
+    #     elif self.is_attacking:
+    #         self.is_attacking = False
+        
 
 
 class Warrior(UnitBase):
@@ -173,7 +225,7 @@ class Unit:
     'Builder class for units, uses `UNIT_TYPES`'
 
     def __new__(cls, unit_type: UnitType, owner: 'Player', x: int, y: int) -> UnitBase:
-        return UNIT_TYPES[unit_type](owner, (x, y))
+        return UNIT_TYPES[unit_type](owner, [x, y])
 
 
 # class UnitTexture:
@@ -191,3 +243,74 @@ class Unit:
 
 # for cls in UNIT_TYPES.values():
 #     cls.textures = UnitTexture(cls.name)
+
+
+class AnimatedUnitSprite(Sprite):
+    def __init__(self, texture, scale=1.0):
+        super().__init__(texture, scale)
+
+        self._moving = False
+        self._target = None
+        self._speed = 0.0
+
+        self._attacking = False
+        self._attack_timer = 0.0
+
+    def start_move(self, target_x: float, target_y: float, duration: float = 0.15):
+        if self.center_x > target_x:
+            self.scale_x = -0.5
+        elif self.center_x < target_x:
+            self.scale_x = 0.5
+
+        dx = target_x - self.center_x
+        dy = target_y - self.center_y
+
+        distance = hypot(dx, dy)
+
+        if distance == 0 or duration <= 0:
+            self.center_x = target_x
+            self.center_y = target_y
+            self._moving = False
+            return
+
+        self._target = (target_x, target_y)
+        self._speed = distance / duration
+        self._moving = True
+
+    def _update_move(self, dt: float):
+        if not self._moving or self._target is None:
+            return
+
+        tx, ty = self._target
+        dx = tx - self.center_x
+        dy = ty - self.center_y
+        dist = hypot(dx, dy)
+
+        if dist <= self._speed * dt:
+            self.center_x = tx
+            self.center_y = ty
+            self._moving = False
+            self._target = None
+            return
+
+        nx = dx / dist
+        ny = dy / dist
+
+        self.center_x += nx * self._speed * dt
+        self.center_y += ny * self._speed * dt
+
+    def start_attack(self, x1, y1, x2, y2, duration=0.5):
+        self._attacking = True
+        self._attack_timer = duration
+
+    def _update_attack(self, dt: float):
+        if not self._attacking:
+            return
+
+        self._attack_timer -= dt
+        if self._attack_timer <= 0:
+            self._attacking = False
+
+    def update(self, dt: float = 1 / 60):
+        self._update_move(dt)
+        self._update_attack(dt)
