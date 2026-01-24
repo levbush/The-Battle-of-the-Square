@@ -303,11 +303,6 @@ class AnimatedUnitSprite(Sprite):
 
 
     def _update_attack(self, dt: float):
-        # if not self._attacking or TraitType.RANGED in self.unit.traits:
-        #     return
-        if self.unit.type == 3:
-            self._start_attack_animation(dt)
-            
         self._attack_elapsed += dt
 
         if self._attack_phase == AttackPhase.APPROACH:
@@ -343,19 +338,15 @@ class AnimatedUnitSprite(Sprite):
             self.center_y += ny * speed * dt
 
     def _start_attack_animation(self, dt):
-        if self.unit.type != 3:
-            self.attack_sprite.center_x = self.center_x 
-            self.attack_sprite.center_y = self.center_y
-            self.attack_sprite.visible = True
-            self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
-        else:
-            self.attack_sprite.center_x += dt
-            self.attack_sprite.center_y += dt
+        self.attack_sprite.center_x = self.center_x 
+        self.attack_sprite.center_y = self.center_y
+        self.attack_sprite.visible = True
+        self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
 
     def _start_return(self):
         self.attack_sprite.visible = False
 
-    def _update_return(self, dt: float):
+    def _update_return(self, dt: float): 
         if self.unit.type != 3:
             tx, ty = self._to_return
             dx = tx - self.center_x

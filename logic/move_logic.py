@@ -1,6 +1,8 @@
 from helpers.terrain.terrain_classes import TileBase, ModifierType, TerrainType, Mountain
 from helpers.unit_classes import UnitBase
 from helpers.traits import TraitType
+import arcade
+import math
 if __name__ == '__main__':
     from views.game_view import GameView
 
@@ -54,8 +56,6 @@ class MovementSystem:
     def move_unit(self, from_tile: TileBase, to_tile: TileBase) -> bool:
         if not from_tile.unit or from_tile.unit.owner != self.game.current_player:
             return False
-        # if to_tile.unit and to_tile.unit.owner != from_tile.unit.owner:
-        #     return self.game.attack_system.attack_unit(from_tile, to_tile)
         if not from_tile.unit.move_remains:
             return False
 
@@ -63,7 +63,6 @@ class MovementSystem:
 
     def _perform_movement(self, from_tile: TileBase, to_tile: TileBase) -> bool:
         try:
-            # from_tile.unit.move((to_tile.row, to_tile.col))
             from_tile.unit.move_remains = False
             if TraitType.MOBILE not in from_tile.unit.traits: from_tile.unit.attack_remains = False
 
@@ -85,6 +84,7 @@ class MovementSystem:
 class AttackSystem:
     def __init__(self, game_view: 'GameView'):
         self.game = game_view
+        self.active_arrows = []
 
     def get_defense_bonus(self, tile: TileBase) -> float:
         if tile.modifier:
@@ -129,6 +129,9 @@ class AttackSystem:
         attacker = attacker_tile.unit
         defender = defender_tile.unit
 
+        if attacker.type == 3:
+            self.create_arrow_animation(attacker_tile, defender_tile)
+
         if not attacker or not defender or attacker.owner == defender.owner:
             return False
         if not (attacker.move_remains or attacker.attack_remains and TraitType.MOBILE in attacker.traits):
@@ -171,10 +174,6 @@ class AttackSystem:
             mover = MovementSystem(self.game)
             if mover._is_passable_for_movement(def_tile) and TraitType.RANGED not in attacker.traits:
                 mover._perform_movement(atk_tile, def_tile)
-                # attacker.move((def_tile.row, def_tile.col))
-                # def_tile.unit = attacker
-                # atk_tile.unit = None
-                # self.game.update_visibility_around_unit(def_tile)
         else:
             x1 = (atk_tile.col - atk_tile.row) * 150 + self.game.width // 2
             y1 = (atk_tile.col + atk_tile.row) * 90 + 150
@@ -198,3 +197,98 @@ class AttackSystem:
         distance = max(abs(target_tile.row - attacker_tile.row),
                        abs(target_tile.col - attacker_tile.col))
         return distance <= attacker.range
+
+    def create_arrow_animation(self, from_tile: TileBase, to_tile: TileBase):
+        from_x, from_y = self.game.tile_to_world(from_tile)
+        to_x, to_y = self.game.tile_to_world(to_tile)
+        
+        from_y += 90
+        to_y += 90
+        
+        arrow = Arrow(from_x + 10, from_y, to_x + 10, to_y)
+        
+        self.active_arrows.append(arrow)
+        
+        self.game.attack_sprites.append(arrow)
+
+    def update_arrow_animations(self, dt):
+        arrows_to_remove = []
+        
+        for arrow in self.active_arrows:
+            arrow.update(dt)
+            
+            if arrow.animation_complete:
+                arrows_to_remove.append(arrow)
+        
+        for arrow in arrows_to_remove:
+            self.active_arrows.remove(arrow)
+            if arrow in self.game.attack_sprites:
+                self.game.attack_sprites.remove(arrow)
+
+
+class Arrow(arcade.Sprite):
+    def __init__(self, start_x, start_y, target_x, target_y, speed=500.0):
+        texture = arcade.load_texture("assets/animation/arrow.png")
+        super().__init__(texture, scale=0.5)
+        
+        self.center_x = start_x
+        self.center_y = start_y
+        
+        self.target_x = target_x
+        self.target_y = target_y
+        
+        self.dx = target_x - start_x
+        self.dy = target_y - start_y
+        
+        distance = math.sqrt(self.dx ** 2 + self.dy ** 2)
+        
+        if distance > 0:
+            self.dx /= distance
+            self.dy /= distance
+            
+            angle_rad = math.atan2(self.dy, self.dx)
+            self.angle = math.degrees(angle_rad)
+        else:
+            self.dx = 0
+            self.dy = 0
+            self.angle = 0
+        
+        self.speed = speed
+        self.distance = distance
+        self.traveled = 0
+
+        self.animation_complete = False
+        self.alpha = 255
+    
+    def update(self, dt):
+        if self.animation_complete:
+            return
+        
+        frame_distance = self.speed * dt
+        self.traveled += frame_distance
+        
+        if self.traveled < self.distance:
+            self.center_x += self.dx * frame_distance
+            self.center_y += self.dy * frame_distance
+        else:
+            self.center_x = self.target_x
+            self.center_y = self.target_y
+            self.animation_complete = True
+            self.alpha = 0
+    
+    def draw(self):
+        if self.alpha > 0:
+            original_color = self._color
+            original_alpha = self.alpha
+
+            self._color = (original_color[0], original_color[1], original_color[2], self.alpha)
+            
+            super().draw()
+
+            self._color = original_color
+    
+    def get_angle_for_direction(self, dx, dy):
+        if dx == 0 and dy == 0:
+            return 0
+        angle_rad = math.atan2(dy, dx)
+        return math.degrees(angle_rad)
