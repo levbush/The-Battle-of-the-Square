@@ -93,7 +93,6 @@ class AttackSystem:
         return 1
 
     def get_valid_attacks(self, attacker_tile: TileBase) -> list[TileBase]:
-        """Return all enemy tiles this unit can attack using BFS style."""
         valid_attacks = []
         attacker = attacker_tile.unit
         if not attacker:
@@ -227,8 +226,10 @@ class AttackSystem:
 
 
 class Arrow(arcade.Sprite):
+    
     def __init__(self, start_x, start_y, target_x, target_y, speed=500.0):
         texture = arcade.load_texture("assets/animation/arrow.png")
+        
         super().__init__(texture, scale=0.5)
         
         self.center_x = start_x
@@ -246,8 +247,9 @@ class Arrow(arcade.Sprite):
             self.dx /= distance
             self.dy /= distance
             
-            angle_rad = math.atan2(self.dy, self.dx)
+            angle_rad = math.atan2(-self.dy, self.dx)
             self.angle = math.degrees(angle_rad)
+        
         else:
             self.dx = 0
             self.dy = 0
@@ -256,8 +258,9 @@ class Arrow(arcade.Sprite):
         self.speed = speed
         self.distance = distance
         self.traveled = 0
-
+        
         self.animation_complete = False
+        
         self.alpha = 255
     
     def update(self, dt):
@@ -279,16 +282,9 @@ class Arrow(arcade.Sprite):
     def draw(self):
         if self.alpha > 0:
             original_color = self._color
-            original_alpha = self.alpha
-
+            
             self._color = (original_color[0], original_color[1], original_color[2], self.alpha)
             
             super().draw()
-
+            
             self._color = original_color
-    
-    def get_angle_for_direction(self, dx, dy):
-        if dx == 0 and dy == 0:
-            return 0
-        angle_rad = math.atan2(dy, dx)
-        return math.degrees(angle_rad)
