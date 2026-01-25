@@ -490,9 +490,9 @@ class GameView(arcade.View):
                 screen_x = (col_idx - row_idx) * 150 + self.width // 2
                 screen_y = (col_idx + row_idx) * 90 + 150
 
-                if not tile.visible_mapping[self.current_player.id]:
-                    self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
-                    continue
+                # if not tile.visible_mapping[self.current_player.id]:
+                #     self.tiles.append(arcade.Sprite(self.spr_texture_fog, 0.3, screen_x, screen_y))
+                #     continue
 
                 self.tiles.append(arcade.Sprite(tile.texture.texture, 0.3, screen_x, screen_y))
 

@@ -116,7 +116,7 @@ class Warrior(UnitBase):
     name = 'warrior'
     cost = 2
     traits = [TraitType.MOBILE]
-    weapon = 'Sword'
+    weapon = 'Club'
 
     def __init__(self, owner, pos, move_remains=True, attack_remains=True, health=None):
         super().__init__(owner, pos, 10, 2, 2, 1, 1, move_remains, attack_remains, health)

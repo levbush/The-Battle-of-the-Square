@@ -1,6 +1,18 @@
 from helpers.terrain.terrain_classes import TileBase, ModifierType
 from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
-from random import choices, randint
+from random import choices, randint, choice
+
+if __name__ == '__main__':
+    from views.game_view import GameView
+
+
+def dist(a: TileBase, b: TileBase) -> int:
+    return abs(a.row - b.row) + abs(a.col - b.col)
+
+
+from helpers.terrain.terrain_classes import TileBase, ModifierType
+from helpers.unit_classes import UnitBase, Unit, UNIT_TYPES
+from random import choices, randint, choice
 
 if __name__ == '__main__':
     from views.game_view import GameView
@@ -16,11 +28,12 @@ class BotLogic:
         self.game = game
 
     def move(self) -> None:
-        '''Perform one AI turn'''
+        self.game.update_sprites()
+
         visible_enemy_units: list[TileBase] = []
         visible_enemy_cities: list[TileBase] = []
         fog: list[TileBase] = []
-        own_units: list[UnitBase] = []
+        own_units: list[TileBase] = []
         villages: list[TileBase] = []
 
         for row in self.game.map:
@@ -28,9 +41,12 @@ class BotLogic:
                 if not tile.visible_mapping[self.game.current_player.id]:
                     fog.append(tile)
                     continue
+
                 if tile.unit:
                     if tile.unit.owner == self.game.current_player:
-                        own_units.append(tile.unit)
+                        tile.unit.move_remains = True
+                        tile.unit.attack_remains = True
+                        own_units.append(tile)
                     else:
                         visible_enemy_units.append(tile)
 
@@ -39,29 +55,25 @@ class BotLogic:
 
                 if tile.modifier and tile.modifier.type == ModifierType.VILLAGE:
                     villages.append(tile)
-            
-        for unit in list(own_units):
-            unit.move_remains = True
-            unit.attack_remains = True
-                
-        for unit in list(own_units):
-            if not unit.move_remains and not unit.attack_remains or not unit.is_alive:
-                continue
 
-            self.act_unit(unit, visible_enemy_units, visible_enemy_cities, fog, villages)
+        for tile in own_units:
+            if tile.unit and tile.unit.is_alive:
+                self.act_unit(tile, visible_enemy_units, visible_enemy_cities, fog, villages)
 
         self.handle_city_actions()
 
     def act_unit(
         self,
-        unit: UnitBase,
+        start_tile: TileBase,
         enemy_units: list[TileBase],
         enemy_cities: list[TileBase],
         fog: list[TileBase],
         villages: list[TileBase],
     ) -> None:
-        '''Resolve a single unit action'''
-        start_tile = self.game.map[unit.pos[0]][unit.pos[1]]
+        unit = start_tile.unit
+        if not unit:
+            return
+
         movement = self.game.movement_system
         attack = self.game.attack_system
 
@@ -79,7 +91,9 @@ class BotLogic:
                 attack.attack_unit(start_tile, tile)
                 return
 
-        target = self.select_reachable_target(start_tile, valid_moves, enemy_units, enemy_cities, fog, villages)
+        target = self.select_reachable_target(
+            start_tile, valid_moves, enemy_units, enemy_cities, fog, villages
+        )
         if not target:
             return
 
@@ -100,12 +114,11 @@ class BotLogic:
         def reachable(target: TileBase) -> bool:
             return any(dist(m, target) < dist(start, target) for m in valid_moves)
 
-        for group in (enemy_units + enemy_cities, villages, fog):
+        for group in (enemy_units + enemy_cities, villages):
             candidates = [t for t in group if reachable(t)]
             if candidates:
                 return min(candidates, key=lambda t: dist(start, t))
-
-        return None
+        return choice(fog) if fog else None
 
     def handle_city_actions(self) -> None:
         '''Produce units and collect modifiers'''
