@@ -229,27 +229,6 @@ class AnimatedUnitSprite(Sprite):
         self._target_unit = None
         self.unit: UnitBase = None
 
-    def start_move(self, target_x: float, target_y: float, duration: float = 0.15):
-        if self.center_x > target_x:
-            self.scale_x = -0.5
-        elif self.center_x < target_x:
-            self.scale_x = 0.5
-
-        dx = target_x - self.center_x
-        dy = target_y - self.center_y
-
-        distance = hypot(dx, dy)
-
-        if distance == 0 or duration <= 0:
-            self.center_x = target_x
-            self.center_y = target_y
-            self._moving = False
-            return
-
-        self._target = (target_x, target_y)
-        self._speed = distance / duration
-        self._moving = True
-
     def _update_move(self, dt: float):
         if not self._moving or self._target is None:
             return
@@ -301,6 +280,26 @@ class AnimatedUnitSprite(Sprite):
 
         self._attack_phase = AttackPhase.APPROACH
 
+    def start_move(self, target_x: float, target_y: float, duration: float = 0.15):
+        if self.center_x > target_x:
+            self.scale_x = -0.5
+        elif self.center_x < target_x:
+            self.scale_x = 0.5
+
+        dx = target_x - self.center_x
+        dy = target_y - self.center_y
+
+        distance = hypot(dx, dy)
+
+        if distance == 0 or duration <= 0:
+            self.center_x = target_x
+            self.center_y = target_y
+            self._moving = False
+            return
+
+        self._target = (target_x, target_y)
+        self._speed = distance / duration
+        self._moving = True
 
     def _update_attack(self, dt: float):
         self._attack_elapsed += dt
