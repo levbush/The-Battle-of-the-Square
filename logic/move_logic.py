@@ -128,7 +128,7 @@ class AttackSystem:
         attacker = attacker_tile.unit
         defender = defender_tile.unit
 
-        if attacker.type == 3:
+        if TraitType.RANGED in attacker.traits:
             self.create_arrow_animation(attacker_tile, defender_tile)
 
         if not attacker or not defender or attacker.owner == defender.owner:
