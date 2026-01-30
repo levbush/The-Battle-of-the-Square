@@ -322,7 +322,10 @@ class AnimatedUnitSprite(Sprite):
             self._update_return(dt)
 
     def _update_attack_move(self, dt: float):
-        if self.unit.type != 3:
+        if TraitType.RANGED not in self.unit.traits:
+            if not self._target:
+                self._attack_phase = AttackPhase.RETURN
+                return
             tx, ty = self._target
             dx = tx - self.center_x
             dy = ty - self.center_y
