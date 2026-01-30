@@ -203,11 +203,12 @@ class TileBase:
 
     def add_population_to_city(self, n: int):
         if not self.owner:
-            return
+            return False
         self.owner.population += n
         if self.owner.population >= self.owner.level + 2:
             self.owner.population -= self.owner.level + 2
-            self.owner.level_up()
+            return self.owner.level_up()
+        return False
 
     def __post_init__(self):
         if self.modifier:
