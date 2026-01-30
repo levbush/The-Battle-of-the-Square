@@ -14,6 +14,27 @@ class StartView(arcade.View):
 
     def __init__(self):
         super().__init__()
+
+        self.player = arcade.Sprite(":resources:images/animated_characters/female_person/femalePerson_idle.png", 0.5)
+        self.player.center_x = self.width // 2
+        self.player.center_y = self.height - 10
+        self.anim_speed_x = 5
+        self.player_speed_y = -3
+
+        self.player_list = arcade.SpriteList()
+        self.player_list.append(self.player)
+
+        self.wall_list = arcade.SpriteList()
+        self.wall = arcade.Sprite(":resources:images/tiles/grassMid.png", 0.5, center_x=self.width // 2,
+                                            center_y=self.height // 2 + 100)
+        self.wall_list.append(self.wall)
+
+        self.physics_engine = arcade.PhysicsEngineSimple(
+            self.player, 
+            self.wall_list
+        )
+
+        # мы вынуждены сделать
         self.back_img = arcade.load_texture('assets/misc/menu_background.jpg')
 
         self.manager = UIManager()
@@ -84,11 +105,28 @@ class StartView(arcade.View):
         self.manager.draw()
         self.trail.draw()
 
+        self.player_list.draw()
+        self.wall_list.draw()
+        # ):
+
     def on_update(self, delta_time):
         self.new_game_button.update_animation(delta_time)
         if self.resume_game_button:
             self.resume_game_button.update_animation(delta_time)
         self.trail.update()
+
+        self.physics_engine.update()
+        if self.player.center_y <= self.height // 2 + 165:
+            self.player_speed_y *= -1
+        elif self.player.center_y >= self.height:
+            self.player_speed_y *= -1
+        self.player.change_y = self.player_speed_y
+        if self.wall.center_x >= self.width or self.wall.center_x <= 0:
+            self.anim_speed_x *= -1
+
+        self.player.change_x = self.anim_speed_x
+        self.wall.center_x += self.anim_speed_x
+        # ):
 
     def new_game(self):
         'Start the creation of a new game'
