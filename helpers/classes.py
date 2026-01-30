@@ -3,7 +3,7 @@ from arcade.gui import UIFlatButton, UIBoxLayout
 from arcade.types import AnchorPoint
 from dataclasses import dataclass, field
 from views.discovery_view import TechTree
-from helpers.unit_classes import Unit, UnitType
+from helpers.unit_classes import Unit, UnitType, UnitBase
 from helpers.custom_texture import CustomTexture
 from helpers.skin import get_skin
 
@@ -181,6 +181,7 @@ class Player:
     is_bot: bool
     is_alive: bool = True
     cities: list["City"] = field(default_factory=list, repr=False)
+    units: list["UnitBase"] = field(default_factory=list, repr=False)
     stars: int = 3
     open_tech: TechTree = field(default_factory=TechTree)
     kills: int = 0
@@ -217,8 +218,13 @@ class City:
 
     def level_up(self):
         self.level += 1
-        if self.level > 1:
-            self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
-            self.tile.unit.move_remains = False
-            self.tile.unit.attack_remains = False
         self.texture = CustomTexture(f'assets/cities/{self.skins_map[self.owner.id]}/House_{self.skins_map[self.owner.id]}_{self.level + 1}.png' if self.skins_map else f'assets/cities/{get_skin()[self  .owner.id]}/House_{get_skin()[self.owner.id]}_{self.level + 1}.png')
+        if self.level > 1:
+            return True
+        return False
+        
+    def spawn_giant(self):
+        self.tile.unit = Unit(UnitType.GIANT, self.owner, self.tile.row, self.tile.col)
+        self.owner.units.append(self.tile.unit)
+        self.tile.unit.move_remains = False
+        self.tile.unit.attack_remains = False

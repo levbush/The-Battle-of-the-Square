@@ -52,10 +52,10 @@ class Sword(Weapon):
         super().__init__(load_texture('assets/animation/sword.png'), **kwargs)
 
 
-class Arrow(Weapon):
-    BASE_ANGLE = 0
-    def __init__(self, **kwargs):
-        super().__init__(load_texture('assets/animation/arrow.png'), **kwargs)
+# class Arrow(Weapon):
+#     BASE_ANGLE = 0
+#     def __init__(self, **kwargs):
+#         super().__init__(load_texture('assets/animation/arrow.png'), **kwargs)
 
 
 class UnitType(IntEnum):
@@ -83,7 +83,7 @@ class UnitBase:
     attack_remains: bool = True
     health: int = None
 
-    weapon: type[Club | Sword | Arrow] = field(init=False, repr=False)
+    weapon: type[Weapon] = field(init=False, repr=False)
     type: UnitType = field(init=False, repr=False)
     name: str = field(init=False, repr=False)
     texture: CustomTexture = field(init=False, repr=False)
@@ -209,7 +209,7 @@ class AttackPhase(Enum):
 
 
 class AnimatedUnitSprite(Sprite):
-    def __init__(self, texture: Texture, attack_sprite: Unit | Sword | Arrow, scale=1.0):
+    def __init__(self, texture: Texture, attack_sprite: Weapon, scale=1.0):
         super().__init__(texture, scale)
 
         self._moving = False
