@@ -85,6 +85,7 @@ class MovementSystem:
             return False
         
     def random_move(self, tile: TileBase):
+        if not tile.unit: return
         tile.unit.move_remains = True
         tile.unit.attack_remains = True
         moves = self.get_valid_moves(tile)
