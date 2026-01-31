@@ -26,7 +26,7 @@ class GameView(arcade.View):
         self.size_map = size_map
         self.player_amount = player_amount
         self.bot_amount = bot_amount
-        self.bot_difficulty = bot_difficulty
+        self.bot_difficulty = bot_difficulty or 1
         self.move = False
         self.move_start = (0, 0)
         self.camera_start = (250 * self.size_map / 4, 250 * self.size_map * (1 / 2 - 1 / 6))
@@ -108,11 +108,11 @@ class GameView(arcade.View):
         self.attack_sprites = arcade.SpriteList()
         self.club = Club(visible=False)
         self.sword = Sword(visible=False)
-        self.arrow = Arrow(visible=False)
-        self.weapon_map: dict[type[Weapon], Weapon] = {'Club': self.club, 'Sword': self.sword, 'Arrow': self.arrow}
+        # self.arrow = Arrow(visible=False)
+        self.weapon_map: dict[type[Weapon], Weapon] = {'Club': self.club, 'Sword': self.sword, 'Arrow': None}
         self.attack_sprites.append(self.club)
         self.attack_sprites.append(self.sword)
-        self.attack_sprites.append(self.arrow)
+        # self.attack_sprites.append(self.arrow)
 
         self.spr_texture_fog = arcade.load_texture("assets/terrain/fog.png")
         # self.bot_city_textures = [arcade.load_texture(f'assets/cities/bot/House_{i}.png') for i in range(6)]
@@ -524,7 +524,7 @@ class GameView(arcade.View):
                     )
 
                 if tile.unit:
-                    if not tile.unit.attack_sprite:
+                    if not tile.unit.attack_sprite and TraitType.RANGED not in tile.unit.traits:
                         tile.unit.attack_sprite = self.weapon_map[tile.unit.weapon]
                     if not tile.unit.sprite:
                         sprite = AnimatedUnitSprite(tile.unit.texture.texture, tile.unit.attack_sprite, 0.5)
@@ -551,7 +551,7 @@ class GameView(arcade.View):
                     )
 
                 if tile.unit and tile.city:
-                    if tile.unit.owner != tile.city.owner:
+                    if tile.unit.owner != tile.city.owner and self.current_player == tile.unit.owner and tile.unit.move_remains:
                         self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y + 100))
 
                 if tile.unit and tile.modifier:
@@ -570,6 +570,7 @@ class GameView(arcade.View):
     def make_bot_move(self):
         if not self.current_player.is_bot or not self.current_player.is_alive:
             return
+        self.update_sprites()
         self.bot_logic.move()
 
     def get_stars_for_player(self) -> int:
@@ -660,10 +661,11 @@ class GameView(arcade.View):
             if self.current_player.stars < self.selected_modifier.cost:
                 return
             
-            # self.movement_system.random_move(tile)
-            tile.add_population_to_city(self.selected_modifier.population)
-            tile.modifier.collect()
             self.current_player.stars -= self.selected_modifier.cost
+            tile.modifier.collect()
+            if tile.add_population_to_city(self.selected_modifier.population):
+                self.movement_system.random_move(tile.owner.tile)
+                tile.owner.spawn_giant()
         elif self.selected_unit or self.selected_city or self.selected_modifier.type == ModifierType.VILLAGE:
             tile = self.screen_to_tile(x, y)
             if tile != self.selected_tile:
@@ -850,6 +852,7 @@ class GameView(arcade.View):
             if tile.unit:
                 tile.unit.owner = players_by_id[tile.unit.owner.id]
                 tile.unit.__post_init__(get_skin())
+                tile.unit.owner.units.append(tile.unit)
 
             if tile.city:
                 tile.city.owner = players_by_id[tile.city.owner.id]
@@ -931,8 +934,10 @@ class GameView(arcade.View):
         if not cost or self.current_player.stars < cost:
             return
         self.selected_tile.unit = Unit(type, self.current_player, self.selected_tile.row, self.selected_tile.col)
-        self.selected_tile.unit.move_remains = False
-        self.selected_tile.unit.attack_remains = False
+        unit: UnitBase = self.selected_tile.unit
+        unit.move_remains = False
+        unit.attack_remains = False
+        unit.owner.units.append(self.selected_tile.unit)
         self.current_player.stars -= cost
         self.deselect_all()
         self.update_sprites()

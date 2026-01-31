@@ -1,6 +1,7 @@
 from helpers.terrain.terrain_classes import TileBase, ModifierType, TerrainType, Mountain
 from helpers.unit_classes import UnitBase
 from helpers.traits import TraitType
+from random import choice
 import arcade
 import math
 if __name__ == '__main__':
@@ -54,7 +55,7 @@ class MovementSystem:
         return True
 
     def move_unit(self, from_tile: TileBase, to_tile: TileBase) -> bool:
-        if not from_tile.unit or from_tile.unit.owner != self.game.current_player:
+        if not from_tile.unit:
             return False
         if not from_tile.unit.move_remains:
             return False
@@ -72,13 +73,24 @@ class MovementSystem:
             from_tile.unit = None
             x = (to_tile.col - to_tile.row) * 150 + self.game.width // 2
             y = (to_tile.col + to_tile.row) * 90 + 150
-            to_tile.unit.sprite.start_move(x + 10, y + 90)
+            if not to_tile.unit.owner.is_bot:
+                to_tile.unit.sprite.start_move(x + 10, y + 90)
+            else:
+                to_tile.unit.move([to_tile.row, to_tile.col])
             self.game.update_sprites()
             return True
         except Exception:
             import traceback
             traceback.print_exc()
             return False
+        
+    def random_move(self, tile: TileBase):
+        tile.unit.move_remains = True
+        tile.unit.attack_remains = True
+        moves = self.get_valid_moves(tile)
+        if not moves:
+            return
+        self.move_unit(tile, choice(moves))
 
 
 class AttackSystem:
@@ -128,7 +140,7 @@ class AttackSystem:
         attacker = attacker_tile.unit
         defender = defender_tile.unit
 
-        if TraitType.RANGED in attacker.traits:
+        if TraitType.RANGED in attacker.traits and not attacker.owner.is_bot:
             self.create_arrow_animation(attacker_tile, defender_tile)
 
         if not attacker or not defender or attacker.owner == defender.owner:
@@ -161,6 +173,7 @@ class AttackSystem:
         defender.health -= round((atk / total) * attacker.attack * 4.5)
         if defender.health <= 0:
             defender.is_alive = False
+            defender.owner.units.remove(defender)
             def_tile.unit = None
             attacker.owner.kills += 1
 
@@ -178,10 +191,11 @@ class AttackSystem:
             y1 = (atk_tile.col + atk_tile.row) * 90 + 150
             x2 = (def_tile.col - def_tile.row) * 150 + self.game.width // 2
             y2 = (def_tile.col + def_tile.row) * 90 + 150
-            attacker.sprite.start_attack(x1 + 10, y1 + 90, x2 + 10, y2 + 90, defender.sprite)
+            if not attacker.owner.is_bot:
+                attacker.sprite.start_attack(x1 + 10, y1 + 90, x2 + 10, y2 + 90, defender.sprite)
             
-
         if not attacker.is_alive:
+            attacker.owner.units.remove(attacker)
             atk_tile.unit = None
 
         attacker.move_remains = False
