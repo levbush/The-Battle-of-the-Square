@@ -555,7 +555,7 @@ class GameView(arcade.View):
                         self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y + 100))
 
                 if tile.unit and tile.modifier:
-                    if tile.modifier.type == ModifierType.VILLAGE:
+                    if tile.modifier.type == ModifierType.VILLAGE and tile.unit.move_remains:
                         self.capture_list.append(arcade.Sprite("assets/misc/capture.png", 0.2, screen_x, screen_y + 100))
 
         self.tiles.reverse()

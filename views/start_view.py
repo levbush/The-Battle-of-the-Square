@@ -15,7 +15,7 @@ class StartView(arcade.View):
     def __init__(self):
         super().__init__()
 
-        self.player = arcade.Sprite(":resources:images/animated_characters/female_person/femalePerson_idle.png", 0.5)
+        self.player = arcade.Sprite("assets/misc/femalePerson_idle.png", 1)
         self.player.center_x = self.width // 2
         self.player.center_y = self.height - 10
         self.anim_speed_x = 5
@@ -25,7 +25,7 @@ class StartView(arcade.View):
         self.player_list.append(self.player)
 
         self.wall_list = arcade.SpriteList()
-        self.wall = arcade.Sprite(":resources:images/tiles/grassMid.png", 0.5, center_x=self.width // 2,
+        self.wall = arcade.Sprite("assets/misc/grassMid.png", 0.5, center_x=self.width // 2,
                                             center_y=self.height // 2 + 100)
         self.wall_list.append(self.wall)
 
@@ -126,7 +126,6 @@ class StartView(arcade.View):
 
         self.player.change_x = self.anim_speed_x
         self.wall.center_x += self.anim_speed_x
-        # ):
 
     def new_game(self):
         'Start the creation of a new game'
