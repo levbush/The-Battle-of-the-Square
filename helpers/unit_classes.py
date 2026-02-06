@@ -340,12 +340,14 @@ class AnimatedUnitSprite(Sprite):
             self.center_y += ny * speed * dt
 
     def _start_attack_animation(self, dt):
+        if self.attack_sprite is None: return
         self.attack_sprite.center_x = self.center_x 
         self.attack_sprite.center_y = self.center_y
         self.attack_sprite.visible = True
         self.attack_sprite.animate(self.scale_x / abs(self.scale_x), self._attack_duration / 3)
 
     def _start_return(self):
+        if self.attack_sprite is None: return
         self.attack_sprite.visible = False
 
     def _update_return(self, dt: float): 
