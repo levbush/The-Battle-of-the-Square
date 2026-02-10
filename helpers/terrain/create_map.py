@@ -58,7 +58,7 @@ def create_map(side: int, players: list[Player]):
             vm = map[x][y].visible_mapping[:]
             vm[player.id] = True
             city = City(player)
-            map[x][y] = Tile(x, y, TerrainType.LAND, vm, city=city, unit=Unit(UnitType.ARCHER, player, x, y))
+            map[x][y] = Tile(x, y, TerrainType.LAND, vm, city=city, unit=Unit(UnitType.WARRIOR, player, x, y))
             map[x][y].city.owner.units.append(map[x][y].unit)
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
