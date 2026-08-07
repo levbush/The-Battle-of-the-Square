@@ -1,3 +1,5 @@
+2nd Yandex Lyceum project
+
 # The Battle of the Square
 Turn-based multiplayer strategy game
 
